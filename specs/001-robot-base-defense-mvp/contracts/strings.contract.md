@@ -51,7 +51,7 @@
 - Stored in `StringTable` ScriptableObject; HUD/audio adapters look up by key and display the exact text.
 - MVP MAY pair each key with a placeholder/TTS-stub audio clip; **final VO replacement swaps the clip reference only**, never the text.
 - Any new player-facing string introduced during implementation MUST be added here as data, not inlined in scene scripts (Constitution VI gate).
-- Battery warning callout for US5.2 reuses `radio.battery_warning` verbatim.
+- Battery warning callout for US5.2 reuses `radio.battery_warning` verbatim. **Clarify-confirmed:** MVP keeps this single line "해태 1호, 배터리 위험." for either robot; the actually-endangered robot (1호/2호) is disambiguated by the HUD battery widget / `robotId`, not by a per-robot VO line (per-robot lines are post-MVP).
 
 ## Main menu and saved settings
 

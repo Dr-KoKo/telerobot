@@ -81,11 +81,11 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | openRoutes (cumulative array) | [NorthRoad] | [NorthRoad, EastAlley] | [NorthRoad, EastAlley, SouthTunnel] |
 | newlyOpenedRoute (this phase) | NorthRoad | EastAlley | SouthTunnel |
 | threatBudget | 40 | 60 | 80 |
-| composition.runner (range) | 20–30 | 33–45 | 52–60 |
-| composition.bruiser (range) | 0 | 2–3 | 0–4 (PLANNING — pending Phase-3 Bruiser clarify) |
+| composition.runner (range) | 20–30 | 33–45 | 50–58 |
+| composition.bruiser (range) | 0 | 2–3 | 2–3 (clarify-confirmed min 2) |
 | composition.ripper (range) | 0 | 0 | 3–5 |
 | learningTargetTotalRange (FR-053) | 20–30 | 35–50 | 55–75 |
-| specialMinimums | — | Bruiser ≥2 | Ripper ≥3 |
+| specialMinimums | — | Bruiser ≥2 | Bruiser ≥2, Ripper ≥3 |
 | trimOrder (on budget conflict) | Runner | Runner → Bruiser | Runner → Bruiser (never below specialMinimums) |
 | targetDifficulty/duration | low / 2–3 min | medium / 3–4 min | high / 4–5 min |
 | deploysUnit | 2 Haetae (start) | — | Medical robot |
@@ -96,7 +96,7 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | **routeWeights** (share of spawns) | North 1.0 | North 0.55 / East 0.45 | North 0.4 / East 0.3 / South 0.3 |
 | **zombieTypeWeightsByRoute** (per-type route distribution, PLANNING) | — | Ripper — ; Bruiser {N 0.65, E 0.35}; Runner {N 0.6, E 0.4} | **Ripper {N 0.15, E 0.20, S 0.65}**; Bruiser {N 0.5, E 0.3, S 0.2}; Runner {N 0.4, E 0.3, S 0.3} |
 | **specialSpawnPolicy** | — | Bruiser min 2 across open routes | Ripper min 3, distributed by the weights above |
-Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 52–60 + ripper 3–5 (+bruiser pending clarify) ⇒ total ≥55 at cost ≤80 (budget caps the achievable upper near ~65, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9):** the spec mandates a Bruiser minimum only for Phase 2 (FR-053); the Phase-3 Bruiser range (`0–4`) is a planning default pending spec-clarification, not assumed. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
+Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 50–58 + bruiser 2 + ripper 3 (specials at minimum, runners fill to target) ⇒ total 55–63 at cost 72–80 ≤ 80 (budget caps the achievable upper near ~63, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9, clarify-confirmed):** Phase 3 now requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so it reads as the all-types 종합 국면. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
 
 ### RobotDef (Haetae) — 2 instances
 | Field | Value | Source |
@@ -145,7 +145,7 @@ Note (Assumptions): mechanical state bands (Low Power/Critical) and UI warning t
 hp 150 (FR-101); deploys Phase 3 (FR-100); stays near base (FR-102); non-combat, no attack (FR-103, Assumptions); heals player first (FR-104); healRate 8 HP/s (FR-105); radiusMeters 6 (FR-106); destructible (FR-107); destroyed zone not regenerated this session (Assumptions).
 
 ### UpgradeDef ×9 (FR-110..115)
-3-of-9 offered after Phase 1 and Phase 2; max 2 selections/session; same 9 candidates every reward step.
+3-of-9 offered after Phase 1 and Phase 2; max 2 selections/session; the global candidate pool stays the same 9 definitions at every reward step (no per-phase gating, FR-115). **Offer policy (clarify-confirmed):** an **already-selected upgrade id is excluded from later offers in the same session**; **no stacking** — each upgrade is selectable at most once per session. `UpgradeService.Offer(rng)` draws 3 from the 9 minus already-selected ids; `selectedUpgradeIds` is tracked on `SessionState`.
 
 | # | id | Effect | Apply rule |
 |---|----|--------|-----------|
@@ -255,7 +255,7 @@ classDiagram
 ```
 
 ### SessionState
-currentPhase (1–3), result (InProgress/Victory/Defeat), defeatReason (BaseDestroyed/PlayerDeath/null), elapsedSimTime, seed, upgradesSelected (≤2), openRoutes set. Win: Phase 3 cleared with base HP ≥1 (FR-004). Defeat: base HP 0 or player HP 0 (FR-005).
+currentPhase (1–3), result (InProgress/Victory/Defeat), defeatReason (BaseDestroyed/PlayerDeath/null), elapsedSimTime, seed, selectedUpgradeIds (≤2; excluded from later offers, no stacking), openRoutes set. Win: Phase 3 cleared with base HP ≥1 (FR-004). Defeat: base HP 0 or player HP 0 (FR-005).
 
 ### PhaseState
 number, openRoutes, threatBudget, plannedComposition, spawnedCount, aliveCount, cleared(bool). Transition (FR-061, ordered): ① all spawned → ② field cleared → ③ base alive → ④ phase cleared → ⑤ upgrade (if eligible) → ⑥ open next route → ⑦ start next phase.

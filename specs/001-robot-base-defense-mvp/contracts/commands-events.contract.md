@@ -54,7 +54,8 @@ ISpawnService
 ITargetingService
   SelectTarget(zombie, perceived)   // per ZombieDef.targetPriority
 IUpgradeService
-  Offer(rng) -> 3 of 9; Apply(upgradeId)
+  Offer(rng, selectedUpgradeIds) -> 3 of (9 minus already-selected); Apply(upgradeId)
+  // clarify-confirmed: exclude already-selected ids; no stacking (SessionState.selectedUpgradeIds)
 ```
 
 ## Domain events (core → adapter; also feed telemetry)

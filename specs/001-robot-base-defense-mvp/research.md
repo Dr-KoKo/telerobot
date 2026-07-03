@@ -161,7 +161,7 @@ Concretely:
 
 **Rationale**: Quantifies FR-034's Ripper-in-South requirement in data (was previously only prose), bounds runtime enemy count for performance/pressure, and makes spawn composition deterministically testable and tunable without code changes (Principle II).
 
-**Note on Phase-3 Bruiser**: the spec mandates a Bruiser minimum only for Phase 2 (FR-053). A Phase-3 Bruiser range (`0–4`) is offered as a planning default; **whether Phase 3 must contain Bruisers is an open spec-clarification item** and is not silently assumed here (Constitution I).
+**Note on Phase-3 Bruiser (clarify-confirmed)**: originally the spec mandated a Bruiser minimum only for Phase 2 (FR-053). This is now **resolved by spec amendment** — Phase 3 requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so Phase 3 reads as the all-types 종합 국면. Composition retuned to runner 50–58 / bruiser 2–3 / ripper 3–5 (achievable total 55–63 ≤ budget 80).
 
 **Alternatives considered**: fixed spawn lists (rejected — not budget-driven, violates FR-050); keeping "Ripper-favored" as prose only (rejected — unverifiable, review P0-2).
 
@@ -234,7 +234,7 @@ Concretely:
 | Shareable playtest distribution | Separate non-Development ZIP under `Builds/Distribution`; tester guide + itch.io checklist + KO feedback form (§17) |
 | Microsoft Store MSIX distribution | Full-trust desktop MSIX via Windows SDK; Partner Center signs certified build (§18) |
 
-No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (3, routed to `/speckit-clarify` with recommended answers in plan.md): per-robot battery-warning string (P1-7), upgrade re-offer/stack policy (P1-8), Phase-3 Bruiser minimum (P1-9). Medical-robot active-targeting is **closed as an accepted MVP assumption** (no active targeting), not a clarify item.
+No `NEEDS CLARIFICATION` markers remain. All prior **spec-clarification** items are now **closed via spec amendment** (spec.md Assumptions) and cascaded: per-robot battery-warning string (P1-7 → single line + HUD disambiguation), upgrade re-offer/stack policy (P1-8 → exclude-selected, no stacking), Phase-3 Bruiser minimum (P1-9 → Bruiser ≥2 & Ripper ≥3). Medical-robot active-targeting also closed as an accepted MVP assumption (no active targeting). **No open clarify gate remains before `/speckit-tasks`.**
 
 ---
 

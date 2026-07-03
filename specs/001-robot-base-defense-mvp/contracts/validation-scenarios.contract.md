@@ -30,7 +30,7 @@
 ### US3 — Phase 2 routes & reward
 | Scenario | Method | Check |
 |----------|--------|-------|
-| 1 Phase 1 clear → 3 upgrades, pick exactly 1 | E, P | Offer=3 of 9, select 1 |
+| 1 Phase 1 clear → 3 upgrades, pick exactly 1 | E, P | Offer=3 of 9, select 1; **2nd reward step excludes the already-selected id (no re-offer, no stacking)** |
 | 2 base +15% (150) on clear | E | recovery math |
 | 3 Phase 2 → East Alley highlight + radio + 2 routes active | P, Q | RouteOpened, RadioEvent(Phase2) |
 | 4 Bruiser hits base → −60 | E, P | base damage = 60 |
