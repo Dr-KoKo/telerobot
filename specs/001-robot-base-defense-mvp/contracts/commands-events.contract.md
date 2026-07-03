@@ -2,6 +2,18 @@
 
 **Feature**: `001-robot-base-defense-mvp` | Non-REST contract. Defines the interfaces between `Game.Core` (pure rules) and `Game.Runtime` (adapters). Adapters translate Unity input/physics/UI into these calls and render the resulting domain events; the core never references Unity.
 
+## Core math types (plain structs — NO `UnityEngine`)
+
+The core is UnityEngine-free (Constitution III), so all geometry in these interfaces uses **plain C# structs**, not `Vector2`/`Vector3`:
+
+```
+CoreVec2   { float x, y }              // 2D input axes
+CoreVec3   { float x, y, z }           // world position/direction in core space
+WorldPoint = CoreVec3                  // a position in the simulation world
+RoutePoint { RouteId routeId; float progress }   // position along a route waypoint chain (arc-distance)
+```
+Adapters convert between these and `UnityEngine.Vector*` at the boundary; the core never sees Unity types.
+
 ## Robot command interface (FR-085, FR-086)
 
 ```
@@ -9,7 +21,7 @@ ICommandInput (issued by adapter → core)
   IssueCommand(robotId, RobotCommand, CommandTarget?)
 
 RobotCommand enum = { DefendPosition, PatrolRoute, ReturnToBase, Charge }   // EXACTLY these 4 (FR-085, FR-140)
-CommandTarget   = { routeId? , point? }   // PatrolRoute requires open routeId; DefendPosition takes point/route (Assumptions)
+CommandTarget   = { RouteId? routeId , WorldPoint? point }   // PatrolRoute requires open routeId; DefendPosition takes point/route (Assumptions)
 ```
 Invariants:
 - Robots are individually selectable; a command applies per robot (Assumptions). A "select all" convenience MAY fan out the same command to both.
@@ -20,7 +32,7 @@ Invariants:
 
 ```
 IPlayerInput (adapter → core/runtime)
-  Move(vec2), Look(vec2), Fire(bool), Reload(), ThrowGrenade(),
+  Move(CoreVec2), Look(CoreVec2), Fire(bool), Reload(), ThrowGrenade(),
   OpenCommandMenu(), SelectRobot(robotId)
 ```
 Testable: the simulation harness and PlayMode tests inject synthetic intent without hardware.
@@ -32,7 +44,7 @@ IGameLoop
   Tick(dt)                          // advance one fixed step (ISimClock / FixedUpdate)
 ICombat
   ApplyHit(targetId, hitRegion)     // hitRegion ∈ {Body, Head}
-  ApplyGrenade(center, GrenadeDef)  // returns affected list (≤ maxAffected)
+  ApplyGrenade(WorldPoint center, GrenadeDef)  // returns affected list (≤ maxAffected)
 IBatteryService
   Drain(robotId, activity, dt); Charge(robotId, dt); RipperHit(robotId)
 IPhaseService

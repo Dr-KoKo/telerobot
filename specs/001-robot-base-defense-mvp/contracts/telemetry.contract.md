@@ -41,11 +41,21 @@ Per Constitution VIII, every event MUST include:
 | `route_pressure_sampled` | routeId, aliveCount, distanceToBase | route pressure over time |
 | `simulation_run_completed` | runId, seed, summary metrics | deterministic sim summary |
 
+## Sampling cadence (required for deterministic diffs — from `TelemetryConfig`)
+
+Sampled/continuous events MUST have a defined, **sim-clock-based** cadence (never wall-time), so two runs of the same `seed × profile` emit identical sample streams:
+
+| Event | Emit rule | Config field |
+|-------|-----------|--------------|
+| `base_hp_sampled` | every `sampleIntervalSeconds` (default 1.0) + at phase end | `sampleIntervalSeconds` |
+| `route_pressure_sampled` | every `routePressureSampleIntervalSeconds` (default 2.0) | `routePressureSampleIntervalSeconds` |
+| `robot_battery_changed` | **OnThresholdCrossing** (band/warning) **+ EveryNSeconds** (`batteryEmitIntervalSeconds`, default 1.0) — NOT per frame | `batteryEmitPolicy`, `batteryEmitIntervalSeconds` |
+
 ## Invariants
 
 - Events tied to not-yet-implemented systems MAY be marked not-applicable in a partial milestone but MUST be added when that system enters scope (Constitution VIII) — e.g. `barrier_*` only once Emergency Barrier exists; `ripper_attacked_robot` from Phase 3.
 - Names are identifiers, MAY be extended, MUST NOT be silently dropped.
-- Same `seed` + `dataVersion` ⇒ identical event stream for a sim run (reproducibility, Constitution IV).
+- Same `seed` + `dataVersion` (+ `profile`) ⇒ identical event stream for a sim run, **including sample timing** (reproducibility, Constitution IV).
 
 ## Acceptance
 

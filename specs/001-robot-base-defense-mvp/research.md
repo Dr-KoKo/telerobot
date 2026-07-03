@@ -8,19 +8,21 @@ This document records technical decisions (Constitution Principle X). Each entry
 
 ## 1. Unity editor baseline
 
-**Decision**: Use **Unity 6.3 LTS** (Unity 6 series, `6000.3.x` LTS line) as the editor baseline for this new Windows-PC project. The exact patch label MUST be confirmed in Unity Hub when the project is created and then pinned in `ProjectSettings/ProjectVersion.txt`; record the confirmed label in `quickstart.md`.
+**Decision**: The project is **pinned to the Unity 6.3 LTS line, exact editor `6000.3.18f1`** — already committed in `ProjectSettings/ProjectVersion.txt` (repo commit `3e7f580`, "initialize Unity 6.3 (URP) project"). This is no longer a "confirm-at-creation" item; the version is decided and pinned.
+
+**Editor baseline policy**: use the **project-pinned Unity 6.3 LTS patch** recorded in `ProjectVersion.txt`. Patch bumps *within the 6.3 LTS line* are allowed if the team approves and re-pins; **do not silently jump to a newer minor (6.4/6.5/…) after tasks are generated** — a minor upgrade is a deliberate, recorded decision (Principle X), not an incidental one. (Newer Unity 6 minors may exist; this MVP deliberately stabilizes on the 6.3 LTS line it was created on rather than tracking "latest.")
 
 **Rationale**:
-- Unity 6.x is the current LTS family for new Windows desktop projects; the LTS line provides the longest patch/support window, which suits an MVP that will iterate over time.
-- 6.3 LTS is the candidate default named in the planning input and is consistent with the project timeline (mid-2026). Treating it as a baseline-to-confirm (not an unchecked constant) avoids pinning to a label that may differ by a patch increment at creation time.
+- The Unity project already exists on 6.3 LTS, so stabilizing there avoids a needless migration mid-MVP.
+- The 6.3 LTS line provides a long patch/support window suited to an iterating MVP.
 - Unity 6.x has first-class support for the Input System package, Unity Test Framework (EditMode/PlayMode), AI Navigation package, and URP — all dependencies this plan relies on.
 
 **Alternatives considered**:
 - **Unity 2022 LTS** — older LTS; rejected because it is past its prime support horizon for a new project and lacks some Unity 6 editor/runtime improvements; no benefit for a greenfield MVP.
 - **Latest non-LTS / Tech Stream** — rejected: tech-stream builds change faster and carry more churn risk; LTS stability is preferred for a balance-iteration MVP.
-- **Pinning a specific 6.3 patch as an unchecked constant** — rejected per planning guidance; the patch label is confirmed at project creation instead.
+- **Tracking "latest Unity 6 LTS" (auto-adopt 6.4/6.5/…)** — rejected for the MVP window: silent minor upgrades risk churn during balance iteration; the project stays on its pinned 6.3 line and upgrades only by an explicit, re-pinned decision.
 
-> Action carried to tasks: confirm exact `6000.3.x` LTS patch label in Unity Hub and pin it.
+> Status: **DONE** — pinned to `6000.3.18f1` in `ProjectVersion.txt` (commit `3e7f580`). No open action.
 
 ---
 
@@ -187,6 +189,28 @@ Concretely:
 
 ---
 
+## 14. Haetae combat numbers (`RobotAttackDef`) **(PLANNING DECISION — to balance)**
+
+> RobotDef previously carried only kill-time *bands* (Runner ~1–2 s, Bruiser ~6–10 s) as validation targets, with no concrete attack values — so `haetae_charge_boost` ("첫 돌진 데미지 +40%") had no base dash damage to scale (review High-4).
+
+**Decision**: Add a `RobotAttackDef` (fields on/beside `RobotDef`): `dashDamage` **60**, `biteDamage` **40**, `biteCooldownSeconds` **0.6**, `dashCooldownSeconds` **3.0**, `engageRange` **2 m**, `detectionRadius` **15 m**. `haetae_charge_boost` multiplies `dashDamage` ×1.4 on the first dash per engagement. Kill-time bands remain **validation targets**, not inputs.
+
+**Rationale**: Consistency checks land inside the spec bands — Runner 90 HP ≈ dash 60 + 1 bite 40 (~1–1.5 s ✓); Bruiser 500 HP ≈ dash then ~66 DPS (~7 s ✓, within 6–10). Concrete values make the +40% dash upgrade, robot DPS, and robot/zombie attrition implementable and testable; flagged for balancing.
+
+**Alternatives considered**: keep only kill bands (rejected — upgrade #3 and combat are not implementable); single flat "robot DPS" number (rejected — loses the dash-vs-bite structure the dash-boost upgrade needs).
+
+---
+
+## 15. Single-source-of-truth ownership (config de-duplication) **(review Med-5)**
+
+**Decision**: Each tunable has exactly one owning asset: base HP/recovery/warning → `BaseConfig`; magazine/reload → `WeaponDef`; per-zombie base damage → `ZombieDef`; player HP → `GameConfig`. `GameConfig` becomes a session-level aggregate holding `playerMaxHp` + references, not copies. Any unavoidable mirror is tagged `mirrored` with a validation rule asserting equality.
+
+**Rationale**: Prevents tuning drift (the same discipline already applied to base damage); makes balance edits land in one place.
+
+**Alternatives considered**: keep duplicates for convenience (rejected — drift risk); a fully normalized config graph (deferred — MVP only needs owner designation).
+
+---
+
 ## Summary of resolved unknowns
 
 | Unknown (Technical Context) | Resolution |
@@ -204,15 +228,17 @@ Concretely:
 | Spawn-operation model | Per-type ranges + schedule/weights, Ripper→South quantified (§11) |
 | Reserve-ammo economy | Planning defaults; grenade resupply spec-fixed (§12) |
 | Deterministic-sim player agent | `SimPlayerProfile` Novice/Baseline/Skilled (§13) |
-| Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§14) |
-| Shareable playtest distribution | Separate non-Development ZIP under `Builds/Distribution`; tester guide + itch.io checklist + KO feedback form (§15) |
-| Microsoft Store MSIX distribution | Full-trust desktop MSIX via Windows SDK; Partner Center signs certified build (§16) |
+| Haetae combat numbers | `RobotAttackDef` dash/bite/cooldowns/ranges, planning values (§14) |
+| Config single-source-of-truth | Owner per tunable; GameConfig aggregate-only (§15) |
+| Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§16) |
+| Shareable playtest distribution | Separate non-Development ZIP under `Builds/Distribution`; tester guide + itch.io checklist + KO feedback form (§17) |
+| Microsoft Store MSIX distribution | Full-trust desktop MSIX via Windows SDK; Partner Center signs certified build (§18) |
 
-No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (not resolved here, routed to `/speckit-clarify`): per-robot battery-warning string (review P1-7), upgrade re-offer/stack policy (P1-8), and whether Phase 3 requires a Bruiser minimum (P1-9).
+No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (3, routed to `/speckit-clarify` with recommended answers in plan.md): per-robot battery-warning string (P1-7), upgrade re-offer/stack policy (P1-8), Phase-3 Bruiser minimum (P1-9). Medical-robot active-targeting is **closed as an accepted MVP assumption** (no active targeting), not a clarify item.
 
 ---
 
-## 14. Playtest build and settings workflow
+## 16. Playtest build and settings workflow
 
 **Decision**: Ship the local playtest through a generated `MainMenu` first scene and an editor `BuildPipeline` command that creates a Windows x64 Development build under ignored `TelerobotMVP/Builds/Windows/`. Store sensitivity, audio, display, fullscreen, and preferred starting perspective locally with `PlayerPrefs`; keep their defaults and bounds in a `PlayerSettings` ScriptableObject.
 
@@ -222,7 +248,7 @@ No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (not 
 
 ---
 
-## 15. Shareable playtest distribution
+## 17. Shareable playtest distribution
 
 **Decision**: Preserve the existing Windows Development build for local diagnosis and add a separate non-Development Windows share build under `Builds/Shareable/Windows`. Automatically package that build as one versioned ZIP under `Builds/Distribution`, excluding folders marked `DoNotShip`/`ButDontShipItWithYourGame` and PDB/MDB debug symbols. Generate a tester start guide, an itch.io upload checklist, and a structured Korean feedback-form template from versioned source documents.
 
@@ -232,7 +258,7 @@ No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (not 
 
 ---
 
-## 16. Microsoft Store MSIX distribution
+## 18. Microsoft Store MSIX distribution
 
 **Decision**: Add a reproducible editor build that creates a non-Development Windows x64 player, stages only runtime payload files, writes a full-trust desktop `AppxManifest.xml` with the Partner Center identity `Dr-Ko.telerobot` / `CN=D7C3F8A8-2C26-4CBC-BEDF-193632AAF7DC`, and invokes the Windows SDK `MakeAppx.exe`. Preserve exact 44, 150, and Store logo assets in versioned source documentation. Upload the intentionally unsigned MSIX to Partner Center so Microsoft signs the certified distribution.
 

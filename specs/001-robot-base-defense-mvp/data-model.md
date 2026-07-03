@@ -9,14 +9,15 @@ All tunable values live in **ScriptableObject data assets** (Constitution II) th
 ## Data assets (ScriptableObject definitions)
 
 ### GameConfig
+Session-level aggregate only — **owns `playerMaxHp` and holds references to the other config assets**; it does NOT duplicate base/weapon values (single-source-of-truth, see note below).
 | Field | Value | Source |
 |-------|-------|--------|
-| playerMaxHp | 100 | FR-017 |
-| baseMaxHp | 1000 | FR-020 |
-| basePhaseRecoveryPct | 0.15 (15%) | FR-021 |
-| baseWarningPct | 0.30 (≤30%) | FR-023, FR-125 |
+| playerMaxHp | 100 | FR-017 (owner; no PlayerConfig split in MVP) |
 | targetSessionMinutes | 10–15 | FR-006, SC-001 |
 | simFixedStepSeconds | 1/60 (tunable) | research.md §3 |
+| baseConfigRef / weaponDefRef / … | asset refs | base HP/recovery/warning live in **BaseConfig**; magazine/reload live in **WeaponDef** |
+
+**Single source of truth (owners):** base maxHp/recovery/warning → `BaseConfig` only; magazine/reload → `WeaponDef` only; per-zombie base damage → `ZombieDef` only. Other assets reference these, never re-declare them. Any unavoidable mirror MUST be tagged `mirrored` and covered by a validation rule asserting equality (see data-config.contract.md).
 
 ### WeaponDef (Assault Rifle)
 | Field | Value | Source |
@@ -77,11 +78,13 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | Field | Phase 1 | Phase 2 | Phase 3 |
 |-------|---------|---------|---------|
 | number | 1 | 2 | 3 |
-| openRoutes | NorthRoad | +EastAlley | +SouthTunnel |
+| openRoutes (cumulative array) | [NorthRoad] | [NorthRoad, EastAlley] | [NorthRoad, EastAlley, SouthTunnel] |
+| newlyOpenedRoute (this phase) | NorthRoad | EastAlley | SouthTunnel |
 | threatBudget | 40 | 60 | 80 |
-| composition.runner (range) | 20–30 | 25–40 | 45–65 |
-| composition.bruiser (range) | 0 | 2–3 | 0–4 (PLANNING — spec sets no Phase-3 Bruiser min; see note) |
+| composition.runner (range) | 20–30 | 33–45 | 52–60 |
+| composition.bruiser (range) | 0 | 2–3 | 0–4 (PLANNING — pending Phase-3 Bruiser clarify) |
 | composition.ripper (range) | 0 | 0 | 3–5 |
+| learningTargetTotalRange (FR-053) | 20–30 | 35–50 | 55–75 |
 | specialMinimums | — | Bruiser ≥2 | Ripper ≥3 |
 | trimOrder (on budget conflict) | Runner | Runner → Bruiser | Runner → Bruiser (never below specialMinimums) |
 | targetDifficulty/duration | low / 2–3 min | medium / 3–4 min | high / 4–5 min |
@@ -91,9 +94,9 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | — groupSizeRange | 3–5 | 4–6 | 5–8 |
 | **maxAliveConcurrent** (PLANNING — perf + pressure) | 18 | 24 | 30 |
 | **routeWeights** (share of spawns) | North 1.0 | North 0.55 / East 0.45 | North 0.4 / East 0.3 / South 0.3 |
-| **zombieTypeWeightsByRoute** | — | Bruiser biased to North (wide) | **Ripper biased to South Tunnel** (satisfies FR-034 MUST, quantified) |
-| **specialSpawnPolicy** | — | Bruiser min 2 across open routes | Ripper min 3, weighted to South Tunnel |
-Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is now **per-type ranges** (not a prose string) so spawn tests can assert bounds. Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` to fit (Assumptions "위협 예산 vs 목표 마릿수"). **Note (P1-9):** the spec mandates a Bruiser minimum only for Phase 2 (FR-053); a Phase-3 Bruiser range is offered here as a planning default (`0–4`) and any *required* Phase-3 Bruiser minimum is an open spec-clarification item, not assumed. All `spawnSchedule`/weight numbers are planning values flagged for balancing (research.md §11).
+| **zombieTypeWeightsByRoute** (per-type route distribution, PLANNING) | — | Ripper — ; Bruiser {N 0.65, E 0.35}; Runner {N 0.6, E 0.4} | **Ripper {N 0.15, E 0.20, S 0.65}**; Bruiser {N 0.5, E 0.3, S 0.2}; Runner {N 0.4, E 0.3, S 0.3} |
+| **specialSpawnPolicy** | — | Bruiser min 2 across open routes | Ripper min 3, distributed by the weights above |
+Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 52–60 + ripper 3–5 (+bruiser pending clarify) ⇒ total ≥55 at cost ≤80 (budget caps the achievable upper near ~65, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9):** the spec mandates a Bruiser minimum only for Phase 2 (FR-053); the Phase-3 Bruiser range (`0–4`) is a planning default pending spec-clarification, not assumed. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
 
 ### RobotDef (Haetae) — 2 instances
 | Field | Value | Source |
@@ -102,9 +105,19 @@ Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is now **per-ty
 | maxBattery | 100 | FR-072, FR-090 |
 | moveSpeed | fast | FR-073 |
 | attack | melee dash + bite | FR-074 |
-| killRunnerSeconds | ~1–2 | FR-075 |
-| killBruiserSeconds | ~6–10 | FR-076 |
-Strong vs normal zombies, weak to battery pressure + Ripper (FR-077).
+| killRunnerSeconds (validation target) | ~1–2 | FR-075 |
+| killBruiserSeconds (validation target) | ~6–10 | FR-076 |
+
+**RobotAttackDef** (PLANNING — to balance, research.md §14): the kill-time bands above are validation *targets*; the concrete combat is driven by these fields (also what `haetae_charge_boost` = "첫 돌진 +40%" multiplies):
+| Field | Value | Note |
+|-------|-------|------|
+| dashDamage | 60 | first-hit lunge; `haetae_charge_boost` scales this (×1.4) on the first dash per engagement |
+| biteDamage | 40 | sustained melee |
+| biteCooldownSeconds | 0.6 | between bites |
+| dashCooldownSeconds | 3.0 | between dashes |
+| engageRange (m) | 2 | melee reach |
+| detectionRadius (m) | 15 | acquire target |
+Sanity vs bands: Runner 90 HP → dash 60 + 1 bite 40 ≈ 1 hit-cycle (~1–1.5 s ✓). Bruiser 500 HP → dash 60 then ~66 DPS (bite 40 / 0.6 s) ≈ ~7 s ✓. Strong vs normal zombies, weak to battery pressure + Ripper (FR-077). All values planning, flagged for balancing.
 
 ### BatteryConfig
 | Field | Value | Source |
@@ -151,7 +164,7 @@ Mix includes numeric-improvement and playstyle-change types (FR-114).
 hp 300; one per open route at phase start (upgrade #6 active); placement = base-side choke anchor; lasts until destroyed or phase end; destroyed by cumulative zombie damage; must not permanently block player/robot nav. Source: research.md §5, FR-113#6, Assumptions.
 
 ### AmmoConfig / SupplyPointConfig ×2
-magazineSize 30, reload 2 s (FR-014/015). Reserve-ammo economy (PLANNING — to balance, research.md §12):
+`magazineSize` and `reloadSeconds` are **owned by `WeaponDef`** (FR-014/015) — AmmoConfig references them, does not re-declare. AmmoConfig owns the reserve-ammo economy (PLANNING — to balance, research.md §12):
 | Field | Value | Note |
 |-------|-------|------|
 | startReserveAmmo | 120 (≈4 mags) | reserve at phase/session start |
@@ -177,7 +190,14 @@ Data-driven defaults and bounds for mouse sensitivity, master/effects volume, re
 8 radio/sound events (FR-130); strings stored verbatim Korean — see [contracts/strings.contract.md](./contracts/strings.contract.md). Triggers implemented with their gameplay milestone (research.md / plan Sound section). MVP uses captions + placeholder/TTS-stub audio; final VO swaps clips without changing event logic.
 
 ### TelemetryConfig
-Event names + required fields per [contracts/telemetry.contract.md](./contracts/telemetry.contract.md); dev-only local file sink (research.md §8).
+Event names + required fields per [contracts/telemetry.contract.md](./contracts/telemetry.contract.md); dev-only local file sink (research.md §8). **Sampling policy (PLANNING — to balance; MUST be sim-clock-driven for deterministic diffs):**
+| Field | Value | Note |
+|-------|-------|------|
+| sampleIntervalSeconds | 1.0 | `base_hp_sampled` cadence (sim-time, not wall-time) |
+| routePressureSampleIntervalSeconds | 2.0 | `route_pressure_sampled` cadence |
+| batteryEmitPolicy | OnThresholdCrossing + EveryNSeconds | `robot_battery_changed` — emit on band/warning crossing **and** every `batteryEmitIntervalSeconds` (avoids per-frame flood from 2.5/s drain) |
+| batteryEmitIntervalSeconds | 1.0 | periodic component of the above |
+All cadences are counted on the fixed sim clock so two runs of the same `seed × profile` produce identical sample streams (Constitution IV).
 
 ### SimPlayerProfile ×3 (PLANNING — to balance)
 The deterministic simulation needs a **scripted player agent**; otherwise clear-rate / defeat-reason are reproducible but meaningless. Each profile is a data asset driving how the sim's player behaves. Three profiles bracket the intended experience:
@@ -288,6 +308,8 @@ stateDiagram-v2
 
 ### ZombieState
 type (Runner/Bruiser/Ripper), hp, routeId, waypointProgress(arc-distance), currentTarget (per targetPriority selection), alive. Reaching base applies type baseDamage (FR-042/043/044).
+
+**Target-priority scope (assumption from FR-044/FR-107):** in the `{base, player, robot}` priority ordering, **"robot" = Haetae combat robot only** (the Ripper is explicitly a "로봇 카운터" for Haetae). The **medical robot is NOT an entry in any zombie's target priority** — it takes damage only **incidentally** when a zombie is adjacent to it on the way to a higher-priority target (FR-107 "좀비가 도달하면"), which can destroy it and disable the zone. **Decided (MVP assumption, accepted — not a clarify item):** no zombie ever *actively* paths to the medical robot; incidental damage only. This is consistent with FR-107's "도달하면" wording and the edge-case coverage already asserting "not actively targeted."
 
 ### MedicalRobotState (Phase 3)
 hp (0–150), position near base, healActivePlayersInRadius(6 m, 8 HP/s, player-first), destroyed(bool, no regen).

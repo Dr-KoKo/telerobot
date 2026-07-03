@@ -59,15 +59,15 @@
 > Every acceptance scenario above has at least one validation method. No scenario is left unvalidated (Constitution V satisfied).
 
 ## Edge-case coverage (spec Edge Cases)
-Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); base hit while charging (P); Haetae destroyed at HP 0 vs battery-Disabled distinction (E, P); medical robot destroyed → zone disabled, no regen (E, P); ammo depletion + risky resupply (P); reload-while-hit exposure (P); threat-budget vs target reconciliation (E, S); Ripper target-switch when no robot near (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
+Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); base hit while charging (P); Haetae destroyed at HP 0 vs battery-Disabled distinction (E, P); medical robot destroyed → zone disabled, no regen (E, P); ammo depletion + risky resupply (P); reload-while-hit exposure (P); threat-budget vs target reconciliation + achievable total ∈ learningTargetTotalRange (E, S); **Phase-3 Ripper spawn count on South Tunnel > other routes (E, S — FR-034 weight matrix)**; cumulative openRoutes P1⊂P2⊂P3 (E); Ripper target-switch when no robot near (E); medical robot damaged only incidentally, not actively targeted (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
 
 ## Deterministic simulation parameters (SimParams asset)
 
 | Param | Value | Source |
 |-------|-------|--------|
 | seeds (smoke) | {1001, 1002, 1003} | fast reproducibility/regression gate |
-| seeds (balance sweep) | {1101, 1102, …, 1120} (20 seeds) | clear-rate distribution vs SC targets |
-| seeds (regression) | {9001} | golden telemetry snapshot |
+| seeds (balance sweep) | {1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120} (20 seeds, fully enumerated) | clear-rate distribution vs SC targets |
+| seeds (regression / golden) | {9001} | golden telemetry snapshot |
 | fixedStepSeconds | 1/60 (tunable) | research.md §3 |
 | movementModel | WaypointMovement (no NavMeshAgent) | research.md §3 |
 | simPlayerProfile | Novice \| Baseline \| Skilled (data asset) | scripted player agent — clear-rate is meaningless without it |

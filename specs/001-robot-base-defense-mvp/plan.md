@@ -20,7 +20,7 @@ This plan covers the **full MVP vertical slice** (Phase 1 → Phase 2 → Phase 
 
 **Language/Version**: C# (Unity scripting runtime, .NET Standard 2.1 profile). Pure core targets plain C# with **no `UnityEngine` references** so it compiles and tests headless.
 
-**Engine / Primary Dependencies**: Unity **6.3 LTS** (baseline — confirm exact patch label in Unity Hub; see [research.md](./research.md) §1); **Input System** package (new) for keyboard/mouse-first TPS controls and future gamepad (research.md §2); **Unity Test Framework** (UTF) with **EditMode** + **PlayMode** test assemblies; **AI Navigation** package (NavMesh) for runtime local steering only (research.md §3). Universal Render Pipeline (URP) acceptable for greybox; not required by spec.
+**Engine / Primary Dependencies**: Unity **6.3 LTS**, pinned to editor **`6000.3.18f1`** in `ProjectVersion.txt` (already committed; see [research.md](./research.md) §1 for the baseline/no-silent-upgrade policy); **Input System** package (new) for keyboard/mouse-first TPS controls and future gamepad (research.md §2); **Unity Test Framework** (UTF) with **EditMode** + **PlayMode** test assemblies; **AI Navigation** package (NavMesh) for runtime local steering only (research.md §3). Universal Render Pipeline (URP) acceptable for greybox; not required by spec.
 
 **Storage**: ScriptableObject `.asset` files for all balance/config/string data; development telemetry written to local structured files (JSON/CSV) under a dev-only output directory. No external services, no network backend.
 
@@ -243,17 +243,19 @@ These are explicitly carried forward and MUST appear as tasks/follow-ups:
 - Tune Emergency Barrier HP/duration/placement/destruction.
 - Tune phase threat compositions against the 10–15 min target and clear-rate goals (SC-001..004).
 - Tune **numeric zombie→robot damage + attack intervals** (research.md §10, planning values).
-- Tune **spawn-operation model** — cadence, group sizes, route weights, `zombieTypeWeightsByRoute` (Ripper→South), `maxAliveConcurrent` (research.md §11).
+- Tune **spawn-operation model** — cadence, group sizes, route weights, numeric `zombieTypeWeightsByRoute` matrix (Ripper→South 0.65), `maxAliveConcurrent`; keep achievable totals inside `learningTargetTotalRange` (research.md §11).
 - Tune **reserve-ammo economy** (start/max/resupply timing) (research.md §12).
 - Tune **`SimPlayerProfile` Novice/Baseline/Skilled** parameters; validate SC-001..004 against Baseline (research.md §13).
+- Tune **Haetae `RobotAttackDef`** (dash/bite damage, cooldowns, ranges) so kill-time bands hold (research.md §14).
+- Tune **telemetry sampling cadences** (`sampleIntervalSeconds`, battery emit policy) for signal vs volume; keep sim-clock-based (data-model TelemetryConfig).
 - Verify deterministic simulation repeatability for fixed `seed × profile` (pinned seeds: smoke/sweep/regression).
 - Verify Korean player-facing string preservation (verbatim), including `radio.phase1`.
-- Confirm exact Unity 6.3 LTS patch label in Unity Hub (research.md §1).
+- ~~Confirm exact Unity 6.3 LTS patch label~~ **DONE** — pinned to `6000.3.18f1` in `ProjectVersion.txt` (commit `3e7f580`); keep on the 6.3 LTS line, no silent minor upgrade (research.md §1).
 
-**Open spec-clarification items (route through `/speckit-clarify` BEFORE tasks that depend on them — do not resolve silently, Constitution I):**
-- Per-robot battery-warning string vs single "해태 1호" line + HUD `robotId` disambiguation (review P1-7).
-- Upgrade re-offer/stack policy on the 2nd reward step (exclude-already-selected vs stack), phrased so it does not collide with FR-115's "no phase-gating of the pool" (review P1-8).
-- Whether Phase 3 requires a Bruiser minimum (spec mandates one only for Phase 2; a `0–4` planning range is used until clarified) (review P1-9).
+**Open spec-clarification items (route through `/speckit-clarify` BEFORE tasks that depend on them — do not resolve silently, Constitution I).** Each carries a **recommended answer** to make the clarify pass fast; the answer is not baked into artifacts until the spec is amended.
+- **Per-robot battery-warning string** (review P1-7). *Recommended:* keep the single spec line "해태 1호, 배터리 위험." for MVP and disambiguate the affected robot via the HUD `robotId`/battery widget; revisit per-robot VO post-MVP. (Lowest-churn; preserves the verbatim spec string.)
+- **Upgrade re-offer/stack policy** (review P1-8) — highest implementation impact (affects `UpgradeService.Offer`, effect stacking, selected-id tracking, UI disable, `upgrade_selected` telemetry). *Recommended:* **Selected upgrades are excluded from later 3-of-9 offers; the candidate pool stays the same 9 definitions across reward steps, but already-selected ids are ineligible for re-offer in the session; no stacking in MVP.** This does **not** conflict with FR-115 — it separates "no per-phase pool gating" (kept) from "no re-offer of an already-selected id" (new).
+- **Phase-3 Bruiser minimum** (review P1-9; spec mandates a Bruiser min only for Phase 2). *Recommended:* set **Bruiser ≥ 2 in Phase 3** so it reads as the "all-types" 종합 국면 (e.g. Runner 50 + Bruiser 2 + Ripper 4 = 76 ≤ budget 80); then finalize the P3 `composition`/`learningTargetTotalRange` retune (currently provisional).
 
 **Scope guard for `/speckit-tasks` (Constitution IX):** the original design doc lists expansion candidates (turret robot, engineer robot, spitter, howler, endless mode). These are excluded by FR-140 and MUST NOT enter tasks without a spec amendment.
 
