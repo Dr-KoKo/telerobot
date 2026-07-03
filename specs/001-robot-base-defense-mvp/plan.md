@@ -242,9 +242,20 @@ These are explicitly carried forward and MUST appear as tasks/follow-ups:
 - Tune grenade damage/radius/falloff/max-target values.
 - Tune Emergency Barrier HP/duration/placement/destruction.
 - Tune phase threat compositions against the 10–15 min target and clear-rate goals (SC-001..004).
-- Verify deterministic simulation repeatability for fixed seeds.
-- Verify Korean player-facing string preservation (verbatim).
+- Tune **numeric zombie→robot damage + attack intervals** (research.md §10, planning values).
+- Tune **spawn-operation model** — cadence, group sizes, route weights, `zombieTypeWeightsByRoute` (Ripper→South), `maxAliveConcurrent` (research.md §11).
+- Tune **reserve-ammo economy** (start/max/resupply timing) (research.md §12).
+- Tune **`SimPlayerProfile` Novice/Baseline/Skilled** parameters; validate SC-001..004 against Baseline (research.md §13).
+- Verify deterministic simulation repeatability for fixed `seed × profile` (pinned seeds: smoke/sweep/regression).
+- Verify Korean player-facing string preservation (verbatim), including `radio.phase1`.
 - Confirm exact Unity 6.3 LTS patch label in Unity Hub (research.md §1).
+
+**Open spec-clarification items (route through `/speckit-clarify` BEFORE tasks that depend on them — do not resolve silently, Constitution I):**
+- Per-robot battery-warning string vs single "해태 1호" line + HUD `robotId` disambiguation (review P1-7).
+- Upgrade re-offer/stack policy on the 2nd reward step (exclude-already-selected vs stack), phrased so it does not collide with FR-115's "no phase-gating of the pool" (review P1-8).
+- Whether Phase 3 requires a Bruiser minimum (spec mandates one only for Phase 2; a `0–4` planning range is used until clarified) (review P1-9).
+
+**Scope guard for `/speckit-tasks` (Constitution IX):** the original design doc lists expansion candidates (turret robot, engineer robot, spitter, howler, endless mode). These are excluded by FR-140 and MUST NOT enter tasks without a spec amendment.
 
 ## Out of Scope (mirrors FR-140 / Constitution IX)
 

@@ -30,6 +30,8 @@ Per Constitution VIII, every event MUST include:
 | `player_hp_at_phase_end` | phase, hp | player HP at phase end |
 | `robot_battery_changed` | robotId, value, state | robot battery over time + threshold events |
 | `robot_disabled` | robotId | robot Depleted count (count of events) |
+| `robot_destroyed` | robotId, phase | Haetae lost to HP-0 (distinct from Depleted) |
+| `medical_robot_destroyed` | phase, simTime | Phase-3 rhythm change; zone lost, no regen (FR-107) |
 | `robot_charge_commanded` | robotId | Charge command count |
 | `ripper_attacked_robot` | robotId, batteryDrained=5 | Ripper hits on robots |
 | `upgrade_selected` | upgradeId, rewardStep | upgrade choices |

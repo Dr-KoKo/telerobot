@@ -56,6 +56,7 @@ IDomainEvents (publish/subscribe)
   PlayerDamaged(amount, newHp), PlayerDied()
   RobotBatteryChanged(robotId, newValue, newState)
   RobotStateChanged(robotId, robotState)
+  RobotDamaged(robotId, amount, newHp), RobotDestroyed(robotId)   // HP-0 destruction, distinct from Disabled
   RobotChargeCommanded(robotId), RobotDisabled(robotId), RobotRecovered(robotId)
   RipperAttackedRobot(robotId, batteryDrained)
   UpgradeOffered(ids[3]), UpgradeSelected(id)
@@ -64,6 +65,7 @@ IDomainEvents (publish/subscribe)
   BarrierDamaged(routeId, newHp), BarrierDestroyed(routeId)
   RadioEvent(eventId)                // drives caption + audio
   MedicalHealApplied(amount)
+  MedicalRobotDamaged(amount, newHp), MedicalRobotDestroyed(), MedicalZoneDisabled()   // FR-107; no regen this session
   GameWon(), GameLost(reason)
 ```
 

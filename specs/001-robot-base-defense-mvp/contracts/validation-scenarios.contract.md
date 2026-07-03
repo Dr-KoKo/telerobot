@@ -7,7 +7,7 @@
 ### US1 — Core combat loop (Phase 1)
 | Scenario | Method | Check |
 |----------|--------|-------|
-| 1 boot radio + North Road only open | P, Q | RadioEvent(GameStart) fires; openRoutes = {NorthRoad} |
+| 1 boot radio + North Road only open | P, Q | `radio.game_start` fires at boot, then `radio.phase1` ("감염체 접근. 북쪽 도로 방어 준비.") fires at Phase 1 start (order asserted); openRoutes = {NorthRoad} |
 | 2 body ~3 / head 1–2 kills Runner | E | damage math: 30 vs 90 hp; headshot 2.5× |
 | 3 robot kills Runner ~1–2 s | P, S | engage timing within band |
 | 4 Runner at base → base −8 | E, P | base damage = 8 |
@@ -59,18 +59,21 @@
 > Every acceptance scenario above has at least one validation method. No scenario is left unvalidated (Constitution V satisfied).
 
 ## Edge-case coverage (spec Edge Cases)
-Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); base hit while charging (P); medical robot destroyed, no regen (E, P); ammo depletion + risky resupply (P); reload-while-hit exposure (P); threat-budget vs target reconciliation (E, S); Ripper target-switch when no robot near (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
+Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); base hit while charging (P); Haetae destroyed at HP 0 vs battery-Disabled distinction (E, P); medical robot destroyed → zone disabled, no regen (E, P); ammo depletion + risky resupply (P); reload-while-hit exposure (P); threat-budget vs target reconciliation (E, S); Ripper target-switch when no robot near (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
 
 ## Deterministic simulation parameters (SimParams asset)
 
 | Param | Value | Source |
 |-------|-------|--------|
-| seeds | explicit fixed list (e.g. {1001, 1002, 1003, …}) | research.md §3 |
+| seeds (smoke) | {1001, 1002, 1003} | fast reproducibility/regression gate |
+| seeds (balance sweep) | {1101, 1102, …, 1120} (20 seeds) | clear-rate distribution vs SC targets |
+| seeds (regression) | {9001} | golden telemetry snapshot |
 | fixedStepSeconds | 1/60 (tunable) | research.md §3 |
 | movementModel | WaypointMovement (no NavMeshAgent) | research.md §3 |
+| simPlayerProfile | Novice \| Baseline \| Skilled (data asset) | scripted player agent — clear-rate is meaningless without it |
 | rng | single seeded IDeterministicRng for spawn composition + upgrade offer | research.md §3 |
-| reproducibility assert | run seed twice → identical telemetry | Constitution IV |
-| balance targets | session 10–15 min (SC-001); P1 clear ≥90% (SC-002); P2 60–75% (SC-003); P3 35–55% (SC-004) | spec Success Criteria |
+| reproducibility assert | run same seed × same profile twice → identical telemetry | Constitution IV |
+| balance targets (Baseline profile) | session 10–15 min (SC-001); P1 clear ≥90% (SC-002); P2 60–75% (SC-003); P3 35–55% (SC-004) | spec Success Criteria |
 
 ## Acceptance
 

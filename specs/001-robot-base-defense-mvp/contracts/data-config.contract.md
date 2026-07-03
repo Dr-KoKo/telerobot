@@ -18,22 +18,23 @@
 | `GrenadeDef` | radiusMeters, centerDamage, innerFullDamageRadiusMeters, edgeDamageAtRadius, maxAffectedZombies, affects=Zombies | inner ≤ radius; edge ≤ center; cap ≥ 1 |
 | `BaseConfig` | maxHp, phaseRecoveryPct, warningPct, allowPlayerRepair=false | warningPct in (0,1) |
 | `RouteDef` (×3) | id, openPhase, character flags, waypoints[], chokeAnchor | waypoints ordered, terminate at base; openPhase ∈ {1,2,3} |
-| `ZombieDef` (×3) | hp, moveSpeed, baseDamage, playerDamage, robotDamage, targetPriority[3], threatCost, special, firstAppears, distinctAV, hitFlashSeconds, deathEffectSeconds, deathPulseSize | priority is a permutation of {base,player,robot}; cost>0; feedback values > 0 |
-| `PhaseDef` (×3) | number, openRoutes[], threatBudget, recommendedComposition, specialMinimums, targetDifficulty, targetDuration, deploysUnit | budget>0; minimums ≥ 0; sum(spawn cost) ≤ budget |
+| `ZombieDef` (×3) | hp, moveSpeed, baseDamage, playerDamage, robotDamage(label), robotDamageNumeric, targetPriority[3], threatCost, attackIntervalSeconds, attackMode, targetAttackRange, special, firstAppears, distinctAV, hitFlashSeconds, deathEffectSeconds, deathPulseSize | priority is a permutation of {base,player,robot}; cost>0; robotDamageNumeric>0; interval>0; attackMode∈{OneShot,RepeatedUntilKilled} (MVP=RepeatedUntilKilled); feedback values > 0 |
+| `PhaseDef` (×3) | number, openRoutes[], threatBudget, composition{runner,bruiser,ripper as min–max ranges}, specialMinimums, trimOrder, spawnSchedule{phaseStartDelay,groupInterval,groupSizeRange}, maxAliveConcurrent, routeWeights, zombieTypeWeightsByRoute, specialSpawnPolicy, targetDifficulty, targetDuration, deploysUnit | budget>0; minimums ≥ 0; achievable spawn cost ≤ budget after trimOrder; ripper weight on South Tunnel > other routes (FR-034); routeWeights sum to 1 over open routes |
 | `RobotDef` | hp, maxBattery, moveSpeed, attack, killRunnerSeconds, killBruiserSeconds | hp,battery>0 |
 | `BatteryConfig` | max, band thresholds, drainIdle/Patrol/Combat, ripperHitDrain, chargeRate, lowPowerMoveMult, lowPowerAttackMult, disabledHoldSeconds, recoveryRate, moveEnableThreshold, warnYellowPct, warnRedPct | bands partition 0..max; rates>0; mults in (0,1] |
 | `MedicalRobotDef` | hp, healRate, radiusMeters, healsPlayerFirst=true, attacks=false, regenAfterDestroy=false | hp,heal,radius>0 |
 | `UpgradeDef` (×9) | id, displayNameKey, effectType, effectParams, applyTiming, targetSystem | exactly 9 ids; ids unique |
 | `BarrierConfig` | hp, perOpenRoute=true, placement=ChokeAnchor, durationPolicy=UntilDestroyedOrPhaseEnd, blocksNavPermanently=false | hp>0; blocksNavPermanently MUST be false |
-| `AmmoConfig` | magazineSize, reloadSeconds | match WeaponDef |
+| `AmmoConfig` | magazineSize, reloadSeconds, startReserveAmmo, reserveAmmoMax, resupplyPolicy∈{FullReserve,FixedAmount}, resupplyAmount, resupplyUseSeconds, resupplyCooldownSeconds, grenadeResupplyPolicy∈{None,PhaseResetOnly} | match WeaponDef; 0<startReserve≤max; grenadeResupplyPolicy=PhaseResetOnly (spec) |
 | `SupplyPointConfig` (×2) | id, kind∈{Safe,Risky}, location | exactly one Safe + one Risky |
+| `SimPlayerProfile` (×3) | id∈{Novice,Baseline,Skilled}, aimAccuracy, headshotRate, reactionDelaySeconds, routePriorityPolicy, ripperFocus, robotChargeThresholdPct, upgradeSelectionPolicy, grenadeUsePolicy | 0≤accuracy≤1; Baseline = intended MVP average |
 | `CommandConfig` | commands = [DefendPosition, PatrolRoute, ReturnToBase, Charge] | exactly these 4, no more (FR-085) |
 | `WarningConfig` | batteryYellowPct, batteryRedPct, baseWarningPct, ripperCalloutEnabled | yellow>red |
 | `HudConfig` | element list, infoPriority order, combatBundle, awarenessBundle, lowAmmoThreshold, damage/hit/headshot feedback durations | priority = base HP > robot battery > route alert; thresholds non-negative; durations > 0 |
 | `PlayerSettings` | mouseSensitivity min/max/default, master/effects volume defaults, minimum/default resolution, defaultFullscreen, defaultPerspective | sensitivity default within min/max; volumes in [0,1]; default resolution ≥ minimum; perspective valid |
 | `RadioEventDef` + `StringTable` | eventId → stringKey → verbatim Korean text + clip ref | strings verbatim (see strings.contract.md) |
 | `TelemetryConfig` | enabledEvents[], sinkPath, requiredFields | includes constitution minimum set |
-| `ValidationConfig`/`SimParams` | seeds[], fixedStep, per-scenario params | seeds explicit |
+| `ValidationConfig`/`SimParams` | seeds[] (fixed list), fixedStep, simPlayerProfileId, per-scenario params | seeds explicit + pinned (no `e.g.`) |
 
 ## Acceptance
 

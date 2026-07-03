@@ -139,6 +139,54 @@ Concretely:
 
 ---
 
+## 10. Zombie robot-damage numbers & attack cadence **(PLANNING DECISION — to balance)**
+
+> The spec gives zombie→robot damage only qualitatively ("낮은/중간 로봇 데미지", FR-042/043/044) and does not state whether a zombie reaching a target deals one-shot or repeated damage. Both are needed to test robot HP 300 / medical HP 150 attrition.
+
+**Decision**: (a) Attack model = **RepeatedUntilKilled** — a zombie at its target deals its damage every `attackIntervalSeconds` until it or the target dies (not one-shot on arrival). (b) Assign **numeric** robot damage per type (planning): Runner **5**, Bruiser **25**, Ripper **20** per hit; intervals Runner **1.0 s**, Bruiser **1.5 s**, Ripper **1.0 s** (Ripper also drains battery −5, FR-045).
+
+**Rationale**: RepeatedUntilKilled matches the spec's "거점 HP가 8씩 감소" (US1.4) phrasing and makes robot/medical destruction reachable and testable. Numeric values preserve the spec's low/medium ordering (Runner < Ripper ≈ Bruiser against robots) while giving EditMode/sim something concrete; flagged for balancing.
+
+**Alternatives considered**: OneShot-on-arrival (rejected — contradicts "8씩" repeated-drain reading and makes robots effectively unkillable by normal zombies); leaving damage qualitative (rejected — not implementable/testable, per review P0-3).
+
+---
+
+## 11. Spawn-operation model **(PLANNING DECISION — to balance)**
+
+> The spec fixes threat budget (40/60/80), costs, and recommended totals, and mandates Ripper is **more frequent in South Tunnel** (FR-034, MUST) — but provides no cadence, group, per-route, or concurrency fields. Without them the composition is not runnable.
+
+**Decision**: Extend `PhaseDef` with **per-type composition ranges**, `trimOrder`, `spawnSchedule` (phase-start delay, group interval, group-size range), `maxAliveConcurrent`, `routeWeights`, `zombieTypeWeightsByRoute` (Ripper weighted to South Tunnel), and `specialSpawnPolicy`. Default numbers are in [data-model.md](./data-model.md) `PhaseDef`. Composition is expressed as ranges (not a prose string) so spawn tests assert bounds; budget remains a hard cap and `specialMinimums` are preserved before trimming.
+
+**Rationale**: Quantifies FR-034's Ripper-in-South requirement in data (was previously only prose), bounds runtime enemy count for performance/pressure, and makes spawn composition deterministically testable and tunable without code changes (Principle II).
+
+**Note on Phase-3 Bruiser**: the spec mandates a Bruiser minimum only for Phase 2 (FR-053). A Phase-3 Bruiser range (`0–4`) is offered as a planning default; **whether Phase 3 must contain Bruisers is an open spec-clarification item** and is not silently assumed here (Constitution I).
+
+**Alternatives considered**: fixed spawn lists (rejected — not budget-driven, violates FR-050); keeping "Ripper-favored" as prose only (rejected — unverifiable, review P0-2).
+
+---
+
+## 12. Reserve-ammo economy **(PLANNING DECISION — to balance; one value spec-fixed)**
+
+**Decision**: Extend `AmmoConfig` with `startReserveAmmo` **120**, `reserveAmmoMax` **240**, `resupplyPolicy` **FullReserve**, `resupplyUseSeconds` **1.5**, `resupplyCooldownSeconds` **0**. `grenadeResupplyPolicy` = **PhaseResetOnly** is **spec-determined** (Assumptions: grenades reset to 2 each phase; no mid-phase grenade resupply).
+
+**Rationale**: The spec + quickstart validate reserve ammo and safe/risky resupply but give no reserve numbers; concrete defaults let ammo depletion, the risky-resupply decision, and telemetry be implemented and tested. Grenade policy is not invented — it is read from the spec.
+
+**Alternatives considered**: infinite reserve (rejected — removes the resupply decision the spec wants tested); FixedAmount resupply (kept as an option but FullReserve is simpler for MVP).
+
+---
+
+## 13. Deterministic-sim scripted player agent **(PLANNING DECISION — to balance)**
+
+> The deterministic sim previously defined seed/clock/movement but **no player behavior**, so clear-rate/defeat-reason were reproducible but not meaningful (review P0-1).
+
+**Decision**: Add a **`SimPlayerProfile`** data asset with three profiles — **Novice / Baseline / Skilled** — parameterizing aim accuracy, headshot rate, reaction delay, route-priority policy, Ripper focus, robot charge threshold, upgrade-selection policy, and grenade-use policy (values in data-model.md). Balance targets (SC-001..004) are read against the **Baseline** profile; Novice/Skilled bracket the range. Each sim run is `seed × profile`; reproducibility asserts identical telemetry for the same pair.
+
+**Rationale**: A base-defense session outcome depends heavily on player behavior; without a scripted agent the sim measures the enemy schedule alone. Data-driving the agent keeps it tunable and keeps balance conclusions honest.
+
+**Alternatives considered**: no player / static defender (rejected — unrealistic clear rates); a single hard-coded policy (rejected — can't express the difficulty bracket SC-005 implies); full ML/behavior-tree agent (rejected — over-scoped for MVP).
+
+---
+
 ## Summary of resolved unknowns
 
 | Unknown (Technical Context) | Resolution |
@@ -152,13 +200,19 @@ Concretely:
 | Test framework | Unity Test Framework, 3 assemblies (§7) |
 | Telemetry sink | Local structured files, dev-only (§8) |
 | Runtime navigation | NavMesh local steering only (§9) |
-| Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§10) |
+| Zombie robot-damage / attack cadence | Numeric damage + RepeatedUntilKilled, planning values (§10) |
+| Spawn-operation model | Per-type ranges + schedule/weights, Ripper→South quantified (§11) |
+| Reserve-ammo economy | Planning defaults; grenade resupply spec-fixed (§12) |
+| Deterministic-sim player agent | `SimPlayerProfile` Novice/Baseline/Skilled (§13) |
+| Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§14) |
+| Shareable playtest distribution | Separate non-Development ZIP under `Builds/Distribution`; tester guide + itch.io checklist + KO feedback form (§15) |
+| Microsoft Store MSIX distribution | Full-trust desktop MSIX via Windows SDK; Partner Center signs certified build (§16) |
 
-No `NEEDS CLARIFICATION` markers remain.
+No `NEEDS CLARIFICATION` markers remain. Open **spec-clarification** items (not resolved here, routed to `/speckit-clarify`): per-robot battery-warning string (review P1-7), upgrade re-offer/stack policy (P1-8), and whether Phase 3 requires a Bruiser minimum (P1-9).
 
 ---
 
-## 10. Playtest build and settings workflow
+## 14. Playtest build and settings workflow
 
 **Decision**: Ship the local playtest through a generated `MainMenu` first scene and an editor `BuildPipeline` command that creates a Windows x64 Development build under ignored `TelerobotMVP/Builds/Windows/`. Store sensitivity, audio, display, fullscreen, and preferred starting perspective locally with `PlayerPrefs`; keep their defaults and bounds in a `PlayerSettings` ScriptableObject.
 
@@ -168,7 +222,7 @@ No `NEEDS CLARIFICATION` markers remain.
 
 ---
 
-## 11. Shareable playtest distribution
+## 15. Shareable playtest distribution
 
 **Decision**: Preserve the existing Windows Development build for local diagnosis and add a separate non-Development Windows share build under `Builds/Shareable/Windows`. Automatically package that build as one versioned ZIP under `Builds/Distribution`, excluding folders marked `DoNotShip`/`ButDontShipItWithYourGame` and PDB/MDB debug symbols. Generate a tester start guide, an itch.io upload checklist, and a structured Korean feedback-form template from versioned source documents.
 
@@ -178,7 +232,7 @@ No `NEEDS CLARIFICATION` markers remain.
 
 ---
 
-## 12. Microsoft Store MSIX distribution
+## 16. Microsoft Store MSIX distribution
 
 **Decision**: Add a reproducible editor build that creates a non-Development Windows x64 player, stages only runtime payload files, writes a full-trust desktop `AppxManifest.xml` with the Partner Center identity `Dr-Ko.telerobot` / `CN=D7C3F8A8-2C26-4CBC-BEDF-193632AAF7DC`, and invokes the Windows SDK `MakeAppx.exe`. Preserve exact 44, 150, and Store logo assets in versioned source documentation. Upload the intentionally unsigned MSIX to Partner Center so Microsoft signs the certified distribution.
 
