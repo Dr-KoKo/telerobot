@@ -45,3 +45,8 @@
   - **Recovery**: Disabled 유지 시간 · 회복률 · 이동 가능 임계값 (현재 잠정 5초 / 0.5초 / 배터리 5)
   - **수류탄**: 데미지 · 폭발 반경 · 최대 타격 수 또는 거리 감쇠 규칙
   - **긴급 방벽**: HP · 지속 시간 · 설치 위치 · 파괴 조건
+- **재검증(2026-07-03, Session 2026-07-03 clarification 반영)** — 아래 신규/변경 FR이 명세에 반영되었고 설계 산출물(plan/data-model/contracts/quickstart)에 카스케이드됨을 확인:
+  - [x] **FR-055** 연속 스폰 + 동시 생존 상한(concurrent cap) — 데이터 구동·결정적 시뮬레이션 재현 (data-model PhaseDef/PhaseState `spawnSchedule`·`maxAliveConcurrent`).
+  - [x] **FR-079/FR-081** 해태 로봇 9번째 상태 `Destroyed`(HP 0) — 현재 페이즈 잔해·명령/이동/공격/충전 불가, 다음 페이즈 시작 시 HP 300 복원 (data-model RobotState/상태머신, commands-events, telemetry `robot_destroyed`, validation·quickstart).
+  - [x] **FR-087** 로봇 개별 선택 + 전체 선택 토글(둘 다 MUST) — 명령은 로봇 단위 적용, 전체 선택은 per-robot fan-out (commands-events `ToggleSelectAllRobots`, CommandConfig, quickstart 조작, validation PlayMode 케이스).
+  - [x] 업그레이드 제시(exclude-selected·no-stack)·배터리 경고 문구·메디컬 표적·Phase-3 브루저 ≥2 clarification 반영(Session 2026-07-03 / Assumptions).

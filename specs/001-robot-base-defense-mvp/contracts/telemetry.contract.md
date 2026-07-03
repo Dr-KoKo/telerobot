@@ -12,6 +12,7 @@ Per Constitution VIII, every event MUST include:
 | `dataVersion` | config-asset snapshot version |
 | `sessionId` or `runId` | join key (`runId` for sim runs) |
 | `seed` | deterministic seed |
+| `simProfileId` | `Novice`/`Baseline`/`Skilled` — **required for simulation events**; `null` for runtime play (reproducibility is keyed on `seed × profile`) |
 | `phase` | 1/2/3, or `null`/`session` for session-level events |
 | `timestamp` / `simTime` | wall time (runtime) or sim clock (sim) |
 
@@ -30,7 +31,7 @@ Per Constitution VIII, every event MUST include:
 | `player_hp_at_phase_end` | phase, hp | player HP at phase end |
 | `robot_battery_changed` | robotId, value, state | robot battery over time + threshold events |
 | `robot_disabled` | robotId | robot Depleted count (count of events) |
-| `robot_destroyed` | robotId, phase | Haetae lost to HP-0 (distinct from Depleted) |
+| `robot_destroyed` | robotId, phase | Haetae lost to HP-0 (FR-081; distinct from battery Depleted); emitted **once** per destruction; next-phase restore is not re-emitted here |
 | `medical_robot_destroyed` | phase, simTime | Phase-3 rhythm change; zone lost, no regen (FR-107) |
 | `robot_charge_commanded` | robotId | Charge command count |
 | `ripper_attacked_robot` | robotId, batteryDrained=5 | Ripper hits on robots |
@@ -39,7 +40,7 @@ Per Constitution VIII, every event MUST include:
 | `ammo_resupplied` | supplyKind∈{Safe,Risky} | ammo resupply usage by point |
 | `barrier_damaged` / `barrier_destroyed` | routeId, hp | barrier damage/destruction (if upgrade #6) |
 | `route_pressure_sampled` | routeId, aliveCount, distanceToBase | route pressure over time |
-| `simulation_run_completed` | runId, seed, summary metrics | deterministic sim summary |
+| `simulation_run_completed` | runId, seed, **simProfileId**, dataVersion, summary metrics | deterministic sim summary |
 
 ## Sampling cadence (required for deterministic diffs — from `TelemetryConfig`)
 
@@ -61,4 +62,5 @@ Sampled/continuous events MUST have a defined, **sim-clock-based** cadence (neve
 
 - [ ] All constitution-minimum events emit with required fields.
 - [ ] Defeat reason distinguishes base-destroyed vs player-death (supports SC-012).
-- [ ] Sim run writes a telemetry file keyed by seed; re-running same seed reproduces it.
+- [ ] Sim run writes a telemetry file keyed by `seed + simProfileId + dataVersion`; re-running the same triple reproduces it byte-for-byte.
+- [ ] `robot_destroyed` / `medical_robot_destroyed` emit once per destruction; FR-081 next-phase restore is observable in state, not a duplicate destroy event.

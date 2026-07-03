@@ -14,7 +14,7 @@ RoutePoint { RouteId routeId; float progress }   // position along a route waypo
 ```
 Adapters convert between these and `UnityEngine.Vector*` at the boundary; the core never sees Unity types.
 
-## Robot command interface (FR-085, FR-086)
+## Robot command interface (FR-085, FR-086, FR-087)
 
 ```
 ICommandInput (issued by adapter → core)
@@ -24,16 +24,18 @@ RobotCommand enum = { DefendPosition, PatrolRoute, ReturnToBase, Charge }   // E
 CommandTarget   = { RouteId? routeId , WorldPoint? point }   // PatrolRoute requires open routeId; DefendPosition takes point/route (Assumptions)
 ```
 Invariants:
-- Robots are individually selectable; a command applies per robot (Assumptions). A "select all" convenience MAY fan out the same command to both.
+- **Individual selection MUST be supported** and **a select-all toggle MUST be supported** (FR-087). Commands are always applied **per robot**, so the two robots may run different routes/commands.
+- Select-all is an adapter/UI convenience: internally it **fans out to one `IssueCommand(robotId, …)` per robot** — the core has no batch command; there is no shared/global robot command state.
 - No command outside the 4 may exist.
 - `Charge` only progresses while the robot is at the charging station; charging robot cannot fight (FR-097).
+- A `Destroyed` robot (FR-081) **ignores commands** until it is restored at next phase start.
 
 ## Player intent interface (input abstraction, research.md §2)
 
 ```
 IPlayerInput (adapter → core/runtime)
   Move(CoreVec2), Look(CoreVec2), Fire(bool), Reload(), ThrowGrenade(),
-  OpenCommandMenu(), SelectRobot(robotId)
+  OpenCommandMenu(), SelectRobot(robotId), ToggleSelectAllRobots(bool)   // FR-087: individual + select-all, both MUST
 ```
 Testable: the simulation harness and PlayMode tests inject synthetic intent without hardware.
 

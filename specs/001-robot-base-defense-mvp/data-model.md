@@ -96,7 +96,7 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | **routeWeights** (share of spawns) | North 1.0 | North 0.55 / East 0.45 | North 0.4 / East 0.3 / South 0.3 |
 | **zombieTypeWeightsByRoute** (per-type route distribution, PLANNING) | — | Ripper — ; Bruiser {N 0.65, E 0.35}; Runner {N 0.6, E 0.4} | **Ripper {N 0.15, E 0.20, S 0.65}**; Bruiser {N 0.5, E 0.3, S 0.2}; Runner {N 0.4, E 0.3, S 0.3} |
 | **specialSpawnPolicy** | — | Bruiser min 2 across open routes | Ripper min 3, distributed by the weights above |
-Source: FR-003, FR-031, FR-051..054, FR-064, FR-034. Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 50–58 + bruiser 2 + ripper 3 (specials at minimum, runners fill to target) ⇒ total 55–63 at cost 72–80 ≤ 80 (budget caps the achievable upper near ~63, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9, clarify-confirmed):** Phase 3 now requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so it reads as the all-types 종합 국면. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
+Source: FR-003, FR-031, FR-051..055, FR-064, FR-034. **Continuous spawn + concurrent cap is now spec-mandated (FR-055):** the composition is spawned at intervals (`spawnSchedule`), not all at once, and field-alive count is bounded by `maxAliveConcurrent` — on reaching the cap, further spawns are delayed until zombies die; both are data-driven and deterministic-sim-reproducible (the numbers stay planning values, but the mechanism is required). Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 50–58 + bruiser 2 + ripper 3 (specials at minimum, runners fill to target) ⇒ total 55–63 at cost 72–80 ≤ 80 (budget caps the achievable upper near ~63, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9, clarify-confirmed):** Phase 3 now requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so it reads as the all-types 종합 국면. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
 
 ### RobotDef (Haetae) — 2 instances
 | Field | Value | Source |
@@ -177,8 +177,11 @@ hp 300; one per open route at phase start (upgrade #6 active); placement = base-
 
 Two supply points (FR-037): `safe` (inside/adjacent base), `risky` (outside/near combat). Fire decrements loaded; reload moves reserve→loaded; resupply refills reserve per `resupplyPolicy` after `resupplyUseSeconds`. `grenadeResupplyPolicy` is the only spec-fixed value here; the rest are planning values to balance.
 
+### ChargingStationConfig
+id, anchor/location, `radiusMeters` (trigger radius), `maxConcurrentRobots` (MVP: both Haetae may charge — value to balance), `allowsCombat=false` (FR-097). **Charge rate is not here** — it lives in `BatteryConfig.chargeRate` (single-source); `charge_station_speedup` upgrade (#4) scales that rate. The station is otherwise a scene adapter (transform + trigger volume).
+
 ### CommandConfig (Robot Commands)
-Exactly 4 commands, no others (FR-085, FR-140): `DefendPosition`, `PatrolRoute`, `ReturnToBase`, `Charge`. Robots individually selectable; commands per-robot (Assumptions). PatrolRoute takes an open-route target; DefendPosition takes a point/route (Assumptions).
+Exactly 4 commands, no others (FR-085, FR-140): `DefendPosition`, `PatrolRoute`, `ReturnToBase`, `Charge`. **Selection (FR-087, MUST):** both **individual selection** and a **select-all toggle** are supported; commands are always applied **per robot** (select-all fans out to per-robot `IssueCommand`), so the two robots may hold different commands/routes. PatrolRoute takes an open-route target; DefendPosition takes a point/route (Assumptions). A `Destroyed` robot ignores commands until next-phase restore (FR-081).
 
 ### WarningConfig / HudConfig
 HUD elements (FR-120): base HP, phase progress, route alert/minimap, robot battery, player HP, ammo, command quick-menu. Info priority: base HP > robot battery > route alert (FR-121). Thresholds: battery <25% yellow flash + callout (FR-123), <10% red flash + urgent callout (FR-124), base ≤30% edge warning + alarm (FR-125), Ripper appearance special icon + callout (FR-126), new route open highlight + radio (FR-122). Minimum combat HUD bundle ships with US1/US2; situational-awareness bundle with US5 (FR-120a). No info overload (FR-127).
@@ -258,7 +261,7 @@ classDiagram
 currentPhase (1–3), result (InProgress/Victory/Defeat), defeatReason (BaseDestroyed/PlayerDeath/null), elapsedSimTime, seed, selectedUpgradeIds (≤2; excluded from later offers, no stacking), openRoutes set. Win: Phase 3 cleared with base HP ≥1 (FR-004). Defeat: base HP 0 or player HP 0 (FR-005).
 
 ### PhaseState
-number, openRoutes, threatBudget, plannedComposition, spawnedCount, aliveCount, cleared(bool). Transition (FR-061, ordered): ① all spawned → ② field cleared → ③ base alive → ④ phase cleared → ⑤ upgrade (if eligible) → ⑥ open next route → ⑦ start next phase.
+number, openRoutes, threatBudget, plannedComposition, spawnedCount, aliveCount, cleared(bool); spawn is **continuous** (interval-based) and gated by `maxAliveConcurrent` — spawning pauses while `aliveCount ≥ cap` and resumes as zombies die (FR-055). Transition (FR-061, ordered): ① all spawned → ② field cleared → ③ base alive → ④ phase cleared → ⑤ upgrade (if eligible) → ⑥ open next route → ⑦ start next phase. **At each phase start, any `Destroyed` Haetae is restored to hp=300 + usable battery (FR-081).**
 
 ### PlayerState
 hp (0–100), grenades, weapon ammo state (loaded, reserve). Death → defeat (FR-017).
@@ -267,9 +270,12 @@ hp (0–100), grenades, weapon ammo state (loaded, reserve). Death → defeat (F
 hp (0–1000), warningActive(≤30%). PhaseClear → +15% maxHp recovery (FR-021). 0 → defeat (FR-024).
 
 ### RobotState (×2 Haetae)
-hp (0–300), battery (0–100), batteryState (Normal/LowPower/Critical/Depleted/Charging), command, robotState (Standby/Patrol/Engage/LowBattery/ReturnToCharge/Charging/Disabled/Recovery — FR-079), currentTargetEntity, engagementFirstDashUsed(bool). **HP-0 vs battery-0 are distinct:** battery 0 → `Disabled` (recoverable, FR-080); HP 0 → **Destroyed** (removed from field). Zombie robot damage (`robotDamageNumeric`) drives HP loss; emits `RobotDamaged`/`RobotDestroyed` (see commands-events + telemetry contracts).
+hp (0–300), battery (0–100), batteryState (Normal/LowPower/Critical/Depleted/Charging), command, robotState (Standby/Patrol/Engage/LowBattery/ReturnToCharge/Charging/Disabled/Recovery/**Destroyed** — FR-079, 9 states), currentTargetEntity, engagementFirstDashUsed(bool). **HP-0 (Destroyed) vs battery-0 (Disabled) are distinct paths (FR-081):**
+- **Destroyed** — entered from any active state when `hp ≤ 0` (zombie damage, `robotDamageNumeric`). During the **current phase** the robot is rubble: **ignores player commands, cannot move / attack / charge**. At **next phase start** it is **restored to `hp = 300` and a usable battery** (same phase-boundary rhythm as grenade reset / base +15%). Emits `RobotDestroyed`; restore is not a `RobotRecovered` event (that's the battery path).
+- **Disabled/Recovery** — battery-0 path (FR-080, recoverable in-phase via Recovery). Independent of Destroyed.
+Both Haetae Destroyed in one phase ⇒ player defends solo for the phase remainder (spec Edge Case / FR-081). Zombie robot damage also emits `RobotDamaged`.
 
-**Battery/robot state machine** (all 8 FR-079 states; FR-080/091/095/097, Assumptions). Note: `Critical` (battery 1–10) is a *battery band* that raises a warning, not one of the 8 robot states — it is shown as a note on `LowBattery`.
+**Battery/robot state machine** (all 9 FR-079 states incl. `Destroyed`; FR-080/081/091/095/097, Assumptions). Note: `Critical` (battery 1–10) is a *battery band* that raises a warning, not one of the 9 robot states — it is shown as a note on `LowBattery`. `Destroyed` is the HP-0 path (FR-081), distinct from the battery `Disabled`/`Recovery` path.
 
 ```mermaid
 stateDiagram-v2
@@ -296,6 +302,16 @@ stateDiagram-v2
     Disabled --> Recovery: 5초 경과
     Recovery --> ReturnToCharge: 배터리 ≥ 5
 
+    Standby --> Destroyed: HP ≤ 0
+    Patrol --> Destroyed: HP ≤ 0
+    Engage --> Destroyed: HP ≤ 0
+    LowBattery --> Destroyed: HP ≤ 0
+    ReturnToCharge --> Destroyed: HP ≤ 0
+    Charging --> Destroyed: HP ≤ 0
+    Disabled --> Destroyed: HP ≤ 0
+    Recovery --> Destroyed: HP ≤ 0
+    Destroyed --> Standby: 다음 페이즈 시작 · HP=300 복원 (FR-081)
+
     note right of LowBattery
         이동 −15% · 공격 −10% (FR-095)
         배터리 ≤ 10 → Critical 경고 (FR-096)
@@ -303,6 +319,7 @@ stateDiagram-v2
     end note
     note right of Disabled: 이동·공격 불가 (FR-080)
     note right of Recovery: +0.5/s · 공격 불가
+    note right of Destroyed: HP 0 (좀비 피해) · 명령/이동/공격/충전 불가 · 현재 페이즈 한정 (FR-081)
     note right of Charging: +4/s · 전투 불가 (FR-097)
 ```
 

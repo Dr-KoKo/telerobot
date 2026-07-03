@@ -13,7 +13,7 @@
 
 | Asset | Required fields (shape) | Invariants |
 |-------|--------------------------|-----------|
-| `GameConfig` | playerMaxHp, baseMaxHp, basePhaseRecoveryPct, baseWarningPct, targetSessionMinutes, simFixedStepSeconds | 0 < pct ≤ 1; positive HP |
+| `GameConfig` | playerMaxHp, targetSessionMinutes, simFixedStepSeconds, config refs | **owns only playerMaxHp**; MUST NOT re-declare base HP/recovery/warning (→ BaseConfig) or magazine/reload (→ WeaponDef) |
 | `WeaponDef` | baseDamage, headshotMultiplier, magazineSize, reloadSeconds, startGrenades, recoilPitch/Yaw, recoilRecovery, muzzleFlash duration/size, impact size, fire/body/headshot tone frequencies, feedback volumes | gameplay values > 0; mult ≥ 1; feedback durations/sizes/frequencies > 0; body/headshot tones distinct; volumes in [0,1] |
 | `GrenadeDef` | radiusMeters, centerDamage, innerFullDamageRadiusMeters, edgeDamageAtRadius, maxAffectedZombies, affects=Zombies | inner ≤ radius; edge ≤ center; cap ≥ 1 |
 | `BaseConfig` | maxHp, phaseRecoveryPct, warningPct, allowPlayerRepair=false | warningPct in (0,1) |
@@ -23,6 +23,7 @@
 | `RobotDef` (+ `RobotAttackDef`) | hp, maxBattery, moveSpeed, attack, killRunnerSeconds, killBruiserSeconds; **dashDamage, biteDamage, biteCooldownSeconds, dashCooldownSeconds, engageRange, detectionRadius** | hp,battery>0; damages>0; cooldowns>0; kill*Seconds are validation targets, not inputs |
 | `BatteryConfig` | max, band thresholds, drainIdle/Patrol/Combat, ripperHitDrain, chargeRate, lowPowerMoveMult, lowPowerAttackMult, disabledHoldSeconds, recoveryRate, moveEnableThreshold, warnYellowPct, warnRedPct | bands partition 0..max; rates>0; mults in (0,1] |
 | `MedicalRobotDef` | hp, healRate, radiusMeters, healsPlayerFirst=true, attacks=false, regenAfterDestroy=false | hp,heal,radius>0 |
+| `ChargingStationConfig` | id, anchor/location, radiusMeters, maxConcurrentRobots, allowsCombat=false | chargeRate is NOT here (owned by `BatteryConfig.chargeRate`, single-source); allowsCombat MUST be false (FR-097) |
 | `UpgradeDef` (×9) | id, displayNameKey, effectType, effectParams, applyTiming, targetSystem | exactly 9 ids; ids unique |
 | `BarrierConfig` | hp, perOpenRoute=true, placement=ChokeAnchor, durationPolicy=UntilDestroyedOrPhaseEnd, blocksNavPermanently=false | hp>0; blocksNavPermanently MUST be false |
 | `AmmoConfig` | (references WeaponDef.magazineSize/reloadSeconds — not re-declared), startReserveAmmo, reserveAmmoMax, resupplyPolicy∈{FullReserve,FixedAmount}, resupplyAmount, resupplyUseSeconds, resupplyCooldownSeconds, grenadeResupplyPolicy∈{None,PhaseResetOnly} | 0<startReserve≤max; grenadeResupplyPolicy=PhaseResetOnly (spec); any mirrored magazine/reload MUST equal WeaponDef |

@@ -90,7 +90,7 @@ specs/001-robot-base-defense-mvp/
 A standard Unity project layout. The key architectural boundary is **`Assets/Game/Core` (pure C#, no UnityEngine)** vs **`Assets/Game/Runtime` (MonoBehaviour adapters)** vs **`Assets/Game/Data` (ScriptableObjects)**, enforced by Assembly Definition (`.asmdef`) references so the core cannot accidentally depend on Unity.
 
 ```text
-TelerobotMVP/                          # Unity project root (created at repo root or /unity)
+TelerobotMVP/                          # Unity project root — at repo root (already created)
 ├── Assets/
 │   ├── Game/
 │   │   ├── Core/                      # PURE C# — no UnityEngine. asmdef: Game.Core
@@ -138,7 +138,7 @@ TelerobotMVP/                          # Unity project root (created at repo roo
 └── README.md
 ```
 
-**Structure Decision**: Single Unity desktop-game project (no web/mobile split). The decisive structure is the three-assembly boundary — `Game.Core` (pure, scene-free, Unity-free), `Game.Runtime` (adapters), `Game.Data` (ScriptableObjects) — with `Game.Simulation` reusing `Game.Core` for deterministic runs. Assembly Definitions enforce that `Game.Core` and `Game.Simulation` never reference `UnityEngine` scene/physics types, which is what makes Principles III and IV mechanically guaranteed rather than aspirational. The Unity project folder may live at repo root or in a `/unity` subfolder; `quickstart.md` records the chosen path.
+**Structure Decision**: Single Unity desktop-game project (no web/mobile split). The decisive structure is the three-assembly boundary — `Game.Core` (pure, scene-free, Unity-free), `Game.Runtime` (adapters), `Game.Data` (ScriptableObjects) — with `Game.Simulation` reusing `Game.Core` for deterministic runs. Assembly Definitions enforce that `Game.Core` and `Game.Simulation` never reference `UnityEngine` scene/physics types, which is what makes Principles III and IV mechanically guaranteed rather than aspirational. The Unity project folder is **`<repo>/TelerobotMVP/`** (already created, pinned to `6000.3.18f1`); `quickstart.md` uses this path in all commands.
 
 ## System Decomposition → Layer Mapping
 
@@ -257,7 +257,7 @@ These are explicitly carried forward and MUST appear as tasks/follow-ups:
 - **Upgrade re-offer/stack policy** (was P1-8) → **Resolved:** global pool stays the same 9 definitions every reward step; already-selected ids excluded from later offers; **no stacking** (≤1 per upgrade, ≤2 per session). Does not conflict with FR-115 (separates "no per-phase gating" from "no re-offer of a selected id"). (spec Assumption "업그레이드 제시 정책"; `UpgradeService.Offer(rng, selectedUpgradeIds)`; data-model UpgradeDef/SessionState.)
 - **Phase-3 Bruiser minimum** (was P1-9) → **Resolved:** Phase 3 requires **Bruiser ≥2 and Ripper ≥3**; composition retuned to runner 50–58 / bruiser 2–3 / ripper 3–5 (achievable total 55–63 ≤ budget 80). (spec Assumption "위협 예산 vs 목표 마릿수"; data-model PhaseDef.)
 
-**Scope guard for `/speckit-tasks` (Constitution IX):** the original design doc lists expansion candidates (turret robot, engineer robot, spitter, howler, endless mode). These are excluded by FR-140 and MUST NOT enter tasks without a spec amendment.
+**Scope guard for `/speckit-tasks` (Constitution IX):** the **normative source for tasks is `spec.md` + this plan + `contracts/`**; the original `docs/tele_robot_team_game_design_v0_1.md` is **background/context only, non-normative**. That design doc lists expansion candidates (turret robot, engineer robot, spitter, howler, Endless Defense) which are excluded by FR-140 and MUST NOT enter tasks without a spec amendment.
 
 ## Out of Scope (mirrors FR-140 / Constitution IX)
 
