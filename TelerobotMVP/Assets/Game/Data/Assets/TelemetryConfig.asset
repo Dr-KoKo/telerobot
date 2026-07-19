@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f84fbf248c79ba66531c2a80d53e882, type: 3}
+  m_Name: TelemetryConfig
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.TelemetryConfigAsset
+  enabledEvents:
+  - session_started
+  - session_ended
+  - phase_started
+  - phase_cleared
+  - phase_failed
+  - zombie_spawned
+  - zombie_killed
+  - base_damaged
+  - player_damaged
+  - player_died
+  - robot_battery_changed
+  - robot_charge_commanded
+  - robot_disabled
+  - ripper_attacked_robot
+  - upgrade_selected
+  - route_pressure_sampled
+  - simulation_run_completed
+  - base_hp_sampled
+  - player_hp_at_phase_end
+  - grenade_used
+  - ammo_resupplied
+  - barrier_damaged
+  - barrier_destroyed
+  - medical_heal_applied
+  - medical_robot_destroyed
+  - robot_destroyed
+  - base_warning
+  - battery_warning
+  - radio_event
+  - ripper_spawned
+  - route_opened
+  - camera_perspective_changed
+  - player_jumped
+  - player_hit_confirmed
+  - game_paused
+  - session_restarted
+  - returned_to_main_menu
+  sinkFolder: Telerobot/Telemetry

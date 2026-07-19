@@ -13,7 +13,12 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+/[Tt]est[Rr]esults/
+/[Tt]elemetry/
 *.log
+.env*
+Thumbs.db
+.DS_Store
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
@@ -47,6 +52,7 @@ ExportedObj/
 *.unityproj
 *.sln
 *.slnx
+*.vsconfig
 *.suo
 *.tmp
 *.user

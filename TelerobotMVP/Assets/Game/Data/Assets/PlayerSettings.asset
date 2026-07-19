@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8dd457702614b2cad35083a9b581116, type: 3}
+  m_Name: PlayerSettings
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.PlayerSettingsAsset
+  minimumMouseSensitivity: 0.04
+  maximumMouseSensitivity: 0.35
+  defaultMouseSensitivity: 0.12
+  defaultMasterVolume: 0.85
+  defaultEffectsVolume: 0.9
+  minimumResolutionWidth: 960
+  minimumResolutionHeight: 540
+  defaultResolutionWidth: 1280
+  defaultResolutionHeight: 720
+  defaultFullscreen: 0
+  defaultPerspective: 0

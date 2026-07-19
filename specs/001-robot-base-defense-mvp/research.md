@@ -152,5 +152,36 @@ Concretely:
 | Test framework | Unity Test Framework, 3 assemblies (§7) |
 | Telemetry sink | Local structured files, dev-only (§8) |
 | Runtime navigation | NavMesh local steering only (§9) |
+| Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§10) |
 
 No `NEEDS CLARIFICATION` markers remain.
+
+---
+
+## 10. Playtest build and settings workflow
+
+**Decision**: Ship the local playtest through a generated `MainMenu` first scene and an editor `BuildPipeline` command that creates a Windows x64 Development build under ignored `TelerobotMVP/Builds/Windows/`. Store sensitivity, audio, display, fullscreen, and preferred starting perspective locally with `PlayerPrefs`; keep their defaults and bounds in a `PlayerSettings` ScriptableObject.
+
+**Rationale**: A standalone exe lets non-Unity playtesters reach the game without opening scenes or importing assets. A single reusable settings overlay keeps the main-menu and pause-menu behavior consistent, while local preferences remain outside deterministic gameplay state.
+
+**Alternatives considered**: Editor-only playtesting (rejected because it requires Unity knowledge); hand-maintained build folders (rejected because scene order and companion files are easy to miss); embedding preference defaults in UI code (rejected by the data-driven configuration principle).
+
+---
+
+## 11. Shareable playtest distribution
+
+**Decision**: Preserve the existing Windows Development build for local diagnosis and add a separate non-Development Windows share build under `Builds/Shareable/Windows`. Automatically package that build as one versioned ZIP under `Builds/Distribution`, excluding folders marked `DoNotShip`/`ButDontShipItWithYourGame` and PDB/MDB debug symbols. Generate a tester start guide, an itch.io upload checklist, and a structured Korean feedback-form template from versioned source documents.
+
+**Rationale**: Non-Unity testers need one download whose runtime companion files cannot be accidentally omitted. Keeping diagnostic and shared builds separate retains useful local debugging while giving external testers a smaller, cleaner archive. Versioned templates keep launch, privacy, log-collection, upload, and feedback instructions reproducible across releases.
+
+**Alternatives considered**: Sending the raw `Builds/Windows` directory (rejected because users can omit required folders and it contains developer-only output); creating an installer now (rejected as unnecessary friction for a small alpha and a larger signing/maintenance surface); moving immediately to Steam Playtest (deferred until a store presence and broader testing justify its setup and review overhead).
+
+---
+
+## 12. Microsoft Store MSIX distribution
+
+**Decision**: Add a reproducible editor build that creates a non-Development Windows x64 player, stages only runtime payload files, writes a full-trust desktop `AppxManifest.xml` with the Partner Center identity `Dr-Ko.telerobot` / `CN=D7C3F8A8-2C26-4CBC-BEDF-193632AAF7DC`, and invokes the Windows SDK `MakeAppx.exe`. Preserve exact 44, 150, and Store logo assets in versioned source documentation. Upload the intentionally unsigned MSIX to Partner Center so Microsoft signs the certified distribution.
+
+**Rationale**: Store installation gives nontechnical testers a familiar one-click install/update path and a Microsoft-signed package, addressing the SmartScreen reputation warning that occurs when sharing an unsigned standalone executable. Separating staging from packaging keeps identity and payload inspectable even when the Windows SDK is not yet installed.
+
+**Alternatives considered**: Buying a public code-signing certificate immediately (deferred because Store signing already covers the selected distribution route); distributing the unsigned MSIX directly (rejected because it cannot provide the intended trust/install experience); replacing the existing ZIP route (rejected because ZIP remains useful for rapid private diagnosis while Store certification is pending).

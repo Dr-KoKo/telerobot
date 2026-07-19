@@ -1,0 +1,6 @@
+{
+  "name": "Game.Runtime",
+  "rootNamespace": "Telerobot.Game.Runtime",
+  "references": ["Game.Core", "Game.Data", "Game.Simulation", "Unity.InputSystem"],
+  "autoReferenced": true
+}

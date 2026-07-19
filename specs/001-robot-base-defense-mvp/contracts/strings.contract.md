@@ -53,6 +53,23 @@
 - Any new player-facing string introduced during implementation MUST be added here as data, not inlined in scene scripts (Constitution VI gate).
 - Battery warning callout for US5.2 reuses `radio.battery_warning` verbatim.
 
+## Main menu and saved settings
+
+| key | Korean text |
+|-----|-------------|
+| `menu.title` | 텔레 로봇팀, 출격하라 |
+| `menu.subtitle` | 세 경로를 방어하고 해태 로봇팀을 지휘하십시오 |
+| `menu.play` / `menu.settings` / `menu.quit` | 게임 시작 / 설정 / 게임 종료 |
+| `menu.main` | 시작 화면으로 |
+| `menu.controls_hint` | WASD 이동 · 마우스 조준 · V 시점 전환 · Space 점프 |
+| `settings.title` | 설정 |
+| `settings.sensitivity` | 마우스 감도 |
+| `settings.master_volume` / `settings.effects_volume` | 전체 음량 / 효과음 음량 |
+| `settings.resolution` / `settings.fullscreen` | 해상도 / 전체 화면 |
+| `settings.default_perspective` | 기본 시점 |
+| `settings.apply` / `settings.cancel` | 저장하고 적용 / 취소 |
+| `settings.on` / `settings.off` | 켜기 / 끄기 |
+
 ## Acceptance
 
 - [ ] All 8 radio strings present verbatim and byte-exact to the spec.

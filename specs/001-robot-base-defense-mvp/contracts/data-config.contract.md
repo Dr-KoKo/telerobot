@@ -14,11 +14,11 @@
 | Asset | Required fields (shape) | Invariants |
 |-------|--------------------------|-----------|
 | `GameConfig` | playerMaxHp, baseMaxHp, basePhaseRecoveryPct, baseWarningPct, targetSessionMinutes, simFixedStepSeconds | 0 < pct ≤ 1; positive HP |
-| `WeaponDef` | baseDamage, headshotMultiplier, magazineSize, reloadSeconds, startGrenades | all > 0; mult ≥ 1 |
+| `WeaponDef` | baseDamage, headshotMultiplier, magazineSize, reloadSeconds, startGrenades, recoilPitch/Yaw, recoilRecovery, muzzleFlash duration/size, impact size, fire/body/headshot tone frequencies, feedback volumes | gameplay values > 0; mult ≥ 1; feedback durations/sizes/frequencies > 0; body/headshot tones distinct; volumes in [0,1] |
 | `GrenadeDef` | radiusMeters, centerDamage, innerFullDamageRadiusMeters, edgeDamageAtRadius, maxAffectedZombies, affects=Zombies | inner ≤ radius; edge ≤ center; cap ≥ 1 |
 | `BaseConfig` | maxHp, phaseRecoveryPct, warningPct, allowPlayerRepair=false | warningPct in (0,1) |
 | `RouteDef` (×3) | id, openPhase, character flags, waypoints[], chokeAnchor | waypoints ordered, terminate at base; openPhase ∈ {1,2,3} |
-| `ZombieDef` (×3) | hp, moveSpeed, baseDamage, playerDamage, robotDamage, targetPriority[3], threatCost, special, firstAppears, distinctAV | priority is a permutation of {base,player,robot}; cost>0 |
+| `ZombieDef` (×3) | hp, moveSpeed, baseDamage, playerDamage, robotDamage, targetPriority[3], threatCost, special, firstAppears, distinctAV, hitFlashSeconds, deathEffectSeconds, deathPulseSize | priority is a permutation of {base,player,robot}; cost>0; feedback values > 0 |
 | `PhaseDef` (×3) | number, openRoutes[], threatBudget, recommendedComposition, specialMinimums, targetDifficulty, targetDuration, deploysUnit | budget>0; minimums ≥ 0; sum(spawn cost) ≤ budget |
 | `RobotDef` | hp, maxBattery, moveSpeed, attack, killRunnerSeconds, killBruiserSeconds | hp,battery>0 |
 | `BatteryConfig` | max, band thresholds, drainIdle/Patrol/Combat, ripperHitDrain, chargeRate, lowPowerMoveMult, lowPowerAttackMult, disabledHoldSeconds, recoveryRate, moveEnableThreshold, warnYellowPct, warnRedPct | bands partition 0..max; rates>0; mults in (0,1] |
@@ -29,7 +29,8 @@
 | `SupplyPointConfig` (×2) | id, kind∈{Safe,Risky}, location | exactly one Safe + one Risky |
 | `CommandConfig` | commands = [DefendPosition, PatrolRoute, ReturnToBase, Charge] | exactly these 4, no more (FR-085) |
 | `WarningConfig` | batteryYellowPct, batteryRedPct, baseWarningPct, ripperCalloutEnabled | yellow>red |
-| `HudConfig` | element list, infoPriority order, combatBundle, awarenessBundle | priority = base HP > robot battery > route alert |
+| `HudConfig` | element list, infoPriority order, combatBundle, awarenessBundle, lowAmmoThreshold, damage/hit/headshot feedback durations | priority = base HP > robot battery > route alert; thresholds non-negative; durations > 0 |
+| `PlayerSettings` | mouseSensitivity min/max/default, master/effects volume defaults, minimum/default resolution, defaultFullscreen, defaultPerspective | sensitivity default within min/max; volumes in [0,1]; default resolution ≥ minimum; perspective valid |
 | `RadioEventDef` + `StringTable` | eventId → stringKey → verbatim Korean text + clip ref | strings verbatim (see strings.contract.md) |
 | `TelemetryConfig` | enabledEvents[], sinkPath, requiredFields | includes constitution minimum set |
 | `ValidationConfig`/`SimParams` | seeds[], fixedStep, per-scenario params | seeds explicit |

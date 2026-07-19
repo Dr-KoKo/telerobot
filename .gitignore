@@ -1,0 +1,22 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.idea/
+.vscode/
+.env*
+
+# Unity project outputs
+TelerobotMVP/Library/
+TelerobotMVP/Temp/
+TelerobotMVP/Obj/
+TelerobotMVP/Logs/
+TelerobotMVP/UserSettings/
+TelerobotMVP/Build/
+TelerobotMVP/Builds/
+TelerobotMVP/TestResults/
+TelerobotMVP/Telemetry/
+
+# Local validation output
+artifacts/

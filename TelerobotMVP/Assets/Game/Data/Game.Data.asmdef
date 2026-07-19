@@ -1,0 +1,6 @@
+{
+  "name": "Game.Data",
+  "rootNamespace": "Telerobot.Game.Data",
+  "references": ["Game.Core"],
+  "autoReferenced": false
+}

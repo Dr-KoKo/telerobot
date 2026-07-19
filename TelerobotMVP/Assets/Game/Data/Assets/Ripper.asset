@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34328ade741f7c120427f444ae39b70e, type: 3}
+  m_Name: Ripper
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.ZombieDefinitionAsset
+  type: 2
+  maxHealth: 180
+  moveSpeed: 7.2
+  baseDamage: 10
+  playerDamage: 18
+  robotDamage: 18
+  attackInterval: 0.9
+  attackRange: 1.8
+  threatCost: 4
+  firstPhase: 3
+  targetPriority: 020000000100000000000000
+  displayColor: {r: 0.92, g: 0.05, b: 0.45, a: 1}
+  displayScale: {x: 0.9, y: 1.05, z: 0.9}
+  hitFlashSeconds: 0.12
+  deathEffectSeconds: 0.42
+  deathPulseSize: 0.9

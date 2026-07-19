@@ -1,0 +1,150 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca93c424e0c7815026b9e82e86686434, type: 3}
+  m_Name: StringTable
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.StringTableAsset
+  entries:
+  - key: radio.game_start
+    value: "\uD154\uB808 \uB85C\uBD07\uD300, \uCD9C\uACA9\uD558\uB77C."
+  - key: radio.phase1
+    value: "\uAC10\uC5FC\uCCB4 \uC811\uADFC. \uBD81\uCABD \uB3C4\uB85C \uBC29\uC5B4
+      \uC900\uBE44."
+  - key: radio.phase2
+    value: "\uB3D9\uCABD \uACE8\uBAA9\uC5D0\uC11C \uCD94\uAC00 \uC811\uADFC \uC2E0\uD638
+      \uAC10\uC9C0."
+  - key: radio.phase3
+    value: "\uB0A8\uCABD \uD130\uB110 \uAC1C\uBC29. \uBA54\uB514\uCEEC \uB85C\uBD07
+      \uD22C\uC785."
+  - key: radio.battery_warning
+    value: "\uD574\uD0DC 1\uD638, \uBC30\uD130\uB9AC \uC704\uD5D8."
+  - key: radio.base_danger
+    value: "\uAC70\uC810 \uBC29\uC5B4\uC120 \uBD95\uAD34 \uC784\uBC15."
+  - key: radio.phase_clear
+    value: "\uC704\uD611 \uC81C\uAC70. \uC7AC\uC815\uBE44 \uB2E8\uACC4 \uC9C4\uC785."
+  - key: radio.victory
+    value: "\uAC70\uC810 \uC0DD\uC874 \uD655\uC778. \uC791\uC804 \uC131\uACF5."
+  - key: cmd.defend
+    value: "\uAC70\uC810 \uC0AC\uC218"
+  - key: cmd.patrol
+    value: "\uACBD\uB85C \uC21C\uCC30"
+  - key: cmd.return
+    value: "\uAE30\uC9C0 \uBCF5\uADC0"
+  - key: cmd.charge
+    value: "\uCDA9\uC804"
+  - key: route.north
+    value: "\uBD81\uCABD \uB3C4\uB85C"
+  - key: route.east
+    value: "\uB3D9\uCABD \uACE8\uBAA9"
+  - key: route.south
+    value: "\uB0A8\uCABD \uD130\uB110"
+  - key: upg.battery
+    value: "\uACE0\uD6A8\uC728 \uBC30\uD130\uB9AC"
+  - key: upg.powersave
+    value: "\uC804\uD22C \uC808\uC804 \uBAA8\uB4DC"
+  - key: upg.dash
+    value: "\uD574\uD0DC \uB3CC\uC9C4 \uAC15\uD654"
+  - key: upg.chargefast
+    value: "\uCDA9\uC804\uC18C \uACE0\uC18D\uD654"
+  - key: upg.armor
+    value: "\uAC70\uC810 \uC7A5\uAC11 \uBCF4\uAC15"
+  - key: upg.barrier
+    value: "\uAE34\uAE09 \uBC29\uBCBD"
+  - key: upg.pierce
+    value: "\uAD00\uD1B5\uD0C4"
+  - key: upg.mag
+    value: "\uD655\uC7A5 \uD0C4\uCC3D"
+  - key: upg.recovery
+    value: "\uC751\uAE09 \uD68C\uBCF5 \uD504\uB85C\uD1A0\uCF5C"
+  - key: hud.base
+    value: "\uAC70\uC810"
+  - key: hud.phase
+    value: "\uD398\uC774\uC988"
+  - key: hud.player
+    value: "\uD50C\uB808\uC774\uC5B4"
+  - key: hud.ammo
+    value: "\uD0C4\uC57D"
+  - key: hud.grenade
+    value: "\uC218\uB958\uD0C4"
+  - key: hud.routes
+    value: "\uACBD\uB85C \uACBD\uBCF4"
+  - key: hud.command
+    value: "\uB85C\uBD07 \uBA85\uB839"
+  - key: hud.target
+    value: "\uB300\uC0C1 \uACBD\uB85C"
+  - key: hud.upgrade
+    value: "\uC5C5\uADF8\uB808\uC774\uB4DC \uC120\uD0DD"
+  - key: hud.ripper
+    value: "\uB9AC\uD37C \uCD9C\uD604"
+  - key: hud.victory
+    value: "\uC791\uC804 \uC131\uACF5"
+  - key: hud.defeat
+    value: "\uC791\uC804 \uC2E4\uD328"
+  - key: hud.pause
+    value: "\uC77C\uC2DC\uC815\uC9C0"
+  - key: hud.resume
+    value: "\uACC4\uC18D\uD558\uAE30"
+  - key: hud.restart
+    value: "\uB2E4\uC2DC \uC2DC\uC791"
+  - key: hud.first_person
+    value: "1\uC778\uCE6D"
+  - key: hud.third_person
+    value: "3\uC778\uCE6D"
+  - key: hud.headshot
+    value: "\uD5E4\uB4DC\uC0F7"
+  - key: hud.low_ammo
+    value: "\uD0C4\uC57D \uBD80\uC871"
+  - key: hud.resupply
+    value: "\uD0C4\uC57D \uBCF4\uAE09"
+  - key: hud.safe_supply
+    value: "\uC548\uC804 \uBCF4\uAE09\uC9C0"
+  - key: hud.risky_supply
+    value: "\uC704\uD5D8 \uBCF4\uAE09\uC9C0"
+  - key: hud.reloading
+    value: "\uC7AC\uC7A5\uC804 \uC911"
+  - key: menu.title
+    value: "\uD154\uB808 \uB85C\uBD07\uD300, \uCD9C\uACA9\uD558\uB77C"
+  - key: menu.subtitle
+    value: "\uC138 \uACBD\uB85C\uB97C \uBC29\uC5B4\uD558\uACE0 \uD574\uD0DC \uB85C\uBD07\uD300\uC744
+      \uC9C0\uD718\uD558\uC2ED\uC2DC\uC624"
+  - key: menu.play
+    value: "\uAC8C\uC784 \uC2DC\uC791"
+  - key: menu.settings
+    value: "\uC124\uC815"
+  - key: menu.quit
+    value: "\uAC8C\uC784 \uC885\uB8CC"
+  - key: menu.main
+    value: "\uC2DC\uC791 \uD654\uBA74\uC73C\uB85C"
+  - key: menu.controls_hint
+    value: "WASD \uC774\uB3D9 \xB7 \uB9C8\uC6B0\uC2A4 \uC870\uC900 \xB7 V \uC2DC\uC810
+      \uC804\uD658 \xB7 Space \uC810\uD504"
+  - key: settings.title
+    value: "\uC124\uC815"
+  - key: settings.sensitivity
+    value: "\uB9C8\uC6B0\uC2A4 \uAC10\uB3C4"
+  - key: settings.master_volume
+    value: "\uC804\uCCB4 \uC74C\uB7C9"
+  - key: settings.effects_volume
+    value: "\uD6A8\uACFC\uC74C \uC74C\uB7C9"
+  - key: settings.resolution
+    value: "\uD574\uC0C1\uB3C4"
+  - key: settings.fullscreen
+    value: "\uC804\uCCB4 \uD654\uBA74"
+  - key: settings.default_perspective
+    value: "\uAE30\uBCF8 \uC2DC\uC810"
+  - key: settings.apply
+    value: "\uC800\uC7A5\uD558\uACE0 \uC801\uC6A9"
+  - key: settings.cancel
+    value: "\uCDE8\uC18C"
+  - key: settings.on
+    value: "\uCF1C\uAE30"
+  - key: settings.off
+    value: "\uB044\uAE30"

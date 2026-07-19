@@ -143,6 +143,9 @@ Exactly 4 commands, no others (FR-085, FR-140): `DefendPosition`, `PatrolRoute`,
 ### WarningConfig / HudConfig
 HUD elements (FR-120): base HP, phase progress, route alert/minimap, robot battery, player HP, ammo, command quick-menu. Info priority: base HP > robot battery > route alert (FR-121). Thresholds: battery <25% yellow flash + callout (FR-123), <10% red flash + urgent callout (FR-124), base ≤30% edge warning + alarm (FR-125), Ripper appearance special icon + callout (FR-126), new route open highlight + radio (FR-122). Minimum combat HUD bundle ships with US1/US2; situational-awareness bundle with US5 (FR-120a). No info overload (FR-127).
 
+### PlayerSettings (playtest access layer)
+Data-driven defaults and bounds for mouse sensitivity, master/effects volume, resolution, fullscreen, and the initial first/third-person perspective. Runtime values are persisted locally with `PlayerPrefs`; they affect presentation and controls only and do not enter deterministic balance simulation.
+
 ### RadioEventDef + StringTable
 8 radio/sound events (FR-130); strings stored verbatim Korean — see [contracts/strings.contract.md](./contracts/strings.contract.md). Triggers implemented with their gameplay milestone (research.md / plan Sound section). MVP uses captions + placeholder/TTS-stub audio; final VO swaps clips without changing event logic.
 
