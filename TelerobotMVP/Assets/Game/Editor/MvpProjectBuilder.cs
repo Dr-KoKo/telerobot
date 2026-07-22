@@ -36,9 +36,8 @@ namespace Telerobot.Game.Editor
             var game = Asset<GameConfigAsset>("GameConfig", item =>
             {
                 item.playerMaxHealth = 100f;
-                item.baseMaxHealth = 1000f;
-                item.baseRecoveryFraction = 0.15f;
-                item.baseWarningFraction = 0.30f;
+                item.targetSessionMinimumSeconds = 600f;
+                item.targetSessionMaximumSeconds = 900f;
                 item.fixedStepSeconds = 1f / 60f;
                 item.playerMoveSpeed = 8f;
                 item.sprintMultiplier = 1.5f;
@@ -52,19 +51,36 @@ namespace Telerobot.Game.Editor
                 item.cameraCollisionPadding = 0.08f;
                 item.jumpHeight = 1.35f;
                 item.groundedVelocity = -2f;
-                item.minimumSpawnInterval = 1.2f;
+            });
+            var baseConfig = Asset<BaseConfigAsset>("BaseConfig", item =>
+            {
+                item.maxHealth = 1000f;
+                item.phaseRecoveryFraction = 0.15f;
+                item.warningFraction = 0.30f;
+                item.allowPlayerRepair = false;
+            });
+            var ammo = Asset<AmmoConfigAsset>("AmmoConfig", item =>
+            {
+                item.startReserveAmmo = 120;
+                item.reserveAmmoMax = 240;
+                item.resupplyPolicy = ResupplyPolicy.FullReserve;
+                item.resupplyAmount = 0;
+                item.resupplyUseSeconds = 1.5f;
+                item.resupplyCooldownSeconds = 0f;
+                item.grenadeResupplyPolicy = GrenadeResupplyPolicy.PhaseResetOnly;
             });
             var weapon = Asset<WeaponDefinitionAsset>("AssaultRifle", item =>
             {
                 item.baseDamage = 30f;
                 item.headshotMultiplier = 2.5f;
                 item.magazineSize = 30;
-                item.reserveAmmo = 180;
                 item.reloadSeconds = 2f;
+                item.fireIntervalSeconds = 0.12f;
                 item.grenadesPerPhase = 2;
                 item.range = 200f;
-                item.recoilPitchDegrees = 1.15f;
-                item.recoilYawDegrees = 0.28f;
+                item.recoilPitchMinimumDegrees = 0.7f;
+                item.recoilPitchMaximumDegrees = 1.15f;
+                item.recoilYawMaximumDegrees = 0.32f;
                 item.recoilRecoveryDegreesPerSecond = 9f;
                 item.muzzleFlashSeconds = 0.07f;
                 item.muzzleFlashSize = 0.32f;
@@ -107,10 +123,20 @@ namespace Telerobot.Game.Editor
             {
                 item.maxHealth = 300f;
                 item.moveSpeed = 10f;
-                item.attackDamage = 75f;
-                item.attackInterval = 1.1f;
-                item.detectionRadius = 18f;
-                item.attackRange = 1.7f;
+                item.dashDamage = 60f;
+                item.biteDamage = 40f;
+                item.biteCooldownSeconds = 0.6f;
+                item.dashCooldownSeconds = 3f;
+                item.detectionRadius = 15f;
+                item.engageRange = 2f;
+                item.separationRadius = 2.2f;
+                item.separationStrength = 1.8f;
+                item.formationSpacing = 3f;
+                item.defendLeashRadius = 14f;
+                item.runnerKillTargetMinimumSeconds = 1f;
+                item.runnerKillTargetMaximumSeconds = 2f;
+                item.bruiserKillTargetMinimumSeconds = 6f;
+                item.bruiserKillTargetMaximumSeconds = 10f;
             });
             var medical = Asset<MedicalRobotDefinitionAsset>("MedicalRobot", item =>
             {
@@ -123,7 +149,6 @@ namespace Telerobot.Game.Editor
             {
                 item.batteryYellowFraction = 0.25f;
                 item.batteryRedFraction = 0.10f;
-                item.baseWarningFraction = 0.30f;
             });
             var world = Asset<WorldLayoutAsset>("WorldLayout", item =>
             {
@@ -136,11 +161,13 @@ namespace Telerobot.Game.Editor
                 item.riskySupply = new Vector3(0f, 0.5f, 18f);
                 item.medicalAnchor = new Vector3(-4.5f, 0.8f, -4.5f);
                 item.supplyInteractionRadius = 2.5f;
+                item.supplyExitTolerance = 0.75f;
+                item.baseChargingRadius = 6f;
                 item.chargingArrivalRadius = 1.2f;
             });
             var commands = Asset<CommandConfigAsset>("CommandConfig", item => item.commands = new[]
             {
-                RobotCommand.DefendPosition, RobotCommand.PatrolRoute, RobotCommand.ReturnToBase, RobotCommand.Charge
+                RobotCommand.DefendPosition, RobotCommand.PatrolRoute, RobotCommand.ReturnToBase
             });
             var hud = Asset<HudConfigAsset>("HudConfig", item =>
             {
@@ -171,15 +198,20 @@ namespace Telerobot.Game.Editor
                 {
                     "session_started", "session_ended", "phase_started", "phase_cleared", "phase_failed",
                     "zombie_spawned", "zombie_killed", "base_damaged", "player_damaged", "player_died",
-                    "robot_battery_changed", "robot_charge_commanded", "robot_disabled", "ripper_attacked_robot",
+                    "robot_battery_changed", "robot_auto_charge_started", "robot_disabled", "ripper_attacked_robot",
                     "upgrade_selected", "route_pressure_sampled", "simulation_run_completed", "base_hp_sampled",
                     "player_hp_at_phase_end", "grenade_used", "ammo_resupplied", "barrier_damaged", "barrier_destroyed",
-                    "medical_heal_applied", "medical_robot_destroyed", "robot_destroyed", "base_warning", "battery_warning",
+                    "medical_heal_applied", "medical_robot_destroyed", "robot_damaged", "robot_destroyed", "base_warning", "battery_warning",
                     "radio_event", "ripper_spawned", "route_opened", "camera_perspective_changed",
                     "player_jumped", "player_hit_confirmed", "game_paused", "session_restarted",
                     "returned_to_main_menu"
                 };
                 item.sinkFolder = "Telerobot/Telemetry";
+                item.requiredFields = new[] { "buildVersion", "dataVersion", "sessionId", "seed", "simProfileId", "phase", "simTime" };
+                item.sampleIntervalSeconds = 1f;
+                item.routePressureSampleIntervalSeconds = 2f;
+                item.batteryEmitPolicy = BatteryEmitPolicy.OnThresholdCrossing | BatteryEmitPolicy.EveryNSeconds;
+                item.batteryEmitIntervalSeconds = 1f;
             });
             var validation = Asset<ValidationConfigAsset>("ValidationConfig", item =>
             {
@@ -200,6 +232,15 @@ namespace Telerobot.Game.Editor
                 item.position = world.riskySupply;
                 item.interactionRadius = world.supplyInteractionRadius;
             });
+            var noviceProfile = SimProfile("SimPlayerNovice", SimProfileId.Novice, 0.55f, 0.10f, 1.2f, 2.6f,
+                SimRoutePriorityPolicy.LateReactive, 0.2f, 0.10f, SimUpgradeSelectionPolicy.RandomOfThree,
+                SimGrenadeUsePolicy.Rarely, 8);
+            var baselineProfile = SimProfile("SimPlayerBaseline", SimProfileId.Baseline, 0.75f, 0.25f, 0.6f, 1.8f,
+                SimRoutePriorityPolicy.BalancedCoverage, 0.6f, 0.25f, SimUpgradeSelectionPolicy.IntendedMeta,
+                SimGrenadeUsePolicy.DenseClusters, 4);
+            var skilledProfile = SimProfile("SimPlayerSkilled", SimProfileId.Skilled, 0.92f, 0.45f, 0.25f, 1.0f,
+                SimRoutePriorityPolicy.HighestPressure, 1f, 0.40f, SimUpgradeSelectionPolicy.RiskAwareOptimal,
+                SimGrenadeUsePolicy.DenseClustersAndBruisers, 3);
 
             var runner = Zombie("Runner", ZombieType.Runner, 90f, 6.5f, 8f, 12f, 8f, 1f, 1, 1,
                 new[] { TargetKind.Base, TargetKind.Player, TargetKind.Robot }, new Color(0.38f, 0.9f, 0.28f), new Vector3(0.72f, 0.86f, 0.72f));
@@ -215,9 +256,9 @@ namespace Telerobot.Game.Editor
             var south = Route("SouthTunnel", RouteId.SouthTunnel, 3, "route.south", new Color(0.65f, 0.18f, 0.75f), 6f,
                 new[] { new Vector3(-40f, 1f, -10f), new Vector3(-29f, 1f, -8f), new Vector3(-19f, 1f, -4f), new Vector3(-10f, 1f, 1f), new Vector3(-4.5f, 1f, 2.5f) });
 
-            var phase1 = Phase("Phase1", 1, 40, 150f, new[] { RouteId.NorthRoad }, 30, 0, 0);
-            var phase2 = Phase("Phase2", 2, 60, 210f, new[] { RouteId.NorthRoad, RouteId.EastAlley }, 45, 3, 0);
-            var phase3 = Phase("Phase3", 3, 80, 270f, new[] { RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel }, 60, 0, 5);
+            var phase1 = Phase("Phase1", 1, 40, 150f, new[] { RouteId.NorthRoad });
+            var phase2 = Phase("Phase2", 2, 60, 210f, new[] { RouteId.NorthRoad, RouteId.EastAlley });
+            var phase3 = Phase("Phase3", 3, 80, 270f, new[] { RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel });
 
             var upgrades = new[]
             {
@@ -236,8 +277,10 @@ namespace Telerobot.Game.Editor
 
             var catalog = Asset<MvpContentCatalog>("MvpBalanceCatalog", item =>
             {
-                item.dataVersion = "mvp-1.3.0";
+                item.dataVersion = "mvp-1.4.5";
                 item.game = game;
+                item.baseConfig = baseConfig;
+                item.ammo = ammo;
                 item.weapon = weapon;
                 item.grenade = grenade;
                 item.battery = battery;
@@ -251,6 +294,7 @@ namespace Telerobot.Game.Editor
                 item.playerSettings = playerSettings;
                 item.telemetry = telemetry;
                 item.validation = validation;
+                item.simPlayerProfiles = new[] { noviceProfile, baselineProfile, skilledProfile };
                 item.supplyPoints = new[] { safeSupply, riskySupply };
                 item.zombies = new[] { runner, bruiser, ripper };
                 item.phases = new[] { phase1, phase2, phase3 };
@@ -284,6 +328,9 @@ namespace Telerobot.Game.Editor
                 item.robotDamage = robotDamage;
                 item.attackInterval = attackInterval;
                 item.attackRange = 1.8f;
+                item.pathVariationFraction = 0.4f;
+                item.separationRadius = type == ZombieType.Bruiser ? 1.9f : type == ZombieType.Ripper ? 1.3f : 1.1f;
+                item.separationStrength = 1.6f;
                 item.threatCost = cost;
                 item.firstPhase = firstPhase;
                 item.targetPriority = priority;
@@ -308,8 +355,7 @@ namespace Telerobot.Game.Editor
             });
         }
 
-        private static PhaseDefinitionAsset Phase(string name, int number, int budget, float duration, RouteId[] routes,
-            int runners, int bruisers, int rippers)
+        private static PhaseDefinitionAsset Phase(string name, int number, int budget, float duration, RouteId[] routes)
         {
             return Asset<PhaseDefinitionAsset>(name, item =>
             {
@@ -317,10 +363,84 @@ namespace Telerobot.Game.Editor
                 item.threatBudget = budget;
                 item.targetDurationSeconds = duration;
                 item.openRoutes = routes;
-                item.runnerTarget = runners;
-                item.bruiserTarget = bruisers;
-                item.ripperTarget = rippers;
+                item.newlyOpenedRoute = routes[routes.Length - 1];
+                item.phaseStartDelaySeconds = 2f;
+                item.trimOrder = new[] { SpawnTrimTarget.Runner, SpawnTrimTarget.Bruiser };
+
+                if (number == 1)
+                {
+                    item.runnerCount = Range(18, 24);
+                    item.bruiserCount = Range(0, 0);
+                    item.ripperCount = Range(0, 0);
+                    item.learningTotal = Range(18, 24);
+                    item.groupIntervalSeconds = 4f;
+                    item.groupSize = Range(3, 4);
+                    item.maxAliveConcurrent = 15;
+                    item.routeWeights = Weights(RouteId.NorthRoad, 1f);
+                    item.zombieTypeRouteWeights = new[]
+                    {
+                        TypeWeights(ZombieType.Runner, Weights(RouteId.NorthRoad, 1f))
+                    };
+                }
+                else if (number == 2)
+                {
+                    item.runnerCount = Range(28, 36);
+                    item.bruiserCount = Range(2, 3);
+                    item.ripperCount = Range(0, 0);
+                    item.learningTotal = Range(30, 39);
+                    item.bruiserMinimum = 2;
+                    item.groupIntervalSeconds = 3.5f;
+                    item.groupSize = Range(3, 5);
+                    item.maxAliveConcurrent = 20;
+                    item.routeWeights = Weights(RouteId.NorthRoad, 0.55f, RouteId.EastAlley, 0.45f);
+                    item.zombieTypeRouteWeights = new[]
+                    {
+                        TypeWeights(ZombieType.Runner, Weights(RouteId.NorthRoad, 0.6f, RouteId.EastAlley, 0.4f)),
+                        TypeWeights(ZombieType.Bruiser, Weights(RouteId.NorthRoad, 0.65f, RouteId.EastAlley, 0.35f))
+                    };
+                }
+                else
+                {
+                    item.runnerCount = Range(42, 48);
+                    item.bruiserCount = Range(2, 3);
+                    item.ripperCount = Range(3, 4);
+                    item.learningTotal = Range(47, 55);
+                    item.bruiserMinimum = 2;
+                    item.ripperMinimum = 3;
+                    item.groupIntervalSeconds = 3f;
+                    item.groupSize = Range(4, 6);
+                    item.maxAliveConcurrent = 24;
+                    item.routeWeights = Weights(RouteId.NorthRoad, 0.4f, RouteId.EastAlley, 0.3f, RouteId.SouthTunnel, 0.3f);
+                    item.zombieTypeRouteWeights = new[]
+                    {
+                        TypeWeights(ZombieType.Runner, Weights(RouteId.NorthRoad, 0.4f, RouteId.EastAlley, 0.3f, RouteId.SouthTunnel, 0.3f)),
+                        TypeWeights(ZombieType.Bruiser, Weights(RouteId.NorthRoad, 0.5f, RouteId.EastAlley, 0.3f, RouteId.SouthTunnel, 0.2f)),
+                        TypeWeights(ZombieType.Ripper, Weights(RouteId.NorthRoad, 0.15f, RouteId.EastAlley, 0.2f, RouteId.SouthTunnel, 0.65f))
+                    };
+                }
             });
+        }
+
+        private static IntRangeConfig Range(int minimum, int maximum)
+        {
+            return new IntRangeConfig { Min = minimum, Max = maximum };
+        }
+
+        private static RouteWeightConfig[] Weights(params object[] values)
+        {
+            var result = new RouteWeightConfig[values.Length / 2];
+            for (var index = 0; index < result.Length; index++)
+                result[index] = new RouteWeightConfig
+                {
+                    Route = (RouteId)values[index * 2],
+                    Weight = Convert.ToSingle(values[index * 2 + 1])
+                };
+            return result;
+        }
+
+        private static ZombieRouteWeightConfig TypeWeights(ZombieType type, RouteWeightConfig[] routes)
+        {
+            return new ZombieRouteWeightConfig { Type = type, Routes = routes };
         }
 
         private static UpgradeDefinitionAsset Upgrade(string name, string id, string key, UpgradeEffectType type, float amount)
@@ -331,6 +451,27 @@ namespace Telerobot.Game.Editor
                 item.displayNameKey = key;
                 item.effectType = type;
                 item.amount = amount;
+            });
+        }
+
+        private static SimPlayerProfileAsset SimProfile(string name, SimProfileId id, float accuracy, float headshot,
+            float reaction, float fireInterval, SimRoutePriorityPolicy routePolicy, float ripperFocus,
+            float chargeThreshold, SimUpgradeSelectionPolicy upgradePolicy, SimGrenadeUsePolicy grenadePolicy,
+            int grenadeClusterThreshold)
+        {
+            return Asset<SimPlayerProfileAsset>(name, item =>
+            {
+                item.id = id;
+                item.aimAccuracy = accuracy;
+                item.headshotRate = headshot;
+                item.reactionDelaySeconds = reaction;
+                item.fireIntervalSeconds = fireInterval;
+                item.routePriorityPolicy = routePolicy;
+                item.ripperFocus = ripperFocus;
+                item.robotChargeThresholdFraction = chargeThreshold;
+                item.upgradeSelectionPolicy = upgradePolicy;
+                item.grenadeUsePolicy = grenadePolicy;
+                item.grenadeClusterThreshold = grenadeClusterThreshold;
             });
         }
 
@@ -349,7 +490,7 @@ namespace Telerobot.Game.Editor
                     Entry("radio.phase_clear", "위협 제거. 재정비 단계 진입."),
                     Entry("radio.victory", "거점 생존 확인. 작전 성공."),
                     Entry("cmd.defend", "거점 사수"), Entry("cmd.patrol", "경로 순찰"),
-                    Entry("cmd.return", "기지 복귀"), Entry("cmd.charge", "충전"),
+                    Entry("cmd.return", "기지 복귀"),
                     Entry("route.north", "북쪽 도로"), Entry("route.east", "동쪽 골목"), Entry("route.south", "남쪽 터널"),
                     Entry("upg.battery", "고효율 배터리"), Entry("upg.powersave", "전투 절전 모드"),
                     Entry("upg.dash", "해태 돌진 강화"), Entry("upg.chargefast", "충전소 고속화"),
@@ -358,6 +499,7 @@ namespace Telerobot.Game.Editor
                     Entry("hud.base", "거점"), Entry("hud.phase", "페이즈"), Entry("hud.player", "플레이어"),
                     Entry("hud.ammo", "탄약"), Entry("hud.grenade", "수류탄"), Entry("hud.routes", "경로 경보"),
                     Entry("hud.command", "로봇 명령"), Entry("hud.target", "대상 경로"), Entry("hud.upgrade", "업그레이드 선택"),
+                    Entry("hud.all_robots", "전체 로봇"),
                     Entry("hud.ripper", "리퍼 출현"), Entry("hud.victory", "작전 성공"), Entry("hud.defeat", "작전 실패"),
                     Entry("hud.pause", "일시정지"), Entry("hud.resume", "계속하기"), Entry("hud.restart", "다시 시작"),
                     Entry("hud.first_person", "1인칭"), Entry("hud.third_person", "3인칭"), Entry("hud.headshot", "헤드샷"),

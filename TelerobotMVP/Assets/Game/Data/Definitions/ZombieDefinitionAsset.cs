@@ -13,6 +13,9 @@ namespace Telerobot.Game.Data
         public float robotDamage;
         public float attackInterval;
         public float attackRange;
+        [Range(0f, 0.45f)] public float pathVariationFraction;
+        [Min(0.1f)] public float separationRadius;
+        [Min(0f)] public float separationStrength;
         public int threatCost;
         public int firstPhase;
         public TargetKind[] targetPriority;

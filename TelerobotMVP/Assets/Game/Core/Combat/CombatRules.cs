@@ -76,10 +76,13 @@ namespace Telerobot.Game.Core
             return true;
         }
 
-        public static void Resupply(AmmoState ammo, int reserveCapacity)
+        public static void Resupply(AmmoState ammo, AmmoConfig config)
         {
             if (ammo == null) throw new ArgumentNullException("ammo");
-            ammo.Reserve = Math.Max(ammo.Reserve, Math.Max(0, reserveCapacity));
+            if (config == null) throw new ArgumentNullException("config");
+            ammo.Reserve = config.ResupplyPolicy == ResupplyPolicy.FullReserve
+                ? Math.Max(ammo.Reserve, config.ReserveAmmoMax)
+                : Math.Min(config.ReserveAmmoMax, ammo.Reserve + Math.Max(0, config.ResupplyAmount));
         }
 
         public static float GrenadeDamage(GrenadeConfig config, float distance)

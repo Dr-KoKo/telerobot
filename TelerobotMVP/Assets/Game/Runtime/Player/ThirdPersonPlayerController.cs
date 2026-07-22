@@ -20,10 +20,12 @@ namespace Telerobot.Game.Runtime
         private AudioClip fireSound;
         private AudioClip bodyHitSound;
         private AudioClip headshotSound;
+        private IDeterministicRng recoilRng;
         private float yaw;
         private float pitch = 5f;
         private float recoilPitchOffset;
         private float recoilYawOffset;
+        private float fireCooldownRemaining;
         private float verticalVelocity;
         private int shotSequence;
         private bool jumpRequestedForTests;
@@ -43,6 +45,8 @@ namespace Telerobot.Game.Runtime
         public GameObject LastMuzzleFlash { get; private set; }
         public GameObject LastImpactEffect { get; private set; }
         public CharacterController CharacterForTests { get { return character; } }
+        public float LastRecoilPitchDegrees { get; private set; }
+        public float LastRecoilYawDegrees { get; private set; }
 
         public void Initialize(MvpGameController owner, PlayerState state, WeaponConfig weaponConfig, IPlayerInput inputSource)
         {
@@ -52,6 +56,7 @@ namespace Telerobot.Game.Runtime
             input = inputSource;
             gameRules = owner.Config.Game;
             weaponPresentation = owner.Catalog.weapon;
+            recoilRng = new XorShiftRng(owner.Session.Seed ^ unchecked((int)0xA341316C));
             character = GetComponent<CharacterController>();
             character.height = 1.8f;
             character.radius = 0.4f;
@@ -187,15 +192,17 @@ namespace Telerobot.Game.Runtime
 
         private void UpdateCombat(PlayerInputFrame frame)
         {
-            if (frame.FirePressed) Shoot();
+            fireCooldownRemaining = Mathf.Max(0f, fireCooldownRemaining - Time.deltaTime);
+            if ((frame.FireHeld || frame.FirePressed) && fireCooldownRemaining <= 0f && Shoot())
+                fireCooldownRemaining = weapon.FireIntervalSeconds;
             if (frame.ReloadPressed) CombatRules.BeginReload(State.Ammo, weapon.ReloadSeconds);
             if (frame.GrenadePressed) ThrowGrenade();
             if (frame.InteractPressed) game.TryResupply(transform.position);
         }
 
-        private void Shoot()
+        private bool Shoot()
         {
-            if (!CombatRules.TryFire(State.Ammo)) return;
+            if (!CombatRules.TryFire(State.Ammo)) return false;
             TriggerShotFeedback();
             var ray = new Ray(viewCamera.transform.position, viewCamera.transform.forward);
             Physics.SyncTransforms();
@@ -209,7 +216,7 @@ namespace Telerobot.Game.Runtime
                     ApplyBullet(hit);
                     break;
                 }
-                return;
+                return true;
             }
 
             var zombieHits = 0;
@@ -227,14 +234,19 @@ namespace Telerobot.Game.Runtime
                 zombieHits++;
                 if (zombieHits >= 2) break;
             }
+            return true;
         }
 
         private void TriggerShotFeedback()
         {
             shotSequence++;
-            recoilPitchOffset -= weaponPresentation.recoilPitchDegrees;
-            recoilYawOffset += (shotSequence & 1) == 0
-                ? -weaponPresentation.recoilYawDegrees : weaponPresentation.recoilYawDegrees;
+            if (recoilRng == null) recoilRng = new XorShiftRng(shotSequence);
+            LastRecoilPitchDegrees = Mathf.Lerp(weaponPresentation.recoilPitchMinimumDegrees,
+                weaponPresentation.recoilPitchMaximumDegrees, recoilRng.NextFloat());
+            LastRecoilYawDegrees = (recoilRng.NextFloat() * 2f - 1f) *
+                weaponPresentation.recoilYawMaximumDegrees;
+            recoilPitchOffset -= LastRecoilPitchDegrees;
+            recoilYawOffset += LastRecoilYawDegrees;
             if (combatAudio != null && fireSound != null)
                 combatAudio.PlayOneShot(fireSound, weaponPresentation.fireSoundVolume * PlayerPreferences.EffectsVolume);
             var muzzlePosition = viewCamera.transform.position + viewCamera.transform.forward * 0.62f;

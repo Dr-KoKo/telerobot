@@ -10,6 +10,8 @@ namespace Telerobot.Game.Runtime
         private HealthState health;
 
         public bool IsAlive { get { return health != null && !health.IsDead; } }
+        public bool IsZoneActive { get { return IsAlive; } }
+        public float CurrentHealth { get { return health == null ? 0f : health.Current; } }
 
         public void Initialize(MvpGameController owner, MedicalConfig definition)
         {
@@ -32,6 +34,7 @@ namespace Telerobot.Game.Runtime
             CombatRules.ApplyDamage(health, damage);
             if (!health.IsDead) return;
             game.Emit("medical_robot_destroyed");
+            game.Emit("medical_zone_disabled");
             Destroy(gameObject);
         }
     }

@@ -44,6 +44,82 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator ContinuousSpawningStopsAtAliveCapAndResumesAfterKill()
+        {
+            foreach (var robot in Game.Robots) robot.enabled = false;
+            for (var frame = 0; frame < 20 && Game.AliveZombies.Count < Game.MaxAliveConcurrent; frame++)
+            {
+                yield return null;
+                foreach (var zombie in Game.AliveZombies) zombie.enabled = false;
+                Assert.That(Game.AliveZombies.Count, Is.LessThanOrEqualTo(Game.MaxAliveConcurrent));
+            }
+            Assert.That(Game.AliveZombies.Count, Is.EqualTo(Game.MaxAliveConcurrent));
+            Assert.That(Game.SpawnedCount, Is.LessThan(Game.TotalSpawnCount));
+
+            var spawnedBeforeKill = Game.SpawnedCount;
+            Game.AliveZombies[0].ReceiveDamage(99999f, "test");
+            yield return null;
+            foreach (var zombie in Game.AliveZombies) zombie.enabled = false;
+            Assert.That(Game.SpawnedCount, Is.GreaterThan(spawnedBeforeKill));
+            Assert.That(Game.AliveZombies.Count, Is.LessThanOrEqualTo(Game.MaxAliveConcurrent));
+        }
+
+        [UnityTest]
+        public IEnumerator SpawnGroupStartsOnDistinctApproachPositions()
+        {
+            for (var frame = 0; frame < 10 && Game.AliveZombies.Count < 3; frame++) yield return null;
+            Assert.That(Game.AliveZombies.Count, Is.GreaterThanOrEqualTo(3));
+            var group = Game.AliveZombies.Take(3).ToArray();
+            for (var left = 0; left < group.Length; left++)
+            for (var right = left + 1; right < group.Length; right++)
+            {
+                var delta = group[left].transform.position - group[right].transform.position;
+                delta.y = 0f;
+                Assert.That(delta.magnitude, Is.GreaterThan(0.25f));
+            }
+            Assert.That(group.Select(item => item.CurrentNavigationPoint.x).Distinct().Count(), Is.GreaterThan(1));
+        }
+
+        [UnityTest]
+        public IEnumerator NavigationWaypointIsTraversedWithoutRemoteBaseDamage()
+        {
+            Game.SpawnAllNowForTests();
+            foreach (var robot in Game.Robots) robot.enabled = false;
+            var target = Game.AliveZombies.First(item => item.Type == ZombieType.Runner);
+            foreach (var other in Game.AliveZombies.ToArray())
+                if (other != target) other.ReceiveDamage(99999f, "test");
+
+            var waypoint = target.CurrentNavigationPoint;
+            target.transform.position = waypoint + Vector3.forward * 1.2f;
+            var distanceBefore = Vector3.Distance(target.transform.position, waypoint);
+            var baseHealthBefore = Game.BaseState.Health.Current;
+            yield return null;
+
+            Assert.That(Game.BaseState.Health.Current, Is.EqualTo(baseHealthBefore));
+            Assert.That(Vector3.Distance(target.transform.position, waypoint), Is.LessThan(distanceBefore));
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeAutonomouslyDamagesNearbyZombie()
+        {
+            Game.SpawnAllNowForTests();
+            var target = Game.AliveZombies.First(item => item.Type == ZombieType.Runner);
+            foreach (var other in Game.AliveZombies.ToArray())
+                if (other != target) other.ReceiveDamage(99999f, "test");
+            target.enabled = false;
+
+            var robot = Game.Robots[0];
+            Game.Robots[1].enabled = false;
+            robot.transform.position = Vector3.zero;
+            target.transform.position = Vector3.forward * 1.5f;
+            Assert.That(robot.Issue(RobotCommand.DefendPosition, RouteId.NorthRoad), Is.True);
+            var healthBefore = target.State.Health.Current;
+            for (var frame = 0; frame < 5 && target.State.Health.Current >= healthBefore; frame++) yield return null;
+
+            Assert.That(target.State.Health.Current, Is.LessThan(healthBefore));
+        }
+
+        [UnityTest]
         public IEnumerator RifleSkipsPlayerColliderAndDamagesFirstVisibleZombie()
         {
             Game.SpawnAllNowForTests();

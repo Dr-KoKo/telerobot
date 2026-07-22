@@ -3,13 +3,15 @@ namespace Telerobot.Game.Core
     public sealed class WarningSystem
     {
         private readonly WarningConfig config;
+        private readonly BaseConfig baseConfig;
         private readonly System.Collections.Generic.Dictionary<string, WarningSeverity> previousBattery =
             new System.Collections.Generic.Dictionary<string, WarningSeverity>();
         private bool previousBase;
 
-        public WarningSystem(WarningConfig config)
+        public WarningSystem(WarningConfig config, BaseConfig baseConfig)
         {
             this.config = config;
+            this.baseConfig = baseConfig;
         }
 
         public WarningSeverity BatterySeverity(float current, float maximum)
@@ -38,7 +40,7 @@ namespace Telerobot.Game.Core
 
         public bool IsBaseWarning(float current, float maximum)
         {
-            return maximum > 0f && current / maximum <= config.BaseWarningFraction;
+            return maximum > 0f && current / maximum <= baseConfig.WarningFraction;
         }
 
         public bool TryBaseTransition(float current, float maximum, out bool active)

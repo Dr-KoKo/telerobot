@@ -38,6 +38,7 @@ namespace Telerobot.Game.Core
         public Float2 Move;
         public Float2 Look;
         public bool FirePressed;
+        public bool FireHeld;
         public bool ReloadPressed;
         public bool GrenadePressed;
         public bool InteractPressed;
@@ -87,6 +88,7 @@ namespace Telerobot.Game.Core
         public string DataVersion;
         public string SessionId;
         public int Seed;
+        public string SimProfileId;
         public int Phase;
         public float SimTime;
         public string EventName;

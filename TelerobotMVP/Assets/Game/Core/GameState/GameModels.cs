@@ -74,6 +74,9 @@ namespace Telerobot.Game.Core
         public RouteId AssignedRoute;
         public float DisabledElapsed;
         public bool FirstDashUsed;
+        public string CurrentTargetId;
+        public float AttackCooldownRemaining;
+        public float DashCooldownRemaining;
 
         public RobotState(string id, float health, float battery)
         {
@@ -87,8 +90,10 @@ namespace Telerobot.Game.Core
             AssignedRoute = RouteId.NorthRoad;
         }
 
-        public bool CanMove { get { return Mode != RobotMode.Disabled && Mode != RobotMode.Recovery && Health.Current > 0f; } }
+        public bool IsDestroyed { get { return Mode == RobotMode.Destroyed || Health.IsDead; } }
+        public bool CanMove { get { return !IsDestroyed && Mode != RobotMode.Disabled && Mode != RobotMode.Recovery; } }
         public bool CanAttack { get { return CanMove && Mode != RobotMode.ReturnToCharge && Mode != RobotMode.Charging; } }
+        public bool CanCharge { get { return !IsDestroyed && Mode != RobotMode.Disabled && Mode != RobotMode.Recovery; } }
     }
 
     [Serializable]

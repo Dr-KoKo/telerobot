@@ -20,6 +20,9 @@ MonoBehaviour:
   robotDamage: 8
   attackInterval: 1
   attackRange: 1.8
+  pathVariationFraction: 0.4
+  separationRadius: 1.1
+  separationStrength: 1.6
   threatCost: 1
   firstPhase: 1
   targetPriority: 000000000100000002000000

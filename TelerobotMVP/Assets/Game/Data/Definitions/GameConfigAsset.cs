@@ -5,9 +5,8 @@ namespace Telerobot.Game.Data
     public sealed class GameConfigAsset : ScriptableObject
     {
         public float playerMaxHealth;
-        public float baseMaxHealth;
-        [Range(0f, 1f)] public float baseRecoveryFraction;
-        [Range(0f, 1f)] public float baseWarningFraction;
+        public float targetSessionMinimumSeconds;
+        public float targetSessionMaximumSeconds;
         public float fixedStepSeconds;
         public float playerMoveSpeed;
         public float sprintMultiplier;
@@ -21,6 +20,5 @@ namespace Telerobot.Game.Data
         public float cameraCollisionPadding;
         public float jumpHeight;
         public float groundedVelocity;
-        public float minimumSpawnInterval;
     }
 }

@@ -8,6 +8,8 @@ namespace Telerobot.Game.Data
     {
         public string dataVersion;
         public GameConfigAsset game;
+        public BaseConfigAsset baseConfig;
+        public AmmoConfigAsset ammo;
         public WeaponDefinitionAsset weapon;
         public GrenadeDefinitionAsset grenade;
         public BatteryConfigAsset battery;
@@ -21,6 +23,7 @@ namespace Telerobot.Game.Data
         public PlayerSettingsAsset playerSettings;
         public TelemetryConfigAsset telemetry;
         public ValidationConfigAsset validation;
+        public SimPlayerProfileAsset[] simPlayerProfiles;
         public SupplyPointDefinitionAsset[] supplyPoints;
         public ZombieDefinitionAsset[] zombies;
         public PhaseDefinitionAsset[] phases;

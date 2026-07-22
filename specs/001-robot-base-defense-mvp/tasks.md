@@ -68,21 +68,21 @@
 
 ## Phase 4: User Story 2 - 해태 로봇 지휘와 배터리 전략 (Priority: P1)
 
-**Goal**: 정확히 네 가지 개별 로봇 명령과 활동별 배터리 소모, 저전력 페널티, 고갈·회복·자동 충전 복귀를 제공한다.
+**Goal**: 정확히 세 가지 개별 로봇 명령과 활동별 배터리 소모, 저전력 페널티, 고갈·회복·기지 자동 충전을 제공한다.
 
-**Independent Test**: 명령별 상태와 0.3/0.8/2.5초당 소모, Low Power/Critical, 0에서 Disabled, 5초 후 0.5/초 Recovery, 배터리 5에서 자동 복귀, 충전 4/초를 검증한다.
+**Independent Test**: 명령 메뉴가 3개만 제공되는지, 명령별 상태와 0.3/0.8/2.5초당 소모, Low Power/Critical, 0에서 Disabled, 5초 후 0.5/초 Recovery, 배터리 5에서 자동 복귀, 기지 자동 충전 4/초와 위협 감지 시 Engage 전환을 검증한다.
 
 ### Tests for User Story 2
 
 - [X] T025 [P] [US2] Add battery bands, drain, charge, Ripper drain, and recovery state-machine EditMode tests in `TelerobotMVP/Assets/Tests/EditMode/BatteryTests.cs`
-- [X] T026 [P] [US2] Add exactly-four command contract and charge-flow PlayMode tests in `TelerobotMVP/Assets/Tests/PlayMode/RobotCommandPlayModeTests.cs`
+- [X] T026 [P] [US2] Add exactly-three command contract and base auto-charge PlayMode tests in `TelerobotMVP/Assets/Tests/PlayMode/RobotCommandPlayModeTests.cs`
 
 ### Implementation for User Story 2
 
 - [X] T027 [US2] Implement battery bands, activity drain, penalties, charging, disabled hold, recovery, and return threshold in `TelerobotMVP/Assets/Game/Core/Battery/BatterySystem.cs`
-- [X] T028 [US2] Implement exactly-four robot commands and command state transitions in `TelerobotMVP/Assets/Game/Core/Robots/RobotCommandSystem.cs`
+- [X] T028 [US2] Implement exactly-three robot commands and command state transitions in `TelerobotMVP/Assets/Game/Core/Robots/RobotCommandSystem.cs`
 - [X] T029 [US2] Integrate commands, charging-station movement, disabled/recovery behavior, and combat lockout in `TelerobotMVP/Assets/Game/Runtime/Robots/HaetaeRobotActor.cs`
-- [X] T030 [US2] Implement robot selection, route targeting, and four-command quick menu in `TelerobotMVP/Assets/Game/Runtime/HUD/RobotCommandMenu.cs`
+- [X] T030 [US2] Implement robot selection, route targeting, and three-command quick menu in `TelerobotMVP/Assets/Game/Runtime/HUD/RobotCommandMenu.cs`
 
 **Checkpoint**: US2 battery decisions create an observable charge-versus-defense tradeoff without breaking US1.
 
@@ -325,3 +325,75 @@ Task T015: PhaseOnePlayModeTests.cs에 장면 통합 테스트 작성
 - 테스트는 대응 구현보다 먼저 작성하고 실패를 확인한 뒤 구현한다.
 - 완료된 작업은 즉시 `[X]`로 갱신한다.
 - 최종 아트·보이스는 테스트 전제조건이 아니며 그레이박스·플레이스홀더를 사용한다.
+
+---
+
+## Phase 17: Convergence
+
+**Purpose**: 2026-07-03 설계 문서 정합화에서 확정된 규칙과 현재 Unity 구현 사이의 남은 차이를 닫는다.
+
+- [X] T098 CRITICAL: Implement data-driven per-phase spawn schedules, group sizes, concurrent-alive caps, pause/resume behavior, and deterministic runtime/simulation coverage per FR-055 and Constitution IV (partial)
+- [X] T099 CRITICAL: Add the distinct Haetae `Destroyed` state, one-shot damage/destruction telemetry, command/move/attack/charge lockout, rubble presentation, and next-phase HP/battery restoration with EditMode and PlayMode coverage per FR-079, FR-081, and Constitution V (missing)
+- [X] T100 CRITICAL: Implement `SimPlayerProfile` assets for Novice/Baseline/Skilled and a fixed-step player/enemy simulation that can produce spec-compliant victory or defeat, evaluate SC-001..004 with the Baseline profile, and prove identical telemetry for the same seed × profile per Constitution IV (partial)
+- [X] T101 Implement an individual/select-all robot selection model, input/UI toggle, per-robot command fan-out, destroyed-robot rejection, and PlayMode verification for same-command and divergent-command flows per FR-087 (missing)
+- [X] T102 Replace fixed Phase 3 composition and modulo route assignment with data-driven composition ranges, special minimums, trim order, route weights, and per-zombie-type route weights; require Bruiser ≥2, Ripper ≥3, and South-Tunnel Ripper count greater than other routes per FR-034, FR-053, and the threat-budget assumption (contradicts)
+- [X] T103 Remove the medical robot from active zombie target candidates, implement incidental adjacent damage while zombies pursue higher-priority targets, and verify destruction disables the medical zone without regeneration per FR-107 and the medical-targeting assumption (contradicts)
+- [X] T104 Change upgrade offering to accept `selectedUpgradeIds`, exclude already-selected upgrades from later 3-choice offers, preserve the global nine-definition pool, prevent stacking, and add second-reward regression coverage per FR-112, FR-115, and the upgrade-offer assumption (partial)
+- [X] T105 Introduce data-driven `RobotAttackDef` dash/bite damage, cooldowns, ranges, first-dash-per-engagement upgrade behavior, and kill-time validation for Runner/Bruiser bands per FR-074..076 and plan: RobotAttackDef decision (partial)
+- [X] T106 Add `AmmoConfig` ownership for start reserve 120, reserve cap 240, FullReserve policy, 1.5-second supply interaction, cooldown, and PhaseResetOnly grenades; replace immediate refill and add safe/risky supply tests per plan: reserve-ammo economy (partial)
+- [X] T107 Expand `TelemetryConfig` and telemetry records with required fields including `simProfileId`, sim-clock sampling cadences, threshold/periodic battery policy, `RobotDamaged`/single `RobotDestroyed` events, and deterministic sample-stream tests per Constitution IV and Constitution VIII (partial)
+- [X] T108 Refactor configuration ownership so `GameConfig` is session-level, base HP/recovery/warning live only in `BaseConfig`, weapon magazine/reload remain in `WeaponDef`, reserve economy lives in `AmmoConfig`, and mapper validation rejects duplicate or mismatched mirrors per Constitution II and plan: single-source-of-truth decision (partial)
+- [X] T109 Reconcile the approved Unity editor baseline across `ProjectVersion.txt`, plan, research, quickstart, README, and task records, keeping the validated version explicit and rerunning the full Unity test/build smoke suite per plan: Unity editor baseline (contradicts)
+
+---
+
+## Phase 18: Runtime Crowd and Robot Combat Fixes
+
+**Purpose**: 묶음 스폰 이후 발생한 좀비 중첩과 경유지 공격 오류를 제거하고 해태 전투 동작을 회귀 검증한다.
+
+- [X] T110 Fix navigation waypoints being treated as attackable base targets so zombies traverse their route before damaging real targets and Haetae can acquire approaching enemies.
+- [X] T111 Add data-driven per-zombie route variation, separated spawn placement, local separation steering, and visible Haetae melee impact feedback.
+- [X] T112 Make ReturnToBase complete into DefendPosition, add PlayMode coverage for separated groups, waypoint traversal, autonomous Haetae attacks, and rerun the full Unity test/build smoke suite.
+
+---
+
+## Phase 19: Haetae Formation and Base Defense
+
+**Purpose**: 두 해태의 중첩을 방지하고 `거점 사수` 명령이 기지 중심 방어 역할을 유지하도록 한다.
+
+- [X] T113 Add data-driven Haetae separation radius/strength, unique formation slots, avoidance steering, and post-move minimum-distance resolution.
+- [X] T114 Make DefendPosition prioritize the same-route zombie closest to the base, enforce a base-centered leash, and return idle defenders to their own rally slots.
+- [X] T115 Add PlayMode regressions for same-position separation, shared-target combat, base-priority acquisition, and leash return; rerun EditMode, PlayMode, Windows build, and standalone smoke.
+
+---
+
+## Phase 20: Difficulty and Rifle Handling
+
+**Purpose**: 첫 외부 플레이 감각에 맞춰 페이즈 압박을 낮추고 기본 소총의 조작감을 보강한다.
+
+- [X] T116 Reduce per-phase zombie composition ranges, spawn group sizes, and concurrent-alive caps while preserving threat budgets and special-zombie minimums.
+- [X] T117 Add data-driven 0.12-second held-fire cadence and per-shot bounded deterministic random recoil.
+- [X] T118 Add EditMode difficulty tuning and PlayMode held-fire/recoil regressions; regenerate balance assets and rerun the full Unity test/build smoke suite.
+
+---
+
+## Phase 21: Barrier Alignment and Haetae Combat Chaining
+
+**Purpose**: 측면 경로 방벽의 시각·충돌 정렬을 바로잡고 해태가 처치 후 가까운 적과 전투를 자연스럽게 이어가도록 한다.
+
+- [X] T119 Align each emergency barrier perpendicular to its route's final base-entry segment, including East Alley and South Tunnel.
+- [X] T120 Keep initial DefendPosition route/base-priority targeting, then allow the nearest valid cross-route follow-up target after a kill without exceeding the defend leash.
+- [X] T121 Add PlayMode regressions for side-route barrier alignment and post-kill Haetae target chaining; rerun EditMode, PlayMode, Windows build, and standalone smoke.
+
+---
+
+## Phase 22: Stable Resupply and Base Auto-Charging
+
+**Purpose**: 안전 보급지의 간헐적 경계 취소를 제거하고 해태 충전을 기지 기반 자동 흐름으로 단순화한다.
+
+- [X] T122 Use XZ-planar supply range checks and a data-driven 0.75m in-progress exit tolerance; add a PlayMode boundary-drift regression.
+- [X] T123 Add a data-driven 6m base charging radius, automatic charging after ReturnToBase/Recovery, and automatic-charge telemetry.
+- [X] T124 Remove Charge from the robot command enum, data contract, string table, and Tab menu; verify exactly three commands and base auto-charging in EditMode/PlayMode source.
+- [X] T125 Build generated EditMode and PlayMode C# projects with zero warnings/errors and synchronize spec, contracts, quickstart, and README.
+- [X] T126 Rerun Unity EditMode/PlayMode, Windows build, and standalone smoke after Hub-authenticated local licensing: EditMode 51/51, PlayMode 38/38, Windows x64 build success, standalone `TELEROBOT_STANDALONE_SMOKE_READY`, exit code 0 (2026-07-22).
+- [X] T127 Make Charging acquire cross-route base threats, interrupt into Engage, and retain the target across frames; strengthen the PlayMode state-machine regression and compile with zero warnings/errors.

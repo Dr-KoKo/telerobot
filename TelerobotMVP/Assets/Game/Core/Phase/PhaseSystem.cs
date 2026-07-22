@@ -13,9 +13,9 @@ namespace Telerobot.Game.Core
 
     public sealed class PhaseSystem
     {
-        private readonly GameRulesConfig config;
+        private readonly BaseConfig config;
 
-        public PhaseSystem(GameRulesConfig config)
+        public PhaseSystem(BaseConfig config)
         {
             if (config == null) throw new ArgumentNullException("config");
             this.config = config;
@@ -40,7 +40,7 @@ namespace Telerobot.Game.Core
             if (!phase.AllSpawned || phase.AliveCount > 0) return PhaseTransition.None;
 
             phase.Cleared = true;
-            CombatRules.RecoverBase(baseState, config.BasePhaseRecoveryFraction);
+            CombatRules.RecoverBase(baseState, config.PhaseRecoveryFraction);
             if (phase.Number >= 3)
             {
                 session.Result = GameResult.Victory;

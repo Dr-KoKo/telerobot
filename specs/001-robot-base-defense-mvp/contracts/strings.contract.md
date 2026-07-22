@@ -22,7 +22,26 @@
 | `cmd.defend` | 거점 사수 | DefendPosition |
 | `cmd.patrol` | 경로 순찰 | PatrolRoute |
 | `cmd.return` | 기지 복귀 | ReturnToBase |
-| `cmd.charge` | 충전 | Charge |
+
+## Robot selection labels — verbatim
+
+| key | Korean (verbatim) | Trigger |
+|-----|-------------------|---------|
+| `hud.all_robots` | 전체 로봇 | `3` select-all toggle / command-menu selection summary |
+
+## HUD and session labels — verbatim
+
+| key | Korean text |
+|-----|-------------|
+| `hud.base` / `hud.phase` / `hud.player` | 거점 / 페이즈 / 플레이어 |
+| `hud.ammo` / `hud.grenade` | 탄약 / 수류탄 |
+| `hud.routes` / `hud.command` / `hud.target` | 경로 경보 / 로봇 명령 / 대상 경로 |
+| `hud.upgrade` / `hud.ripper` | 업그레이드 선택 / 리퍼 출현 |
+| `hud.victory` / `hud.defeat` | 작전 성공 / 작전 실패 |
+| `hud.pause` / `hud.resume` / `hud.restart` | 일시정지 / 계속하기 / 다시 시작 |
+| `hud.first_person` / `hud.third_person` | 1인칭 / 3인칭 |
+| `hud.headshot` / `hud.low_ammo` / `hud.reloading` | 헤드샷 / 탄약 부족 / 재장전 중 |
+| `hud.resupply` / `hud.safe_supply` / `hud.risky_supply` | 탄약 보급 / 안전 보급지 / 위험 보급지 |
 
 ## Route names (FR-031) — verbatim
 
@@ -72,6 +91,6 @@
 
 ## Acceptance
 
-- [ ] All 8 radio strings present verbatim and byte-exact to the spec.
-- [ ] No player-facing Korean string is hard-coded in a MonoBehaviour/adapter.
-- [ ] Displayed text equals spec text with no paraphrase/translation/shortening.
+- [x] All 8 radio strings present verbatim and byte-exact to the spec.
+- [x] No player-facing Korean string is hard-coded in a MonoBehaviour/adapter.
+- [x] Displayed text equals spec text with no paraphrase/translation/shortening.

@@ -14,7 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.RobotDefinitionAsset
   maxHealth: 300
   moveSpeed: 10
-  attackDamage: 75
-  attackInterval: 1.1
-  detectionRadius: 18
-  attackRange: 1.7
+  dashDamage: 60
+  biteDamage: 40
+  biteCooldownSeconds: 0.6
+  dashCooldownSeconds: 3
+  detectionRadius: 15
+  engageRange: 2
+  separationRadius: 2.2
+  separationStrength: 1.8
+  formationSpacing: 3
+  defendLeashRadius: 14
+  runnerKillTargetMinimumSeconds: 1
+  runnerKillTargetMaximumSeconds: 2
+  bruiserKillTargetMinimumSeconds: 6
+  bruiserKillTargetMaximumSeconds: 10

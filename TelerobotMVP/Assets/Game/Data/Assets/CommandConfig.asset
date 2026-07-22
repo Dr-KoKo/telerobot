@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa95464cc68e0e827a4aeca274d87f4, type: 3}
   m_Name: CommandConfig
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.CommandConfigAsset
-  commands: 00000000010000000200000003000000
+  commands: 000000000100000002000000

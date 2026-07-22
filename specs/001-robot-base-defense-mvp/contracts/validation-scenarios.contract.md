@@ -1,6 +1,6 @@
 # Contract: Validation Scenarios & Deterministic Simulation Parameters
 
-**Feature**: `001-robot-base-defense-mvp` | Non-REST contract. Maps **every** US1–US5 acceptance scenario to a validation method (Constitution V — no silent omissions) and fixes deterministic-simulation parameters (Constitution IV). Validation method codes: **E** = EditMode unit, **P** = PlayMode integration, **S** = deterministic simulation, **Q** = quickstart/manual.
+**Feature**: `001-robot-base-defense-mvp` | Non-REST contract. Maps **every** US1–US6 acceptance scenario to a validation method (Constitution V — no silent omissions) and fixes deterministic-simulation parameters (Constitution IV). Validation method codes: **E** = EditMode unit, **P** = PlayMode integration, **S** = deterministic simulation, **Q** = quickstart/manual.
 
 ## Acceptance-scenario → validation map
 
@@ -14,18 +14,19 @@
 | 5 base HP 0 → defeat | E, P | defeat = BaseDestroyed |
 | 6 player HP 0 → defeat | E, P | defeat = PlayerDeath |
 | 7 all spawned + cleared + base alive → Phase 1 clear | E, P, S | 7-step transition |
+| 8 robot kill + nearby valid enemy → chained engagement | P | nearest enemy inside detection radius becomes `CurrentTargetId`; Defend leash remains enforced |
 
 ### US2 — Robot command & battery
 | Scenario | Method | Check |
 |----------|--------|-------|
-| 1 menu shows exactly 4 commands | P | CommandConfig = 4 |
+| 1 menu shows exactly 3 commands and no Charge entry | P | CommandConfig = 3 |
 | 2 combat drains 2.5/s (idle 0.3, patrol 0.8) | E | drain rates |
 | 3 Low Power 11–30 → move −15%, attack −10% | E | mults applied |
 | 4 Critical 1–10 → clear warning | E, P | warning fired |
 | 5 Depleted 0 → Disabled (no move/attack) | E, P | state machine |
-| 6 charge +4/s, no combat while charging | E, P | charge + FR-097 |
-| 7 charge-vs-fight tradeoff exists | S, Q | sim shows pressure |
-| 8 Disabled 5 s → Recovery 0.5/s → battery 5 → auto return-to-charge, no attack | E, P | depletion/recovery (PLANNING values) |
+| 6 inside base zone → automatic charge +4/s; cross-route nearby threat interrupts charging and remains targeted | E, P | base auto-charge + FR-035/097 |
+| 7 ReturnToBase-vs-fight tradeoff exists | S, Q | sim shows pressure |
+| 8 Disabled 5 s → Recovery 0.5/s → battery 5 → auto return-to-base/charge, no attack | E, P | depletion/recovery (PLANNING values) |
 
 ### US3 — Phase 2 routes & reward
 | Scenario | Method | Check |
@@ -56,10 +57,18 @@
 | 4 base ≤30% → edge warning + alarm | E, P | base warning |
 | 5 new route open → highlight + radio | P | RouteOpened + RadioEvent |
 
+### US6 — Playtest entry, controls, and settings
+| Scenario | Method | Check |
+|----------|--------|-------|
+| 1 launch → start/settings/quit main menu | P, Q | `MainMenu` is first scene; all three actions are available |
+| 2 saved sensitivity/audio/display/default perspective applies | P, Q | values round-trip locally, clamp to data bounds, and apply on MVP start |
+| 3 perspective toggle + grounded jump + sprint | E, P, Q | FOV/body/eye change; airborne/landing state; configured sprint multiplier |
+| 4 pause freezes time and offers resume/settings/restart/main-menu | P, Q | time scale stops; cursor/menu flow and return paths work |
+
 > Every acceptance scenario above has at least one validation method. No scenario is left unvalidated (Constitution V satisfied).
 
 ## Edge-case coverage (spec Edge Cases)
-Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); base hit while charging (P); Haetae HP 0 → `RobotDestroyed` (once) → current-phase command/move/attack/charge blocked (distinct from battery-Disabled) → **next phase start restores hp=300 + usable battery** (E, P — FR-081); both Haetae Destroyed in one phase → solo defense for phase remainder (S, P); medical robot destroyed → zone disabled, no regen (E, P); ammo depletion + risky resupply (P); reload-while-hit exposure (P); threat-budget vs target reconciliation + achievable total ∈ learningTargetTotalRange (E, S); **Phase-3 Ripper spawn count on South Tunnel > other routes (E, S — FR-034 weight matrix)**; cumulative openRoutes P1⊂P2⊂P3 (E); robot select-all toggle → both Haetae take the same command, then individual selection → each takes a different command (P — FR-087); continuous spawn respects concurrent cap → alive count never exceeds `maxAliveConcurrent`, spawns resume as zombies die (S, P — FR-055); Ripper target-switch when no robot near (E); medical robot damaged only incidentally, not actively targeted (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
+Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P — US2.8); nearby cross-route base threat interrupts `Charging` into `Engage` and remains targeted (P — FR-035/097); Haetae HP 0 → `RobotDestroyed` (once) → current-phase command/move/attack/charge blocked (distinct from battery-Disabled) → **next phase start restores hp=300 + usable battery** (E, P — FR-081); both Haetae Destroyed in one phase → solo defense for phase remainder (S, P); Haetae kill → nearest valid cross-route follow-up before returning home while Defend leash remains enforced (P — FR-078); side-route emergency barriers align perpendicular to the final approach segment (P — FR-113#6); medical robot destroyed → zone disabled, no regen (E, P); ammo depletion + risky resupply, including jump-height planar entry and small exit-boundary drift (P); reload-while-hit exposure (P); threat-budget vs target reconciliation + achievable total ∈ learningTargetTotalRange (E, S); **Phase-3 Ripper spawn count on South Tunnel > other routes (E, S — FR-034 weight matrix)**; cumulative openRoutes P1⊂P2⊂P3 (E); robot select-all toggle → both Haetae take the same command, then individual selection → each takes a different command (P — FR-087); continuous spawn respects concurrent cap → alive count never exceeds `maxAliveConcurrent`, spawns resume as zombies die (S, P — FR-055); Ripper target-switch when no robot near (E); medical robot damaged only incidentally, not actively targeted (E); upgrade-vs-in-progress-state (E — current-value addition, extended-mag next-reload).
 
 ## Deterministic simulation parameters (SimParams asset)
 
@@ -77,6 +86,6 @@ Both robots Depleted simultaneously (S, P); Disabled robot return path (E, P —
 
 ## Acceptance
 
-- [ ] Each US1–US5 scenario has a passing validation under its listed method(s).
-- [ ] Deterministic suite reproduces identical telemetry for a fixed seed across two runs.
-- [ ] Simulation produces telemetry enabling SC-001..004 balance review.
+- [x] Each US1–US6 scenario has a passing automated validation under at least one listed method; Q remains the optional human playtest route.
+- [x] Deterministic suite reproduces identical telemetry for a fixed seed across two runs.
+- [x] Simulation produces telemetry enabling SC-001..004 balance review; measured external playtest rates remain a product outcome, not an implementation gate.

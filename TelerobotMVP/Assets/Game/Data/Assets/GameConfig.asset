@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: GameConfig
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.GameConfigAsset
   playerMaxHealth: 100
-  baseMaxHealth: 1000
-  baseRecoveryFraction: 0.15
-  baseWarningFraction: 0.3
+  targetSessionMinimumSeconds: 600
+  targetSessionMaximumSeconds: 900
   fixedStepSeconds: 0.016666668
   playerMoveSpeed: 8
   sprintMultiplier: 1.5
@@ -29,4 +28,3 @@ MonoBehaviour:
   cameraCollisionPadding: 0.08
   jumpHeight: 1.35
   groundedVelocity: -2
-  minimumSpawnInterval: 1.2

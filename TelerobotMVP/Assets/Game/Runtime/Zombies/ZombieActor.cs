@@ -13,6 +13,7 @@ namespace Telerobot.Game.Runtime
         private Vector3[] waypoints;
         private int waypointIndex;
         private float nextAttack;
+        private float nextIncidentalMedicalAttack;
         private float hitFlashUntil;
         private float deathElapsed;
         private bool dead;
@@ -24,6 +25,11 @@ namespace Telerobot.Game.Runtime
         public ZombieState State { get; private set; }
         public ZombieType Type { get { return State.Type; } }
         public float VisualHeight { get { return transform.localScale.y * 2f; } }
+        public float SeparationRadius { get { return config == null ? 1f : config.SeparationRadius; } }
+        public Vector3 CurrentNavigationPoint
+        {
+            get { return waypoints != null && waypointIndex < waypoints.Length ? waypoints[waypointIndex] : transform.position; }
+        }
         public bool HitFlashActive { get { return !dead && Time.time < hitFlashUntil; } }
         public bool DeathFeedbackActive { get { return dead; } }
         public Color CurrentVisualColor { get { return visualRenderer == null ? Color.clear : visualRenderer.material.color; } }
@@ -55,23 +61,46 @@ namespace Telerobot.Game.Runtime
             }
             if (game == null || game.IsFinished) return;
             var target = ResolveTarget();
-            if (target.TargetTransform == null) return;
-            var distance = Vector3.Distance(transform.position, target.TargetTransform.position);
-            if (distance <= config.AttackRange)
+            if (!target.HasTarget) return;
+            TryIncidentalMedicalDamage(target);
+            var targetPosition = target.Position;
+            var distance = Vector3.Distance(transform.position, targetPosition);
+            if (!target.IsNavigationPoint && distance <= config.AttackRange)
             {
                 Attack(target);
                 return;
             }
-            transform.position = Vector3.MoveTowards(transform.position, target.TargetTransform.position, config.MoveSpeed * Time.deltaTime);
-            var direction = target.TargetTransform.position - transform.position;
+            MoveTowardsTarget(targetPosition, distance);
+        }
+
+        private void MoveTowardsTarget(Vector3 targetPosition, float targetDistance)
+        {
+            var direction = targetPosition - transform.position;
             direction.y = 0f;
-            if (direction.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(direction);
+            if (direction.sqrMagnitude <= 0.0001f) return;
+            var forward = direction.normalized;
+            var movement = forward + game.GetZombieAvoidance(this) * config.SeparationStrength;
+            movement.y = 0f;
+            var progress = Vector3.Dot(movement, forward);
+            if (progress < 0.35f) movement += forward * (0.35f - progress);
+            if (movement.sqrMagnitude <= 0.0001f) movement = forward;
+            movement.Normalize();
+            var step = Mathf.Min(config.MoveSpeed * Time.deltaTime, targetDistance);
+            transform.position += movement * step;
+            transform.rotation = Quaternion.LookRotation(movement);
         }
 
         private RuntimeTarget ResolveTarget()
         {
-            if (game.TryGetBarrier(State.Route, out var barrier))
+            if (game.TryGetBarrier(State.Route, out var barrier) &&
+                Vector3.Distance(transform.position, barrier.transform.position) <= config.AttackRange + 1.5f)
                 return new RuntimeTarget(TargetKind.Base, barrier.transform, null, barrier);
+
+            while (waypointIndex < waypoints.Length &&
+                   Vector3.Distance(transform.position, waypoints[waypointIndex]) < 0.75f)
+                waypointIndex++;
+            if (waypointIndex < waypoints.Length)
+                return RuntimeTarget.Navigation(waypoints[waypointIndex]);
 
             var candidates = new List<TargetCandidate>
             {
@@ -80,26 +109,16 @@ namespace Telerobot.Game.Runtime
             };
             foreach (var robot in game.Robots)
                 candidates.Add(new TargetCandidate(robot.State.Id, TargetKind.Robot, Vector3.Distance(transform.position, robot.transform.position), !robot.State.Health.IsDead));
-            if (game.MedicalActor != null)
-                candidates.Add(new TargetCandidate("medical", TargetKind.Robot, Vector3.Distance(transform.position, game.MedicalActor.transform.position), game.MedicalActor.IsAlive));
 
             var selected = TargetingSystem.Select(config, candidates);
             if (selected == null) return new RuntimeTarget(TargetKind.Base, game.BaseTransform, null, null);
             if (selected.Kind == TargetKind.Player) return new RuntimeTarget(selected.Kind, game.PlayerActor.transform, null, null);
             if (selected.Kind == TargetKind.Robot)
             {
-                if (selected.Id == "medical")
-                    return new RuntimeTarget(selected.Kind, game.MedicalActor.transform, null, null, game.MedicalActor);
                 var robot = game.Robots.Find(item => item.State.Id == selected.Id);
                 return new RuntimeTarget(selected.Kind, robot.transform, robot, null);
             }
 
-            if (waypointIndex < waypoints.Length)
-            {
-                var point = waypoints[waypointIndex];
-                if (Vector3.Distance(transform.position, point) < 0.6f) waypointIndex++;
-                if (waypointIndex < waypoints.Length) return new RuntimeTarget(TargetKind.Base, game.RouteTargets[State.Route][waypointIndex], null, null);
-            }
             return new RuntimeTarget(TargetKind.Base, game.BaseTransform, null, null);
         }
 
@@ -119,10 +138,16 @@ namespace Telerobot.Game.Runtime
                 target.Robot.ReceiveZombieHit(config.RobotDamage, Type == ZombieType.Ripper);
                 if (Type == ZombieType.Ripper) game.NotifyRipperAttack(target.Robot);
             }
-            else if (target.Medical != null)
-            {
-                target.Medical.ReceiveDamage(config.RobotDamage);
-            }
+        }
+
+        private void TryIncidentalMedicalDamage(RuntimeTarget priorityTarget)
+        {
+            if (game.MedicalActor == null || !game.MedicalActor.IsAlive || !priorityTarget.HasTarget) return;
+            var distance = Vector3.Distance(transform.position, game.MedicalActor.transform.position);
+            if (!MedicalRules.ShouldApplyIncidentalDamage(distance, config.AttackRange, true) ||
+                Time.time < nextIncidentalMedicalAttack) return;
+            nextIncidentalMedicalAttack = Time.time + config.AttackInterval;
+            game.MedicalActor.ReceiveDamage(config.RobotDamage);
         }
 
         public void ReceiveDamage(float amount, string source)
@@ -172,15 +197,32 @@ namespace Telerobot.Game.Runtime
             public Transform TargetTransform;
             public HaetaeRobotActor Robot;
             public BarrierRuntime Barrier;
-            public MedicalRobotActor Medical;
+            public bool IsNavigationPoint;
+            private Vector3 navigationPosition;
+            public bool HasTarget { get { return IsNavigationPoint || TargetTransform != null; } }
+            public Vector3 Position { get { return IsNavigationPoint ? navigationPosition : TargetTransform.position; } }
 
-            public RuntimeTarget(TargetKind kind, Transform targetTransform, HaetaeRobotActor robot, BarrierRuntime barrier, MedicalRobotActor medical = null)
+            public RuntimeTarget(TargetKind kind, Transform targetTransform, HaetaeRobotActor robot, BarrierRuntime barrier)
             {
                 Kind = kind;
                 TargetTransform = targetTransform;
                 Robot = robot;
                 Barrier = barrier;
-                Medical = medical;
+                IsNavigationPoint = false;
+                navigationPosition = Vector3.zero;
+            }
+
+            public static RuntimeTarget Navigation(Vector3 position)
+            {
+                return new RuntimeTarget
+                {
+                    Kind = TargetKind.Base,
+                    TargetTransform = null,
+                    Robot = null,
+                    Barrier = null,
+                    IsNavigationPoint = true,
+                    navigationPosition = position
+                };
             }
         }
     }

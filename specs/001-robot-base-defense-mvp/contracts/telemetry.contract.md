@@ -16,9 +16,11 @@ Per Constitution VIII, every event MUST include:
 | `phase` | 1/2/3, or `null`/`session` for session-level events |
 | `timestamp` / `simTime` | wall time (runtime) or sim clock (sim) |
 
-## Constitution minimum event set (MUST emit)
+## Required event set (Constitution VIII + recorded feature exception)
 
-`session_started`, `session_ended`, `phase_started`, `phase_cleared`, `phase_failed`, `zombie_spawned`, `zombie_killed`, `base_damaged`, `player_damaged`, `player_died`, `robot_battery_changed`, `robot_charge_commanded`, `robot_disabled`, `ripper_attacked_robot`, `upgrade_selected`, `route_pressure_sampled`, `simulation_run_completed`.
+`session_started`, `session_ended`, `phase_started`, `phase_cleared`, `phase_failed`, `zombie_spawned`, `zombie_killed`, `base_damaged`, `player_damaged`, `player_died`, `robot_battery_changed`, `robot_auto_charge_started`, `robot_disabled`, `ripper_attacked_robot`, `upgrade_selected`, `route_pressure_sampled`, `simulation_run_completed`.
+
+Constitution VIII still names `robot_charge_commanded`. The user-authorized 2026-07-22 removal of the manual Charge command makes that identifier semantically false, so this feature replaces it one-for-one with `robot_auto_charge_started`. The exception rationale, impact, and follow-up are recorded in `plan.md` Complexity Tracking; the constitution itself is intentionally unchanged pending separate approval. Consumers MUST count charge starts from the replacement event and MUST NOT sum both names.
 
 ## Spec-specific events / payloads (MUST emit for this MVP)
 
@@ -33,7 +35,7 @@ Per Constitution VIII, every event MUST include:
 | `robot_disabled` | robotId | robot Depleted count (count of events) |
 | `robot_destroyed` | robotId, phase | Haetae lost to HP-0 (FR-081; distinct from battery Depleted); emitted **once** per destruction; next-phase restore is not re-emitted here |
 | `medical_robot_destroyed` | phase, simTime | Phase-3 rhythm change; zone lost, no regen (FR-107) |
-| `robot_charge_commanded` | robotId | Charge command count |
+| `robot_auto_charge_started` | robotId | Base-zone automatic charge starts |
 | `ripper_attacked_robot` | robotId, batteryDrained=5 | Ripper hits on robots |
 | `upgrade_selected` | upgradeId, rewardStep | upgrade choices |
 | `grenade_used` | center, affectedCount | grenade usage |
@@ -60,7 +62,7 @@ Sampled/continuous events MUST have a defined, **sim-clock-based** cadence (neve
 
 ## Acceptance
 
-- [ ] All constitution-minimum events emit with required fields.
-- [ ] Defeat reason distinguishes base-destroyed vs player-death (supports SC-012).
-- [ ] Sim run writes a telemetry file keyed by `seed + simProfileId + dataVersion`; re-running the same triple reproduces it byte-for-byte.
-- [ ] `robot_destroyed` / `medical_robot_destroyed` emit once per destruction; FR-081 next-phase restore is observable in state, not a duplicate destroy event.
+- [x] All required events emit with required fields, applying the recorded `robot_charge_commanded` → `robot_auto_charge_started` substitution.
+- [x] Defeat reason distinguishes base-destroyed vs player-death (supports SC-012).
+- [x] Sim run writes a telemetry file keyed by `seed + simProfileId + dataVersion`; re-running the same triple reproduces it byte-for-byte.
+- [x] `robot_destroyed` / `medical_robot_destroyed` emit once per destruction; FR-081 next-phase restore is observable in state, not a duplicate destroy event.

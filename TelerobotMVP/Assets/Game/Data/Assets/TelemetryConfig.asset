@@ -24,7 +24,7 @@ MonoBehaviour:
   - player_damaged
   - player_died
   - robot_battery_changed
-  - robot_charge_commanded
+  - robot_auto_charge_started
   - robot_disabled
   - ripper_attacked_robot
   - upgrade_selected
@@ -38,6 +38,7 @@ MonoBehaviour:
   - barrier_destroyed
   - medical_heal_applied
   - medical_robot_destroyed
+  - robot_damaged
   - robot_destroyed
   - base_warning
   - battery_warning
@@ -51,3 +52,15 @@ MonoBehaviour:
   - session_restarted
   - returned_to_main_menu
   sinkFolder: Telerobot/Telemetry
+  requiredFields:
+  - buildVersion
+  - dataVersion
+  - sessionId
+  - seed
+  - simProfileId
+  - phase
+  - simTime
+  sampleIntervalSeconds: 1
+  routePressureSampleIntervalSeconds: 2
+  batteryEmitPolicy: 3
+  batteryEmitIntervalSeconds: 1

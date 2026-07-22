@@ -35,7 +35,7 @@
 - 검증 결과(2026-06-27): 모든 항목 통과.
   - 구현 세부(엔진/언어/렌더링/네트워킹/플랫폼)는 명세 모두에서 의도적으로 배제됨 — 명세 상단 "범위 규칙" 및 FR 전반에서 WHAT/WHY만 기술.
   - [NEEDS CLARIFICATION] 마커 없음 — 모호 지점(Disabled 로봇 회복, 로봇 개별 지휘, 순찰 대상 지정, 위협 예산 vs 마릿수, 수류탄 동작 등)은 Assumptions 섹션에 합리적 기본값으로 문서화.
-  - 모든 수치 요구사항(데미지/HP/배터리/소모율 등)은 테스트 가능한 합격 시나리오(US1~US5)와 Success Criteria(SC-001~SC-031)로 검증 가능.
+  - 모든 수치 요구사항(데미지/HP/배터리/소모율 등)은 테스트 가능한 합격 시나리오(US1~US6)와 Success Criteria(SC-001~SC-031)로 검증 가능.
 - 외부 리뷰 반영(2026-06-27, 다중 에이전트 검증 워크플로): 10개 지적 중 사실/심각도를 검증한 뒤 다음을 명세에 반영함.
   - **반영(실질)**: ① 업그레이드 즉시 체감 vs 메디컬 업그레이드 충돌 → FR-115 재서술(대상 유닛이 존재하는 가장 가까운 페이즈에서 체감, 응급 회복 프로토콜은 Phase 3 체감, 9후보 풀 유지). ② Disabled→Recovery 잠정 기본값 + US2 합격 시나리오 8 추가. ③ 메디컬 로봇 "공격 안 함" 고정(Assumption). ④ 업그레이드별 세부 적용 규칙(돌진/방벽/관통탄/고효율 배터리) 추가. ⑤ 배터리 상태 구간 vs 경보 임계값 분리 명확화. ⑥ 위협 예산 = 하드 상한, 충돌 시 러너 수 축소 규칙. ⑦ 최소 전투 HUD를 P1로 태깅(FR-120a).
   - **수치는 유지(원본 입력 충실)**: 위협 예산/마릿수, 배터리 구간(11~30/1~10), 경보 임계값(25%/10%), 무전 문구(FR-130) 등은 권한 있는 입력의 verbatim 값이라 변경하지 않고 의미만 명확화함. 리뷰의 일부 제안(FR-018 SHOULD 강등, FR-130 단축형 교체, 배터리 5단계 신설, Phase 1 풀에서 후보 제거)은 입력에서 벗어나므로 미채택.
@@ -50,3 +50,8 @@
   - [x] **FR-079/FR-081** 해태 로봇 9번째 상태 `Destroyed`(HP 0) — 현재 페이즈 잔해·명령/이동/공격/충전 불가, 다음 페이즈 시작 시 HP 300 복원 (data-model RobotState/상태머신, commands-events, telemetry `robot_destroyed`, validation·quickstart).
   - [x] **FR-087** 로봇 개별 선택 + 전체 선택 토글(둘 다 MUST) — 명령은 로봇 단위 적용, 전체 선택은 per-robot fan-out (commands-events `ToggleSelectAllRobots`, CommandConfig, quickstart 조작, validation PlayMode 케이스).
   - [x] 업그레이드 제시(exclude-selected·no-stack)·배터리 경고 문구·메디컬 표적·Phase-3 브루저 ≥2 clarification 반영(Session 2026-07-03 / Assumptions).
+- **구현 정합성 재검증(2026-07-22)**:
+  - [x] 현재 구현의 시작 화면·저장 설정·일시정지·1인칭/3인칭·점프·달리기를 US6 및 FR-007~010C에 반영하고 validation contract에 수용 시나리오를 매핑함.
+  - [x] 해태 명령은 정확히 3개이며, 자동 충전 중 기지 위협 탐지 시 `Charging → Engage`로 전환하는 규칙을 spec/plan/data-model/contracts/quickstart와 일치시킴.
+  - [x] 수동 Charge 제거로 헌법의 `robot_charge_commanded`와 충돌하는 부분은 헌법/템플릿을 변경하지 않고 plan Complexity Tracking에 명시적 예외와 `robot_auto_charge_started` 대체를 기록함.
+  - [x] Unity `6000.3.20f1` 배치 검증(EditMode 51/51, PlayMode 38/38, Windows build, standalone smoke)을 tasks/quickstart에 반영함.

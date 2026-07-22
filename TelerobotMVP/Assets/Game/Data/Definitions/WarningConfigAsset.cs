@@ -6,6 +6,5 @@ namespace Telerobot.Game.Data
     {
         [Range(0f, 1f)] public float batteryYellowFraction;
         [Range(0f, 1f)] public float batteryRedFraction;
-        [Range(0f, 1f)] public float baseWarningFraction;
     }
 }

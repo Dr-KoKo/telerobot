@@ -8,7 +8,8 @@ namespace Telerobot.Game.Tests
         [Test]
         public void BatteryAndBaseThresholdBoundariesMatchSpec()
         {
-            var warnings = new WarningSystem(TestConfigFactory.Create().Warnings);
+            var config = TestConfigFactory.Create();
+            var warnings = new WarningSystem(config.Warnings, config.Base);
             Assert.That(warnings.BatterySeverity(25f, 100f), Is.EqualTo(WarningSeverity.None));
             Assert.That(warnings.BatterySeverity(24.9f, 100f), Is.EqualTo(WarningSeverity.Yellow));
             Assert.That(warnings.BatterySeverity(10f, 100f), Is.EqualTo(WarningSeverity.Yellow));

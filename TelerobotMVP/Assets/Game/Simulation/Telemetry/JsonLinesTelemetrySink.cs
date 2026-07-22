@@ -13,7 +13,7 @@ namespace Telerobot.Game.Simulation
         {
             "session_started", "session_ended", "phase_started", "phase_cleared", "phase_failed",
             "zombie_spawned", "zombie_killed", "base_damaged", "player_damaged", "player_died",
-            "robot_battery_changed", "robot_charge_commanded", "robot_disabled", "ripper_attacked_robot",
+            "robot_battery_changed", "robot_auto_charge_started", "robot_disabled", "ripper_attacked_robot",
             "upgrade_selected", "route_pressure_sampled", "simulation_run_completed"
         };
     }
@@ -56,6 +56,8 @@ namespace Telerobot.Game.Simulation
             Append(builder, "dataVersion", record.DataVersion, false);
             Append(builder, "sessionId", record.SessionId, false);
             Append(builder, "seed", record.Seed.ToString(CultureInfo.InvariantCulture), false, false);
+            if (record.SimProfileId == null) builder.Append(",\"simProfileId\":null");
+            else Append(builder, "simProfileId", record.SimProfileId, false);
             Append(builder, "phase", record.Phase.ToString(CultureInfo.InvariantCulture), false, false);
             Append(builder, "simTime", record.SimTime.ToString("0.000", CultureInfo.InvariantCulture), false, false);
             Append(builder, "event", record.EventName, false);

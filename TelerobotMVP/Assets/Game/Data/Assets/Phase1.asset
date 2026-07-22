@@ -16,6 +16,34 @@ MonoBehaviour:
   threatBudget: 40
   targetDurationSeconds: 150
   openRoutes: 00000000
-  runnerTarget: 30
-  bruiserTarget: 0
-  ripperTarget: 0
+  newlyOpenedRoute: 0
+  runnerCount:
+    Min: 18
+    Max: 24
+  bruiserCount:
+    Min: 0
+    Max: 0
+  ripperCount:
+    Min: 0
+    Max: 0
+  learningTotal:
+    Min: 18
+    Max: 24
+  runnerMinimum: 0
+  bruiserMinimum: 0
+  ripperMinimum: 0
+  trimOrder: 0000000001000000
+  phaseStartDelaySeconds: 2
+  groupIntervalSeconds: 4
+  groupSize:
+    Min: 3
+    Max: 4
+  maxAliveConcurrent: 15
+  routeWeights:
+  - Route: 0
+    Weight: 1
+  zombieTypeRouteWeights:
+  - Type: 0
+    Routes:
+    - Route: 0
+      Weight: 1

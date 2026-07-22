@@ -27,10 +27,9 @@ namespace Telerobot.Game.Tests
         [Test]
         public void HaetaeKillTimingFitsRunnerAndBruiserBands()
         {
-            var runnerHits = (int)System.Math.Ceiling(config.GetZombie(ZombieType.Runner).MaxHealth / config.Robot.AttackDamage);
-            var bruiserHits = (int)System.Math.Ceiling(config.GetZombie(ZombieType.Bruiser).MaxHealth / config.Robot.AttackDamage);
-            var runnerSeconds = (runnerHits - 1) * config.Robot.AttackInterval;
-            var bruiserSeconds = (bruiserHits - 1) * config.Robot.AttackInterval;
+            var system = new RobotAttackSystem(config.Robot);
+            var runnerSeconds = system.EstimateKillTime(config.GetZombie(ZombieType.Runner).MaxHealth, 1f);
+            var bruiserSeconds = system.EstimateKillTime(config.GetZombie(ZombieType.Bruiser).MaxHealth, 1f);
             Assert.That(runnerSeconds, Is.InRange(1f, 2f));
             Assert.That(bruiserSeconds, Is.InRange(6f, 10f));
         }
@@ -57,8 +56,12 @@ namespace Telerobot.Game.Tests
             Assert.That(CombatRules.TickReload(ammo, 0.01f), Is.True);
             Assert.That(ammo.Loaded, Is.EqualTo(30));
             ammo.Reserve = 0;
-            CombatRules.Resupply(ammo, 180);
-            Assert.That(ammo.Reserve, Is.EqualTo(180));
+            var ammoConfig = TestConfigFactory.Create().Ammo;
+            CombatRules.Resupply(ammo, ammoConfig);
+            Assert.That(ammo.Reserve, Is.EqualTo(240));
+            Assert.That(ammoConfig.StartReserveAmmo, Is.EqualTo(120));
+            Assert.That(ammoConfig.ResupplyUseSeconds, Is.EqualTo(1.5f));
+            Assert.That(ammoConfig.GrenadeResupplyPolicy, Is.EqualTo(GrenadeResupplyPolicy.PhaseResetOnly));
         }
 
         [Test]

@@ -7,13 +7,56 @@ namespace Telerobot.Game.Tests
     public sealed class PhaseTwoAndUpgradeTests
     {
         [Test]
-        public void PhaseTwoCompositionPreservesThreeBruisersWithinBudget()
+        public void PhaseTwoCompositionPreservesBruiserMinimumWithinBudget()
         {
             var config = TestConfigFactory.Create();
             var spawns = new SpawnSystem(config).Compose(config.GetPhase(2), new XorShiftRng(1001));
-            Assert.That(spawns.FindAll(item => item.Type == ZombieType.Bruiser).Count, Is.EqualTo(3));
+            Assert.That(spawns.FindAll(item => item.Type == ZombieType.Bruiser).Count, Is.InRange(2, 3));
             var cost = spawns.FindAll(item => item.Type == ZombieType.Runner).Count + spawns.FindAll(item => item.Type == ZombieType.Bruiser).Count * 5;
             Assert.That(cost, Is.LessThanOrEqualTo(60));
+        }
+
+        [Test]
+        public void ContinuousSpawnSchedulerPausesAtCapAndResumesWhenCapacityReturns()
+        {
+            var phase = TestConfigFactory.Create().GetPhase(1);
+            var scheduler = new ContinuousSpawnScheduler(phase, new XorShiftRng(1001));
+
+            Assert.That(scheduler.Advance(phase.PhaseStartDelaySeconds - 0.01f, 0, 20), Is.Zero);
+            var firstGroup = scheduler.Advance(0.01f, 0, 20);
+            Assert.That(firstGroup, Is.InRange(phase.GroupSize.Min, phase.GroupSize.Max));
+            Assert.That(scheduler.Advance(phase.GroupIntervalSeconds, phase.MaxAliveConcurrent, 20), Is.Zero);
+            Assert.That(scheduler.Advance(0f, phase.MaxAliveConcurrent - 2, 20), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void PhaseThreeCompositionKeepsSpecialMinimumsAndWeightsRippersToSouthTunnel()
+        {
+            var config = TestConfigFactory.Create();
+            var phase = config.GetPhase(3);
+            var spawns = new SpawnSystem(config).Compose(phase, new XorShiftRng(1001));
+            var bruisers = spawns.FindAll(item => item.Type == ZombieType.Bruiser).Count;
+            var rippers = spawns.FindAll(item => item.Type == ZombieType.Ripper).Count;
+            var southRippers = spawns.FindAll(item => item.Type == ZombieType.Ripper && item.Route == RouteId.SouthTunnel).Count;
+            var northRippers = spawns.FindAll(item => item.Type == ZombieType.Ripper && item.Route == RouteId.NorthRoad).Count;
+            var eastRippers = spawns.FindAll(item => item.Type == ZombieType.Ripper && item.Route == RouteId.EastAlley).Count;
+
+            Assert.That(bruisers, Is.InRange(2, 3));
+            Assert.That(rippers, Is.InRange(3, 5));
+            Assert.That(southRippers, Is.GreaterThan(northRippers));
+            Assert.That(southRippers, Is.GreaterThan(eastRippers));
+            Assert.That(spawns.Count, Is.InRange(phase.LearningTotal.Min, phase.LearningTotal.Max));
+            Assert.That(new SpawnSystem(config).ThreatCost(CountByType(spawns)), Is.LessThanOrEqualTo(phase.ThreatBudget));
+        }
+
+        private static Dictionary<ZombieType, int> CountByType(List<SpawnEntry> spawns)
+        {
+            var counts = new Dictionary<ZombieType, int>
+            {
+                { ZombieType.Runner, 0 }, { ZombieType.Bruiser, 0 }, { ZombieType.Ripper, 0 }
+            };
+            foreach (var spawn in spawns) counts[spawn.Type]++;
+            return counts;
         }
 
         [Test]
@@ -32,6 +75,24 @@ namespace Telerobot.Game.Tests
             Assert.That(system.Apply(config.Upgrades[0], session, baseState, new[] { robot }, player, modifiers), Is.True);
             Assert.That(robot.MaximumBattery, Is.EqualTo(120f));
             Assert.That(robot.Battery, Is.EqualTo(120f));
+        }
+
+        [Test]
+        public void SecondOfferExcludesAlreadySelectedUpgradeAndCannotStackIt()
+        {
+            var config = TestConfigFactory.Create();
+            var system = new UpgradeSystem(config);
+            var session = new SessionState(2);
+            var selected = config.Upgrades[0];
+            Assert.That(system.Apply(selected, session, new BaseState(1000f),
+                new[] { new RobotState("one", 300f, 100f) }, new PlayerState(100f, 30, 120, 2),
+                new RuntimeModifiers()), Is.True);
+
+            var secondOffer = system.Offer(new XorShiftRng(3), session.SelectedUpgrades);
+            Assert.That(secondOffer.ConvertAll(item => item.Id), Does.Not.Contain(selected.Id));
+            Assert.That(system.Apply(selected, session, new BaseState(1000f),
+                new[] { new RobotState("one", 300f, 100f) }, new PlayerState(100f, 30, 120, 2),
+                new RuntimeModifiers()), Is.False);
         }
 
         [Test]

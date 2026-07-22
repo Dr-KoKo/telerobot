@@ -10,6 +10,11 @@ namespace Telerobot.Game.Core
             if (!medicalAlive || config == null || player == null || distance > config.Radius) return 0f;
             return CombatRules.Heal(player, config.HealPerSecond * modifiers.MedicalHealMultiplier * Math.Max(0f, deltaTime));
         }
+
+        public static bool ShouldApplyIncidentalDamage(float distanceToMedical, float attackRange, bool pursuingPriorityTarget)
+        {
+            return pursuingPriorityTarget && distanceToMedical >= 0f && distanceToMedical <= Math.Max(0f, attackRange);
+        }
     }
 
     public static class RipperRules

@@ -13,6 +13,8 @@ namespace Telerobot.Game.Data
         public Vector3 riskySupply;
         public Vector3 medicalAnchor;
         public float supplyInteractionRadius;
+        public float supplyExitTolerance;
+        public float baseChargingRadius;
         public float chargingArrivalRadius;
     }
 }

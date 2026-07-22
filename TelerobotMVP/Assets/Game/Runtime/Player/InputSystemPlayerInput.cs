@@ -43,6 +43,7 @@ namespace Telerobot.Game.Runtime
                 Move = new Float2(moveValue.x, moveValue.y),
                 Look = new Float2(lookValue.x, lookValue.y),
                 FirePressed = attack.WasPressedThisFrame(),
+                FireHeld = attack.IsPressed(),
                 ReloadPressed = keyboard != null && keyboard.rKey.wasPressedThisFrame,
                 GrenadePressed = keyboard != null && keyboard.gKey.wasPressedThisFrame,
                 InteractPressed = (interact != null && interact.WasPressedThisFrame()) || keyboard != null && keyboard.eKey.wasPressedThisFrame,

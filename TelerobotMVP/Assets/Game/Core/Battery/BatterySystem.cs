@@ -14,7 +14,7 @@ namespace Telerobot.Game.Core
 
         public void Drain(RobotState robot, RobotActivity activity, float deltaTime, float combatMultiplier)
         {
-            if (robot == null || robot.Mode == RobotMode.Disabled || robot.Mode == RobotMode.Recovery || robot.Mode == RobotMode.Charging) return;
+            if (robot == null || robot.IsDestroyed || robot.Mode == RobotMode.Disabled || robot.Mode == RobotMode.Recovery || robot.Mode == RobotMode.Charging) return;
             var rate = activity == RobotActivity.Combat
                 ? config.CombatDrainPerSecond * combatMultiplier
                 : activity == RobotActivity.Patrol ? config.PatrolDrainPerSecond : config.IdleDrainPerSecond;
@@ -24,14 +24,14 @@ namespace Telerobot.Game.Core
 
         public void ApplyRipperHit(RobotState robot)
         {
-            if (robot == null) return;
+            if (robot == null || robot.IsDestroyed) return;
             robot.Battery = Math.Max(0f, robot.Battery - config.RipperHitDrain);
             RefreshBandAndMode(robot);
         }
 
         public void TickDisabledRecovery(RobotState robot, float deltaTime)
         {
-            if (robot == null || robot.Battery > 0f && robot.Mode != RobotMode.Recovery) return;
+            if (robot == null || robot.IsDestroyed || robot.Battery > 0f && robot.Mode != RobotMode.Recovery) return;
             if (robot.Mode == RobotMode.Disabled)
             {
                 robot.DisabledElapsed += Math.Max(0f, deltaTime);
@@ -44,22 +44,20 @@ namespace Telerobot.Game.Core
             if (robot.Battery >= config.MoveEnableThreshold)
             {
                 robot.Mode = RobotMode.ReturnToCharge;
-                robot.Command = RobotCommand.Charge;
+                robot.Command = RobotCommand.ReturnToBase;
             }
         }
 
         public void Charge(RobotState robot, float deltaTime, float chargeMultiplier)
         {
-            if (robot == null || robot.Health.IsDead) return;
+            if (robot == null || !robot.CanCharge) return;
             robot.Mode = RobotMode.Charging;
-            robot.Command = RobotCommand.Charge;
             robot.Battery = Math.Min(robot.MaximumBattery,
                 robot.Battery + config.ChargePerSecond * chargeMultiplier * Math.Max(0f, deltaTime));
             robot.BatteryBand = BatteryBand.Charging;
             if (robot.Battery >= robot.MaximumBattery)
             {
                 robot.Mode = RobotMode.Standby;
-                robot.Command = RobotCommand.DefendPosition;
                 robot.BatteryBand = BatteryBand.Normal;
             }
         }

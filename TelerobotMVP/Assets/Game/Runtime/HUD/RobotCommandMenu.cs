@@ -21,6 +21,7 @@ namespace Telerobot.Game.Runtime
             if (game == null || keyboard == null || game.UpgradeOpen) return;
             if (keyboard.digit1Key.wasPressedThisFrame && game.Robots.Count > 0) game.SelectedRobot = game.Robots[0];
             if (keyboard.digit2Key.wasPressedThisFrame && game.Robots.Count > 1) game.SelectedRobot = game.Robots[1];
+            if (keyboard.digit3Key.wasPressedThisFrame) game.ToggleSelectAllRobots(!game.AreAllRobotsSelected);
             if (keyboard.tabKey.wasPressedThisFrame)
             {
                 IsOpen = !IsOpen;
@@ -36,23 +37,23 @@ namespace Telerobot.Game.Runtime
             if (!IsOpen || game == null || game.SelectedRobot == null) return;
             var strings = game.Catalog.strings;
             var route = game.OpenRoutes.Count == 0 ? RouteId.NorthRoad : game.OpenRoutes[Mathf.Clamp(routeIndex, 0, game.OpenRoutes.Count - 1)];
-            var panel = new Rect(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 165f, 360f, 330f);
+            var panel = new Rect(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 140f, 360f, 280f);
             GUI.color = new Color(0.02f, 0.04f, 0.08f, 0.96f);
             GUI.Box(panel, GUIContent.none);
             GUI.color = Color.white;
-            GUI.Label(new Rect(panel.x + 22f, panel.y + 18f, 320f, 28f), strings.Get("hud.command") + " — " + game.SelectedRobot.State.Id);
+            var selectionLabel = game.AreAllRobotsSelected ? strings.Get("hud.all_robots") : game.SelectedRobot.State.Id;
+            GUI.Label(new Rect(panel.x + 22f, panel.y + 18f, 320f, 28f), strings.Get("hud.command") + " — " + selectionLabel);
             GUI.Label(new Rect(panel.x + 22f, panel.y + 48f, 320f, 26f), strings.Get("hud.target") + ": " + strings.Get(game.Catalog.Route(route).displayNameKey) + "  [Q]");
 
             DrawCommand(new Rect(panel.x + 30f, panel.y + 82f, 300f, 44f), "cmd.defend", RobotCommand.DefendPosition, route);
             DrawCommand(new Rect(panel.x + 30f, panel.y + 132f, 300f, 44f), "cmd.patrol", RobotCommand.PatrolRoute, route);
             DrawCommand(new Rect(panel.x + 30f, panel.y + 182f, 300f, 44f), "cmd.return", RobotCommand.ReturnToBase, route);
-            DrawCommand(new Rect(panel.x + 30f, panel.y + 232f, 300f, 44f), "cmd.charge", RobotCommand.Charge, route);
         }
 
         private void DrawCommand(Rect rect, string key, RobotCommand command, RouteId route)
         {
             if (!GUI.Button(rect, game.Catalog.strings.Get(key))) return;
-            game.SelectedRobot.Issue(command, route);
+            game.IssueCommandToSelected(command, route);
             IsOpen = false;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

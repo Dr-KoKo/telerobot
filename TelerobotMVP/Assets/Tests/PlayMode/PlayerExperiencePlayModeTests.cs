@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Telerobot.Game.Core;
@@ -113,6 +114,44 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator HeldFireUsesConfiguredCadenceAndBoundedRandomRecoil()
+        {
+            var player = Game.PlayerActor;
+            var input = new StubPlayerInput
+            {
+                Frame = new PlayerInputFrame { FireHeld = true }
+            };
+            player.SetInputForTests(input);
+            var ammoBefore = player.State.Ammo.Loaded;
+            var observedFeedback = player.ShotFeedbackCount;
+            var pitchSamples = new List<float>();
+            var yawSamples = new List<float>();
+            var endTime = Time.time + Game.Config.Weapon.FireIntervalSeconds * 3.5f;
+
+            while (Time.time < endTime)
+            {
+                yield return null;
+                if (player.ShotFeedbackCount == observedFeedback) continue;
+                observedFeedback = player.ShotFeedbackCount;
+                pitchSamples.Add(player.LastRecoilPitchDegrees);
+                yawSamples.Add(player.LastRecoilYawDegrees);
+            }
+            input.Frame = default;
+
+            var roundsFired = ammoBefore - player.State.Ammo.Loaded;
+            Assert.That(roundsFired, Is.InRange(3, 5));
+            Assert.That(pitchSamples.Count, Is.EqualTo(roundsFired));
+            Assert.That(pitchSamples.All(value => value >= Game.Catalog.weapon.recoilPitchMinimumDegrees &&
+                value <= Game.Catalog.weapon.recoilPitchMaximumDegrees), Is.True);
+            Assert.That(yawSamples.All(value => Mathf.Abs(value) <=
+                Game.Catalog.weapon.recoilYawMaximumDegrees), Is.True);
+            Assert.That(pitchSamples.Select(value => Mathf.RoundToInt(value * 1000f)).Distinct().Count(),
+                Is.GreaterThan(1));
+            Assert.That(yawSamples.Select(value => Mathf.RoundToInt(value * 1000f)).Distinct().Count(),
+                Is.GreaterThan(1));
+        }
+
+        [UnityTest]
         public IEnumerator PlayerDamageReportsDirectionAndActivatesHudFeedback()
         {
             var player = Game.PlayerActor;
@@ -145,9 +184,49 @@ namespace Telerobot.Game.Tests
             Assert.That(Game.TryGetNearbySupply(player.transform.position, out var kind), Is.True);
             Assert.That(kind, Is.EqualTo(SupplyKind.Safe));
             Assert.That(Game.TryResupply(player.transform.position), Is.True);
-            Assert.That(Game.PlayerState.Ammo.Reserve, Is.EqualTo(Game.Config.Weapon.ReserveAmmo));
-            Assert.That(Game.EventHistory.Any(item => item.Name == "ammo_resupplied"), Is.True);
-            yield return null;
+            Assert.That(Game.IsResupplying, Is.True);
+            Assert.That(Game.PlayerState.Ammo.Reserve, Is.Zero);
+            yield return new WaitForSeconds(Game.Config.Ammo.ResupplyUseSeconds + 0.1f);
+            Assert.That(Game.PlayerState.Ammo.Reserve, Is.EqualTo(Game.Config.Ammo.ReserveAmmoMax));
+            Assert.That(Game.EventHistory.Any(item => item.Name == "ammo_resupplied" &&
+                item.Payload["supplyKind"] == SupplyKind.Safe.ToString()), Is.True);
+
+            Game.PlayerState.Ammo.Reserve = 0;
+            player.transform.position = Game.ToVector(Game.Config.World.RiskySupply);
+            player.enabled = false;
+            Game.PlayerState.Health.Maximum = 10000f;
+            Game.PlayerState.Health.Current = 10000f;
+            Game.BaseState.Health.Maximum = 10000f;
+            Game.BaseState.Health.Current = 10000f;
+            Physics.SyncTransforms();
+            Assert.That(Game.TryResupply(player.transform.position), Is.True);
+            yield return new WaitForSeconds(Game.Config.Ammo.ResupplyUseSeconds + 0.1f);
+            Assert.That(Game.EventHistory.Any(item => item.Name == "ammo_resupplied" &&
+                item.Payload["supplyKind"] == SupplyKind.Risky.ToString()), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator SafeSupplyUsesPlanarRangeAndToleratesSmallBoundaryDrift()
+        {
+            var player = Game.PlayerActor;
+            player.enabled = false;
+            Game.PlayerState.Ammo.Reserve = 0;
+            var supply = Game.ToVector(Game.Config.World.SafeSupply);
+            player.transform.position = supply + new Vector3(Game.Config.World.SupplyInteractionRadius - 0.05f, 5f, 0f);
+            Physics.SyncTransforms();
+
+            Assert.That(Game.TryGetNearbySupply(player.transform.position, out var kind), Is.True);
+            Assert.That(kind, Is.EqualTo(SupplyKind.Safe));
+            Assert.That(Game.TryResupply(player.transform.position), Is.True);
+
+            player.transform.position = supply + new Vector3(
+                Game.Config.World.SupplyInteractionRadius + Game.Config.World.SupplyExitTolerance * 0.5f, 5f, 0f);
+            Physics.SyncTransforms();
+            yield return new WaitForSeconds(Game.Config.Ammo.ResupplyUseSeconds + 0.1f);
+
+            Assert.That(Game.PlayerState.Ammo.Reserve, Is.EqualTo(Game.Config.Ammo.ReserveAmmoMax));
+            Assert.That(Game.EventHistory.Any(item => item.Name == "ammo_resupplied" &&
+                item.Payload["supplyKind"] == SupplyKind.Safe.ToString()), Is.True);
         }
 
         [UnityTest]

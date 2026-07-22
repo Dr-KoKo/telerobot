@@ -1,6 +1,6 @@
 # Research / Technical Decisions: 「텔레 로봇팀, 출격하라」 MVP
 
-**Feature**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Plan**: [plan.md](./plan.md)
+**Feature**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Last reconciled**: 2026-07-22 | **Plan**: [plan.md](./plan.md)
 
 This document records technical decisions (Constitution Principle X). Each entry follows **Decision / Rationale / Alternatives considered**. Values marked **PLANNING DECISION — to be balanced** are not derived from the spec; they are introduced here so implementation can proceed and are flagged for tuning (carried into `/speckit-tasks`).
 
@@ -8,7 +8,7 @@ This document records technical decisions (Constitution Principle X). Each entry
 
 ## 1. Unity editor baseline
 
-**Decision**: The project is **pinned to the Unity 6.3 LTS line, exact editor `6000.3.18f1`** — already committed in `ProjectSettings/ProjectVersion.txt` (repo commit `3e7f580`, "initialize Unity 6.3 (URP) project"). This is no longer a "confirm-at-creation" item; the version is decided and pinned.
+**Decision**: The project is **pinned to the Unity 6.3 LTS line, exact editor `6000.3.20f1`** in `ProjectSettings/ProjectVersion.txt`. The project was initially created on `6000.3.18f1`; the patch-level update to `6000.3.20f1` was explicitly adopted and validated without changing the 6.3 LTS minor line. This is no longer a "confirm-at-creation" item; the version is decided and pinned.
 
 **Editor baseline policy**: use the **project-pinned Unity 6.3 LTS patch** recorded in `ProjectVersion.txt`. Patch bumps *within the 6.3 LTS line* are allowed if the team approves and re-pins; **do not silently jump to a newer minor (6.4/6.5/…) after tasks are generated** — a minor upgrade is a deliberate, recorded decision (Principle X), not an incidental one. (Newer Unity 6 minors may exist; this MVP deliberately stabilizes on the 6.3 LTS line it was created on rather than tracking "latest.")
 
@@ -22,7 +22,7 @@ This document records technical decisions (Constitution Principle X). Each entry
 - **Latest non-LTS / Tech Stream** — rejected: tech-stream builds change faster and carry more churn risk; LTS stability is preferred for a balance-iteration MVP.
 - **Tracking "latest Unity 6 LTS" (auto-adopt 6.4/6.5/…)** — rejected for the MVP window: silent minor upgrades risk churn during balance iteration; the project stays on its pinned 6.3 line and upgrades only by an explicit, re-pinned decision.
 
-> Status: **DONE** — pinned to `6000.3.18f1` in `ProjectVersion.txt` (commit `3e7f580`). No open action.
+> Status: **DONE** — pinned to and validated on `6000.3.20f1` in `ProjectVersion.txt` as of 2026-07-22. No open action.
 
 ---
 
@@ -161,7 +161,7 @@ Concretely:
 
 **Rationale**: Quantifies FR-034's Ripper-in-South requirement in data (was previously only prose), bounds runtime enemy count for performance/pressure, and makes spawn composition deterministically testable and tunable without code changes (Principle II).
 
-**Note on Phase-3 Bruiser (clarify-confirmed)**: originally the spec mandated a Bruiser minimum only for Phase 2 (FR-053). This is now **resolved by spec amendment** — Phase 3 requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so Phase 3 reads as the all-types 종합 국면. Composition retuned to runner 50–58 / bruiser 2–3 / ripper 3–5 (achievable total 55–63 ≤ budget 80).
+**Note on Phase-3 Bruiser (clarify-confirmed)**: originally the spec mandated a Bruiser minimum only for Phase 2 (FR-053). This is now **resolved by spec amendment** — Phase 3 requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so Phase 3 reads as the all-types 종합 국면. The first hands-on difficulty pass retuned composition to runner 42–48 / bruiser 2–3 / ripper 3–4 (total 47–55, cost 64–79 ≤ budget 80), with smaller groups and a 24-zombie concurrent cap.
 
 **Alternatives considered**: fixed spawn lists (rejected — not budget-driven, violates FR-050); keeping "Ripper-favored" as prose only (rejected — unverifiable, review P0-2).
 
@@ -215,7 +215,7 @@ Concretely:
 
 | Unknown (Technical Context) | Resolution |
 |------------------------------|------------|
-| Unity editor/version | 6.3 LTS baseline, confirm patch in Hub (§1) |
+| Unity editor/version | Unity 6.3 LTS, exact `6000.3.20f1` pinned and validated (§1) |
 | Input stack | New Input System + `IPlayerInput` abstraction (§2) |
 | Deterministic simulation | Seeded RNG + fixed sim clock + headless waypoint movement; NavMesh excluded (§3) |
 | Grenade values | Planning defaults, to be balanced (§4) |
@@ -233,6 +233,8 @@ Concretely:
 | Playtest build/run workflow | MainMenu first scene + automated Windows x64 Development build under ignored `Builds/Windows` (§16) |
 | Shareable playtest distribution | Separate non-Development ZIP under `Builds/Distribution`; tester guide + itch.io checklist + KO feedback form (§17) |
 | Microsoft Store MSIX distribution | Full-trust desktop MSIX via Windows SDK; Partner Center signs certified build (§18) |
+| Haetae command/state machine | 9 modes + orthogonal battery bands; exactly 3 commands; automatic charge with threat interrupt (§19) |
+| Automated Unity verification | Hub-authenticated `6000.3.20f1` batch runs; XML/log artifacts retained (§20) |
 
 No `NEEDS CLARIFICATION` markers remain. All prior **spec-clarification** items are now **closed via spec amendment** (spec.md Assumptions) and cascaded: per-robot battery-warning string (P1-7 → single line + HUD disambiguation), upgrade re-offer/stack policy (P1-8 → exclude-selected, no stacking), Phase-3 Bruiser minimum (P1-9 → Bruiser ≥2 & Ripper ≥3). Medical-robot active-targeting also closed as an accepted MVP assumption (no active targeting). **No open clarify gate remains before `/speckit-tasks`.**
 
@@ -265,3 +267,29 @@ No `NEEDS CLARIFICATION` markers remain. All prior **spec-clarification** items 
 **Rationale**: Store installation gives nontechnical testers a familiar one-click install/update path and a Microsoft-signed package, addressing the SmartScreen reputation warning that occurs when sharing an unsigned standalone executable. Separating staging from packaging keeps identity and payload inspectable even when the Windows SDK is not yet installed.
 
 **Alternatives considered**: Buying a public code-signing certificate immediately (deferred because Store signing already covers the selected distribution route); distributing the unsigned MSIX directly (rejected because it cannot provide the intended trust/install experience); replacing the existing ZIP route (rejected because ZIP remains useful for rapid private diagnosis while Store certification is pending).
+
+---
+
+## 19. Haetae command and state-machine ownership
+
+**Decision**: Keep the nine FR-079 `RobotMode` values (`Standby`, `Patrol`, `Engage`, `LowBattery`, `ReturnToCharge`, `Charging`, `Disabled`, `Recovery`, `Destroyed`) separate from the orthogonal `BatteryBand` classification. Expose exactly three player commands (`DefendPosition`, `PatrolRoute`, `ReturnToBase`); automatic charging is a base-zone transition, not a command. While actively `Charging`, a Haetae cannot attack, but it scans for nearby base threats without route restriction, exits `Charging` before entering `Engage`, and retains the acquired target until invalid. Battery depletion follows `Disabled → Recovery → ReturnToCharge`; HP depletion follows the separate current-phase `Destroyed` path.
+
+**Ownership**: `BatterySystem` owns pure battery-band, drain, charge, Disabled/Recovery transitions; `RobotAttackSystem` owns engagement/cooldown/first-dash state; `HaetaeRobotActor` and `MvpGameController` own spatial acquisition, cross-route base-threat interruption, formation/avoidance, and movement. This preserves pure-core testability while keeping scene-dependent distance queries at the adapter boundary.
+
+**Rationale**: A manual Charge command duplicated the useful decision already expressed by `ReturnToBase` and created a state where a robot could ignore an immediate base threat. Orthogonal health, battery, command, and spatial concerns make transitions observable and prevent `Destroyed` (HP 0) from being confused with `Disabled` (battery 0).
+
+**Alternatives considered**: keep a fourth Charge command (rejected by the approved three-command flow); allow simultaneous charging and attacking (rejected because it removes the charge-versus-defense tradeoff); restrict charging interruption to the assigned route (rejected because a robot already at the base must defend the base); merge Destroyed and Disabled (rejected because their recovery lifecycles differ).
+
+**Verification**: EditMode covers battery depletion/recovery and HP destruction separation. PlayMode covers exactly three commands, ReturnToBase completion, automatic charging, cross-route threat interruption/target retention, post-kill chaining, formation separation, defend priority/leash, command rejection while Destroyed, and next-phase restore. See `data-model.md` for the normative transition diagram.
+
+---
+
+## 20. Automated Unity verification and licensing workflow
+
+**Decision**: Run automation through the project-pinned editor executable (`6000.3.20f1`) in batch mode after Unity Hub has authenticated the local Personal license. Retain NUnit XML and build/smoke logs under `TelerobotMVP/TestResults/` so results can be inspected without reopening the editor. The standalone smoke run must load the generated gameplay world, emit `TELEROBOT_STANDALONE_SMOKE_READY`, and exit successfully.
+
+**Rationale**: The earlier batch exit code 198 came from an unavailable headless editor license, not from the Personal license tier or the tests. Hub-authenticated licensing makes the same EditMode, PlayMode, Windows build, and standalone smoke workflow repeatable by an automated agent or a developer.
+
+**Alternatives considered**: manual Test Runner only (rejected because it cannot be repeated unattended); generated C# project compilation alone (kept as a fast supplementary check, but rejected as the final gate because it does not exercise Unity serialization, scenes, PlayMode, or player builds); changing license tier (rejected because the authenticated Personal license passes the required batch workflow).
+
+**Validated baseline (2026-07-22)**: EditMode 51/51, PlayMode 38/38, no failed/skipped/inconclusive tests; Windows x64 batch build success; standalone smoke marker present with exit code 0.

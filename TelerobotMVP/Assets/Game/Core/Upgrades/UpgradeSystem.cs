@@ -15,8 +15,16 @@ namespace Telerobot.Game.Core
 
         public List<UpgradeConfig> Offer(IDeterministicRng rng)
         {
+            return Offer(rng, Array.Empty<string>());
+        }
+
+        public List<UpgradeConfig> Offer(IDeterministicRng rng, IEnumerable<string> selectedUpgradeIds)
+        {
+            if (rng == null) throw new ArgumentNullException("rng");
             if (config.Upgrades.Count != 9) throw new InvalidOperationException("Exactly nine upgrade definitions are required.");
-            var pool = new List<UpgradeConfig>(config.Upgrades);
+            var selected = selectedUpgradeIds == null ? new HashSet<string>() : new HashSet<string>(selectedUpgradeIds);
+            var pool = config.Upgrades.FindAll(item => !selected.Contains(item.Id));
+            if (pool.Count < 3) throw new InvalidOperationException("At least three unselected upgrades are required for an offer.");
             var result = new List<UpgradeConfig>(3);
             while (result.Count < 3)
             {

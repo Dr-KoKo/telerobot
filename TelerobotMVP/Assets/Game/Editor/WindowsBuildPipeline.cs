@@ -83,7 +83,8 @@ namespace Telerobot.Game.Editor
                 "2. 시작 화면에서 설정을 먼저 확인합니다.\r\n" +
                 "3. 게임 시작을 누릅니다.\r\n\r\n" +
                 "조작: WASD 이동, 마우스 조준, Shift 달리기, Space 점프, V 시점 전환, " +
-                "마우스 왼쪽 사격, R 재장전, G 수류탄, E 보급, Esc 일시정지.\r\n\r\n" +
+                "마우스 왼쪽 사격, R 재장전, G 수류탄, E 보급 시작, 1/2 개별 선택, 3 전체 선택, Esc 일시정지.\r\n" +
+                "보급을 완료하려면 E를 누른 뒤 1.5초 동안 보급지 반경에 머무르십시오.\r\n\r\n" +
                 "중요: Builds/Windows 폴더 안의 파일과 폴더를 전부 함께 보관해야 합니다.\r\n";
             File.WriteAllText(Path.Combine(outputFolder, "README-KO.txt"), guide, new UTF8Encoding(true));
         }

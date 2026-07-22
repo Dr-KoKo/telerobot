@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b1208ada91c1dea4c0549cd9df19fa, type: 3}
   m_Name: MvpBalanceCatalog
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.MvpContentCatalog
-  dataVersion: mvp-1.3.0
+  dataVersion: mvp-1.4.5
   game: {fileID: 11400000, guid: 385771c6190f7464b94ab07261ab172f, type: 2}
+  baseConfig: {fileID: 11400000, guid: 4af6770a95ffec643b43fec1691eeb02, type: 2}
+  ammo: {fileID: 11400000, guid: 4eba51f11dd168948b6f1b748ad35ed8, type: 2}
   weapon: {fileID: 11400000, guid: d86c3fe4900caad4ebc06debb994cb7f, type: 2}
   grenade: {fileID: 11400000, guid: 00f0a055643c00e4f99c63e725a9862f, type: 2}
   battery: {fileID: 11400000, guid: 39fd1d9f9e7e0b048b68580fdce7ad6a, type: 2}
@@ -27,6 +29,10 @@ MonoBehaviour:
   playerSettings: {fileID: 11400000, guid: 43e8df4d6b6c36f4cb068cf9fe653168, type: 2}
   telemetry: {fileID: 11400000, guid: a61d8df013dcc9543a867b6836fac9cc, type: 2}
   validation: {fileID: 11400000, guid: 050b3acbfc7e2fe44b3cc59136bc7b57, type: 2}
+  simPlayerProfiles:
+  - {fileID: 11400000, guid: 3a4d9c356d435c549818218de794ca70, type: 2}
+  - {fileID: 11400000, guid: 61ca86e96a06e3b4f8cb25d8eaf6f33b, type: 2}
+  - {fileID: 11400000, guid: ff9fb4dccaf531840bb7607dd91ead4d, type: 2}
   supplyPoints:
   - {fileID: 11400000, guid: 1d038c56d3ef3b84d84f8801964939f7, type: 2}
   - {fileID: 11400000, guid: 2bcc5396643e21d4d9aac928ad7c07f1, type: 2}

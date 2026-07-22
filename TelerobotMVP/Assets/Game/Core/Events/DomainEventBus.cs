@@ -30,14 +30,17 @@ namespace Telerobot.Game.Core
         private readonly string dataVersion;
         private readonly string sessionId;
         private readonly int seed;
+        private readonly string simProfileId;
 
-        public TelemetryBridge(DomainEventBus bus, ITelemetrySink sink, string buildVersion, string dataVersion, string sessionId, int seed)
+        public TelemetryBridge(DomainEventBus bus, ITelemetrySink sink, string buildVersion, string dataVersion, string sessionId, int seed,
+            string simProfileId = null)
         {
             this.sink = sink;
             this.buildVersion = buildVersion;
             this.dataVersion = dataVersion;
             this.sessionId = sessionId;
             this.seed = seed;
+            this.simProfileId = simProfileId;
             bus.EventPublished += OnEvent;
         }
 
@@ -49,6 +52,7 @@ namespace Telerobot.Game.Core
                 DataVersion = dataVersion,
                 SessionId = sessionId,
                 Seed = seed,
+                SimProfileId = simProfileId,
                 Phase = gameEvent.Phase,
                 SimTime = gameEvent.SimTime,
                 EventName = gameEvent.Name,

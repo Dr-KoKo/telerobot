@@ -38,8 +38,6 @@ MonoBehaviour:
     value: "\uACBD\uB85C \uC21C\uCC30"
   - key: cmd.return
     value: "\uAE30\uC9C0 \uBCF5\uADC0"
-  - key: cmd.charge
-    value: "\uCDA9\uC804"
   - key: route.north
     value: "\uBD81\uCABD \uB3C4\uB85C"
   - key: route.east
@@ -82,6 +80,8 @@ MonoBehaviour:
     value: "\uB300\uC0C1 \uACBD\uB85C"
   - key: hud.upgrade
     value: "\uC5C5\uADF8\uB808\uC774\uB4DC \uC120\uD0DD"
+  - key: hud.all_robots
+    value: "\uC804\uCCB4 \uB85C\uBD07"
   - key: hud.ripper
     value: "\uB9AC\uD37C \uCD9C\uD604"
   - key: hud.victory

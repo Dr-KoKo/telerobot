@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.WarningConfigAsset
   batteryYellowFraction: 0.25
   batteryRedFraction: 0.1
-  baseWarningFraction: 0.3

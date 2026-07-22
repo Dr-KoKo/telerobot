@@ -1,18 +1,18 @@
 # Implementation Plan: 「텔레 로봇팀, 출격하라」 MVP 수직 슬라이스
 
-**Branch**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Last reconciled**: 2026-07-22 | **Spec**: [spec.md](./spec.md)
 
 **Active Spec Identity** (Constitution Principle I gate):
 - Path: `specs/001-robot-base-defense-mvp/spec.md`
 - Feature name: 「텔레 로봇팀, 출격하라」 MVP 수직 슬라이스 (`001-robot-base-defense-mvp`)
-- Spec status/date: Draft, Created 2026-06-27
-- Reference commit: `2df8642` (Add MVP spec) on branch `001-robot-base-defense-mvp`
+- Spec status/date: Implemented; automated validation passed 2026-07-22; external playtest outcomes pending, Created 2026-06-27
+- Last committed Spec Kit baseline: `f2a46de` (`docs: align design artifacts with FR-055/079/081/087 spec update`); the 2026-07-22 implementation reconciliation is represented by the current working tree
 
 **Input**: Feature specification from `specs/001-robot-base-defense-mvp/spec.md`
 
 ## Summary
 
-This plan covers the **full MVP vertical slice** (Phase 1 → Phase 2 → Phase 3) of a single-player 3D third-person zombie base-defense shooter built in **Unity** for **Windows PC first**, keyboard + mouse first. The player is a field commander who shoots zombies directly with an assault rifle while commanding two battery-constrained Haetae combat robots, defending a central base across three progressively-unlocked routes (North Road → East Alley → South Tunnel), choosing 1-of-3 upgrades twice per session, and winning by clearing Phase 3 with the base alive.
+This plan covers the **full MVP vertical slice** (Phase 1 → Phase 2 → Phase 3) of a single-player 3D zombie base-defense shooter built in **Unity** for **Windows PC first**, keyboard + mouse first. The player uses a default third-person view with an optional first-person view, shoots zombies directly with an assault rifle, and commands two battery-constrained Haetae combat robots while defending a central base across three progressively-unlocked routes (North Road → East Alley → South Tunnel), choosing 1-of-3 upgrades twice per session, and winning by clearing Phase 3 with the base alive. A generated main menu, saved player settings, pause flow, and standalone Windows build provide the external-playtest entry path.
 
 **Technical approach**: A **data-driven architecture** with a strict split between (1) a **pure C# gameplay/domain core** (no `UnityEngine` dependency) that owns all rule math — damage, health, battery, threat-budget, spawn composition, target priority, phase transitions, upgrade application, grenade falloff, barrier HP — and is EditMode-testable without a scene; (2) **ScriptableObject data assets** that feed tunable values into the core; and (3) **MonoBehaviour adapters** that bind Unity physics/rendering/audio/UI/input/navigation to the core. A **deterministic simulation harness** drives the same core with a seeded RNG, a fixed simulation clock, and a **waypoint-following headless movement model** (independent of NavMeshAgent), producing reproducible full-session balance telemetry. NavMeshAgent, if used, is runtime local steering only and is never the source of route identity or simulation outcomes.
 
@@ -20,9 +20,9 @@ This plan covers the **full MVP vertical slice** (Phase 1 → Phase 2 → Phase 
 
 **Language/Version**: C# (Unity scripting runtime, .NET Standard 2.1 profile). Pure core targets plain C# with **no `UnityEngine` references** so it compiles and tests headless.
 
-**Engine / Primary Dependencies**: Unity **6.3 LTS**, pinned to editor **`6000.3.18f1`** in `ProjectVersion.txt` (already committed; see [research.md](./research.md) §1 for the baseline/no-silent-upgrade policy); **Input System** package (new) for keyboard/mouse-first TPS controls and future gamepad (research.md §2); **Unity Test Framework** (UTF) with **EditMode** + **PlayMode** test assemblies; **AI Navigation** package (NavMesh) for runtime local steering only (research.md §3). Universal Render Pipeline (URP) acceptable for greybox; not required by spec.
+**Engine / Primary Dependencies**: Unity **6.3 LTS**, pinned to editor **`6000.3.20f1`** in `ProjectVersion.txt` (approved 6.3 LTS patch re-pin; see [research.md](./research.md) §1 for the baseline/no-silent-upgrade policy); **Input System** package (new) for keyboard/mouse-first TPS controls and future gamepad (research.md §2); **Unity Test Framework** (UTF) with **EditMode** + **PlayMode** test assemblies; **AI Navigation** package (NavMesh) for runtime local steering only (research.md §3). Universal Render Pipeline (URP) acceptable for greybox; not required by spec.
 
-**Storage**: ScriptableObject `.asset` files for all balance/config/string data; development telemetry written to local structured files (JSON/CSV) under a dev-only output directory. No external services, no network backend.
+**Storage**: ScriptableObject `.asset` files for all balance/config/string data (current catalog `dataVersion`: `mvp-1.4.5`); development telemetry written to local structured files (JSON/CSV) under a dev-only output directory. No external services, no network backend.
 
 **Testing**: Unity Test Framework — EditMode (pure rules), PlayMode (scene integration), plus a deterministic **simulation test** category that runs full sessions headless via the pure core + simulation clock + seeded RNG and asserts/records telemetry.
 
@@ -30,11 +30,11 @@ This plan covers the **full MVP vertical slice** (Phase 1 → Phase 2 → Phase 
 
 **Project Type**: Single Unity desktop-game project (game client only; no API/web tiers).
 
-**Performance Goals**: Smooth playtest framerate on a typical dev Windows PC (target 60 fps with greybox assets and the spec's enemy counts — Phase 3 up to ~75 zombies). Deterministic simulation runs a full 10–15 min session far faster than real time (decoupled sim clock, no rendering).
+**Performance Goals**: Smooth playtest framerate on a typical dev Windows PC (target 60 fps with greybox assets and the current Phase 3 composition of 47–55 total spawns, capped at 24 simultaneously alive). Deterministic simulation runs a full 10–15 min session far faster than real time (decoupled sim clock, no rendering).
 
 **Constraints**: Deterministic simulation MUST be reproducible per seed + data version and MUST NOT depend on framerate or NavMeshAgent drift (Constitution IV). Player-facing Korean strings MUST be stored as data and rendered verbatim (Constitution VI). Tunable values MUST live in data assets, never inline in MonoBehaviours/adapters/domain classes (Constitution II). Greybox/placeholder assets MUST NOT block validation (Constitution VII).
 
-**Scale/Scope**: 1 map (greybox), 3 routes, 3 phases, 3 zombie types, 2 Haetae robots + 1 medical robot, 9 upgrades, 8 radio/string events, ~20 EditMode pure-rule suites, ~8 PlayMode integration scenarios, 1 deterministic full-session simulation suite. Single-player PvE only.
+**Scale/Scope**: 1 map (greybox), 3 routes, 3 phases, 3 zombie types, 2 Haetae robots + 1 medical robot, 9 upgrades, 8 required radio events, a main menu/settings/pause access layer, 51 EditMode tests, 38 PlayMode tests, and a deterministic full-session simulation suite. Single-player PvE only.
 
 ## Constitution Check
 
@@ -48,14 +48,14 @@ The constitution at `.specify/memory/constitution.md` is **ratified v1.1.1 (not 
 | II | Data-driven gameplay & balance | ✅ PASS | All tunables → ScriptableObjects (see [data-model.md](./data-model.md) and contracts/data-config.contract.md). No balance value inline in MonoBehaviours, adapters, or domain classes; domain reads injected config structs sourced from SOs. |
 | III | Testable pure gameplay core | ✅ PASS | Pure C# `Core/` assembly with no `UnityEngine` reference; EditMode tests cover damage/headshot, HP/death/defeat, base recovery, ammo/reload/resupply, grenade falloff, battery drain/charge/thresholds, depletion/recovery, upgrade application, threat-budget composition, target priority, phase transitions. |
 | IV | Deterministic simulation | ✅ PASS | research.md §3 defines seeded RNG, fixed sim clock, waypoint headless movement (no NavMeshAgent), and presentation/sim movement separation. Simulation suite produces reproducible telemetry per seed + dataVersion. |
-| V | Acceptance scenarios verifiable | ✅ PASS | Every US1–US5 acceptance scenario mapped to a validation method in contracts/validation-scenarios.contract.md and exercised in quickstart.md. No scenario left unvalidated. |
+| V | Acceptance scenarios verifiable | ✅ PASS | Every US1–US6 acceptance scenario is mapped to a validation method in contracts/validation-scenarios.contract.md and exercised in quickstart.md. No scenario is left unvalidated. |
 | VI | Player-facing text preserved | ✅ PASS | All 8 radio lines + HUD captions + warnings stored verbatim as string-key data (contracts/strings.contract.md), Korean exact. Greybox captions never substitute spec strings. |
 | VII | Greybox first | ✅ PASS | Plan separates gameplay-validation work from polish; placeholder geometry/units/VFX/SFX acceptable; final art/audio out of scope and never a test prerequisite. |
-| VIII | Development telemetry required | ✅ PASS | Telemetry event schema (contracts/telemetry.contract.md) covers the constitution minimum set plus spec-specific events; events emitted at gameplay milestones and by the simulation harness, including `seed`, `dataVersion`, `sessionId`/`runId`, `phase`, `simTime`. |
-| IX | Scope discipline | ✅ PASS | No multiplayer/boss/open-world/multi-map/customization/crafting/extra-weapons/endless/extra-robots/extra-zombies. Out-of-scope list mirrored from FR-140. |
+| VIII | Development telemetry required | ✅ PASS WITH RECORDED EXCEPTION | Telemetry event schema covers the required gameplay/simulation events. The obsolete `robot_charge_commanded` identifier is replaced by `robot_auto_charge_started` because the user explicitly removed the manual Charge command; rationale, impact, and follow-up are recorded in Complexity Tracking. |
+| IX | Scope discipline | ✅ PASS | First/third-person switching, movement/session UX, and saved settings were explicitly added to the active spec in the 2026-07-22 clarification. No multiplayer/boss/open-world/multi-map/customization/crafting/extra-weapons/endless/extra-robots/extra-zombies. |
 | X | Explicit technical decisions | ✅ PASS | Unity baseline, input stack, data-asset strategy, navigation/movement, simulation, test strategy, telemetry sink all recorded with rationale + alternatives in research.md. |
 
-**Initial gate: PASS.** No violations; Complexity Tracking left empty. Post-design re-check at end of Phase 1 (below) also PASS.
+**Initial gate: PASS.** The original Phase 1 gate had no violations. The 2026-07-22 implementation reconciliation records one approved telemetry identifier exception without changing the constitution or Spec Kit templates; the current gate remains PASS WITH RECORDED EXCEPTION.
 
 ### Recommended future constitution principles (already satisfied here)
 
@@ -111,14 +111,12 @@ TelerobotMVP/                          # Unity project root — at repo root (al
 │   │   │   ├── Events/                # domain event bus interfaces
 │   │   │   └── Config/                # plain config structs (fed by SOs)
 │   │   ├── Runtime/                   # MonoBehaviour adapters. asmdef: Game.Runtime (refs Game.Core)
-│   │   │   ├── Player/                # input, TPS movement, shooting adapter
+│   │   │   ├── Player/                # input, first/third-person movement, shooting adapter
 │   │   │   ├── Robots/                # robot MonoBehaviour, NavMesh steering adapter
 │   │   │   ├── Zombies/               # zombie MonoBehaviour, waypoint follower (runtime)
-│   │   │   ├── Spawning/              # spawn point adapters
 │   │   │   ├── Combat/                # hit detection, grenade VFX adapter
-│   │   │   ├── Stations/              # charging station, medical zone, ammo supply adapters
 │   │   │   ├── HUD/                   # HUD + warning view adapters
-│   │   │   ├── Audio/                 # radio/SFX playback adapter (placeholder clips/TTS stub)
+│   │   │   ├── Settings/              # saved preferences + shared settings overlay
 │   │   │   └── Bootstrap/             # scene wiring, composition root
 │   │   ├── Data/                      # ScriptableObject definitions + instances. asmdef: Game.Data
 │   │   │   ├── Definitions/           # SO classes (ZombieDef, RobotDef, PhaseDef, UpgradeDef, ...)
@@ -127,18 +125,20 @@ TelerobotMVP/                          # Unity project root — at repo root (al
 │   │   │   ├── HeadlessMovement/      # waypoint-progress model (no NavMeshAgent)
 │   │   │   ├── SimRunner/             # fixed-step session driver
 │   │   │   └── Telemetry/             # telemetry sink (file writer)
+│   │   ├── Editor/                    # project generation + Windows/share/Store build pipeline
 │   │   └── Scenes/
+│   │       ├── MainMenu.unity         # first build scene: play/settings/quit
 │   │       └── MVP.unity              # greybox map: base, 3 routes, choke points, stations
 │   └── Tests/
 │       ├── EditMode/                  # asmdef: Game.Tests.EditMode (refs Game.Core, Game.Simulation)
 │       ├── PlayMode/                  # asmdef: Game.Tests.PlayMode (refs Game.Runtime)
-│       └── Simulation/               # deterministic full-session balance tests + seed fixtures
+│       └── Shared/                    # common test config factory
 ├── ProjectSettings/
 ├── Packages/                          # manifest.json: input system, test framework, ai navigation
 └── README.md
 ```
 
-**Structure Decision**: Single Unity desktop-game project (no web/mobile split). The decisive structure is the three-assembly boundary — `Game.Core` (pure, scene-free, Unity-free), `Game.Runtime` (adapters), `Game.Data` (ScriptableObjects) — with `Game.Simulation` reusing `Game.Core` for deterministic runs. Assembly Definitions enforce that `Game.Core` and `Game.Simulation` never reference `UnityEngine` scene/physics types, which is what makes Principles III and IV mechanically guaranteed rather than aspirational. The Unity project folder is **`<repo>/TelerobotMVP/`** (already created, pinned to `6000.3.18f1`); `quickstart.md` uses this path in all commands.
+**Structure Decision**: Single Unity desktop-game project (no web/mobile split). The decisive structure is the three-assembly boundary — `Game.Core` (pure, scene-free, Unity-free), `Game.Runtime` (adapters), `Game.Data` (ScriptableObjects) — with `Game.Simulation` reusing `Game.Core` for deterministic runs. Assembly Definitions enforce that `Game.Core` and `Game.Simulation` never reference `UnityEngine` scene/physics types, which is what makes Principles III and IV mechanically guaranteed rather than aspirational. The Unity project folder is **`<repo>/TelerobotMVP/`** (already created, pinned to `6000.3.20f1`); `quickstart.md` uses this path in all commands.
 
 ## System Decomposition → Layer Mapping
 
@@ -188,6 +188,14 @@ Single greybox `MVP.unity` scene:
   - Bruiser: base > robot > player
   - Ripper: robot > player > base
 
+## Haetae Command / State-Machine Strategy
+
+- `RobotMode` has the nine FR-079 modes: `Standby`, `Patrol`, `Engage`, `LowBattery`, `ReturnToCharge`, `Charging`, `Disabled`, `Recovery`, `Destroyed`. `BatteryBand` is an orthogonal resource classification; `Critical` is a band/warning, not a tenth robot mode.
+- Player input exposes exactly three commands: `DefendPosition`, `PatrolRoute`, `ReturnToBase`. Charging is an automatic environmental transition inside the base zone and is never a fourth command.
+- `Charging` and attacking are mutually exclusive. A valid nearby base threat first transitions the robot out of `Charging` and into `Engage`; cross-route acquisition is allowed for this base-defense interrupt, and the selected target is retained until invalid.
+- Battery depletion uses `Disabled → Recovery → ReturnToCharge`; HP depletion uses the separate terminal-for-current-phase `Destroyed` path. `ReturnToBase` completes into `DefendPosition` at the robot's unique rally slot.
+- Pure battery transitions live in `BatterySystem`; combat cadence/engagement state lives in `RobotAttackSystem`; spatial target acquisition, formation, avoidance, and runtime movement live in `HaetaeRobotActor`/`MvpGameController`. The normative transition diagram is in [data-model.md](./data-model.md).
+
 ## Sound / Radio & Localization Plan
 
 - Radio/sound **event triggers are implemented alongside the gameplay milestone that fires them** (not deferred): game-start & Phase-1 lines with US1; battery/base warnings with US2/US5; Phase-2 line with US3; Phase-3/medical line + Ripper callout with US4; clear/victory lines with phase transitions.
@@ -204,15 +212,15 @@ Single greybox `MVP.unity` scene:
 
 **EditMode / unit (pure rules, no scene):** damage + headshot multiplier; HP/death/defeat conditions; base HP recovery (15%); ammo/reload/resupply rules; grenade damage/falloff/max-target; battery drain/charge/state thresholds; depletion → recovery → return-to-charge logic; upgrade application (incl. reservation + edge rules); threat-budget composition (incl. budget-vs-target reconciliation); zombie target-priority selection; phase transition conditions (7-step).
 
-**PlayMode / integration (scene):** Phase 1 clear/loss; player shooting + ammo resupply (safe & risky); robot command flow (4 commands); depletion → recovery → return-to-charge; Phase 2 route unlock + Bruiser spawn; Phase 3 medical healing + Ripper battery drain; victory/defeat; HUD warning + radio event triggers.
+**PlayMode / integration (scene):** Phase 1 clear/loss; player shooting + ammo resupply (safe & risky); robot command flow (exactly 3 commands); automatic base charging and threat interruption; depletion → recovery → return-to-charge; Haetae destruction/next-phase restore, formation separation, defend leash, and post-kill chaining; Phase 2 route unlock + Bruiser spawn; Phase 3 medical healing + Ripper battery drain; victory/defeat; HUD warning + radio event triggers; main-menu/settings persistence; first/third-person, jump, sprint, camera collision, and pause flow.
 
 **Deterministic simulation:** full-session balance loops driven by the pure core + seeded RNG + fixed sim clock + headless waypoint movement; assert reproducibility for fixed seeds and emit telemetry for balance review. Validation-scenario parameters are data (contracts/validation-scenarios.contract.md).
 
-Acceptance-scenario → validation-method mapping for **every** US1–US5 scenario is in contracts/validation-scenarios.contract.md (Constitution V; no silent omissions).
+Acceptance-scenario → validation-method mapping for **every** US1–US6 scenario is in contracts/validation-scenarios.contract.md (Constitution V; no silent omissions).
 
 ## Telemetry / Instrumentation (Constitution VIII)
 
-Development-only telemetry, no external analytics. Emits the constitution minimum event set plus spec-specific events; each event carries `buildVersion`, `dataVersion`, `sessionId`/`runId`, `seed`, `phase` (nullable/`session` for session-level), `timestamp`/`simTime`. Minimum logged data: session duration; phase start/end timestamps; phase clear/fail; defeat reason (base destroyed vs player death); base HP over time / at phase end; player HP at phase end; robot battery over time + threshold events; robot Depleted count; Charge command count; Ripper hits on robots; upgrade choices; grenade usage; ammo resupply usage by safe/risky point; barrier damage/destruction (if Emergency Barrier selected); deterministic simulation seed. Schema in contracts/telemetry.contract.md.
+Development-only telemetry, no external analytics. Emits the constitution minimum event set plus spec-specific events, subject to the recorded `robot_charge_commanded` → `robot_auto_charge_started` identifier exception below; each event carries `buildVersion`, `dataVersion`, `sessionId`/`runId`, `seed`, `phase` (nullable/`session` for session-level), `timestamp`/`simTime`. Minimum logged data: session duration; phase start/end timestamps; phase clear/fail; defeat reason (base destroyed vs player death); base HP over time / at phase end; player HP at phase end; robot battery over time + threshold events; robot Depleted count; base automatic-charge start count; Ripper hits on robots; upgrade choices; grenade usage; ammo resupply usage by safe/risky point; barrier damage/destruction (if Emergency Barrier selected); deterministic simulation seed. Schema in contracts/telemetry.contract.md.
 
 ## Contracts (non-REST; Unity game)
 
@@ -225,19 +233,19 @@ This project has no network/API backend, so contracts describe internal interfac
 
 ## Complexity Tracking
 
-No constitution violations. No entries.
+One explicit, user-authorized Principle VIII identifier exception is retained rather than silently changing the binding constitution.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| — | — | — |
+| Constitution VIII names `robot_charge_commanded`, while the implemented feature emits `robot_auto_charge_started` | The user explicitly removed the manual `Charge` command and made base charging automatic. Emitting a “commanded” event would misrepresent player intent. Impact: telemetry consumers must query the replacement name; all required charge-start counts remain available. Follow-up: amend the constitution event identifier in a separately approved governance change, or preserve this recorded exception. | Keeping a hidden/manual Charge path contradicts FR-085; emitting both names would create duplicate charge counts and retain a misleading event. |
 
 ## Post-Design Constitution Re-Check
 
-After Phase 1 design (data-model, contracts, quickstart): **PASS, unchanged.** The three-assembly boundary keeps the core pure (III); every tunable resolved to a ScriptableObject/config field (II); deterministic sim path is data-parameterized and NavMesh-independent (IV); all acceptance scenarios mapped to validation methods (V); Korean strings captured verbatim as data (VI); telemetry schema meets the minimum set (VIII); scope additions are none (IX); all technical decisions recorded with alternatives (X). No new complexity introduced.
+After the 2026-07-22 implementation reconciliation: **PASS WITH RECORDED EXCEPTION.** The three-assembly boundary keeps the core pure (III); every tunable resolves to a ScriptableObject/config field (II); the deterministic sim path is data-parameterized and NavMesh-independent (IV); all US1–US6 acceptance scenarios map to validation methods (V); Korean strings are data (VI); telemetry satisfies Principle VIII through the explicitly recorded automatic-charge event substitution; player-view/session UX additions are now in the active spec (IX); and the Haetae state-machine plus automated build/test workflow are recorded decisions (X). No Spec Kit template or constitution text was changed.
 
-## Planning / Task Carry-Forward (into `/speckit-tasks`)
+## Planning / Task Carry-Forward (historical trace)
 
-These are explicitly carried forward and MUST appear as tasks/follow-ups:
+These items were carried into `tasks.md` and implemented or validated by the completed task phases; they remain here as decision trace rather than open work:
 - Confirm Recovery values (5 s disabled, 0.5/s recovery, battery-5 move threshold) after first simulation/playtest pass.
 - Tune grenade damage/radius/falloff/max-target values.
 - Tune Emergency Barrier HP/duration/placement/destruction.
@@ -250,12 +258,12 @@ These are explicitly carried forward and MUST appear as tasks/follow-ups:
 - Tune **telemetry sampling cadences** (`sampleIntervalSeconds`, battery emit policy) for signal vs volume; keep sim-clock-based (data-model TelemetryConfig).
 - Verify deterministic simulation repeatability for fixed `seed × profile` (pinned seeds: smoke/sweep/regression).
 - Verify Korean player-facing string preservation (verbatim), including `radio.phase1`.
-- ~~Confirm exact Unity 6.3 LTS patch label~~ **DONE** — pinned to `6000.3.18f1` in `ProjectVersion.txt` (commit `3e7f580`); keep on the 6.3 LTS line, no silent minor upgrade (research.md §1).
+- ~~Confirm exact Unity 6.3 LTS patch label~~ **DONE** — the initial `6000.3.18f1` baseline was explicitly re-pinned to the validated `6000.3.20f1` patch in `ProjectVersion.txt`; keep on the 6.3 LTS line, no silent minor upgrade (research.md §1).
 
 **Resolved spec-clarification items (closed via spec amendment — see spec.md Assumptions):** the 3 previously-open items are now decided and cascaded into data-model/contracts/quickstart. No open clarify gate remains before `/speckit-tasks`.
 - **Per-robot battery-warning string** (was P1-7) → **Resolved:** keep the single verbatim line "해태 1호, 배터리 위험."; affected robot disambiguated via HUD `robotId`/battery widget; per-robot VO is post-MVP. (spec Assumption "배터리 경고 문구 대상"; strings.contract.md.)
 - **Upgrade re-offer/stack policy** (was P1-8) → **Resolved:** global pool stays the same 9 definitions every reward step; already-selected ids excluded from later offers; **no stacking** (≤1 per upgrade, ≤2 per session). Does not conflict with FR-115 (separates "no per-phase gating" from "no re-offer of a selected id"). (spec Assumption "업그레이드 제시 정책"; `UpgradeService.Offer(rng, selectedUpgradeIds)`; data-model UpgradeDef/SessionState.)
-- **Phase-3 Bruiser minimum** (was P1-9) → **Resolved:** Phase 3 requires **Bruiser ≥2 and Ripper ≥3**; composition retuned to runner 50–58 / bruiser 2–3 / ripper 3–5 (achievable total 55–63 ≤ budget 80). (spec Assumption "위협 예산 vs 목표 마릿수"; data-model PhaseDef.)
+- **Phase-3 Bruiser minimum** (was P1-9) → **Resolved:** Phase 3 requires **Bruiser ≥2 and Ripper ≥3**; the first hands-on difficulty pass retuned composition to runner 42–48 / bruiser 2–3 / ripper 3–4 (total 47–55, cost 64–79 ≤ budget 80). (spec Assumption "위협 예산 vs 목표 마릿수"; data-model PhaseDef.)
 
 **Scope guard for `/speckit-tasks` (Constitution IX):** the **normative source for tasks is `spec.md` + this plan + `contracts/`**; the original `docs/tele_robot_team_game_design_v0_1.md` is **background/context only, non-normative**. That design doc lists expansion candidates (turret robot, engineer robot, spitter, howler, Endless Defense) which are excluded by FR-140 and MUST NOT enter tasks without a spec amendment.
 

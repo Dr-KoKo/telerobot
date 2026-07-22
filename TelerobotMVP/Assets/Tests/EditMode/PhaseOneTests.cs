@@ -33,10 +33,26 @@ namespace Telerobot.Game.Tests
         }
 
         [Test]
+        public void DifficultyTuningKeepsWavePressureWithinReducedTargets()
+        {
+            var config = TestConfigFactory.Create();
+            var phaseOne = config.GetPhase(1);
+            var phaseTwo = config.GetPhase(2);
+            var phaseThree = config.GetPhase(3);
+
+            Assert.That(phaseOne.LearningTotal.Max, Is.EqualTo(24));
+            Assert.That(phaseOne.MaxAliveConcurrent, Is.EqualTo(15));
+            Assert.That(phaseTwo.LearningTotal.Max, Is.EqualTo(39));
+            Assert.That(phaseTwo.MaxAliveConcurrent, Is.EqualTo(20));
+            Assert.That(phaseThree.LearningTotal.Max, Is.EqualTo(55));
+            Assert.That(phaseThree.MaxAliveConcurrent, Is.EqualTo(24));
+        }
+
+        [Test]
         public void ClearRequiresAllSpawnedNoAliveAndBaseAlive()
         {
             var config = TestConfigFactory.Create();
-            var system = new PhaseSystem(config.Game);
+            var system = new PhaseSystem(config.Base);
             var session = new SessionState(1001);
             var phase = new PhaseState(1, new[] { RouteId.NorthRoad });
             var baseState = new BaseState(1000f);
@@ -51,7 +67,7 @@ namespace Telerobot.Game.Tests
         public void BaseOrPlayerDeathImmediatelyDefeats(bool killBase, bool killPlayer, DefeatReason reason)
         {
             var config = TestConfigFactory.Create();
-            var system = new PhaseSystem(config.Game);
+            var system = new PhaseSystem(config.Base);
             var session = new SessionState(1);
             var phase = new PhaseState(1, new[] { RouteId.NorthRoad });
             var baseState = new BaseState(1000f);
@@ -60,6 +76,17 @@ namespace Telerobot.Game.Tests
             if (killPlayer) player.Health.Current = 0f;
             Assert.That(system.Evaluate(session, phase, baseState, player), Is.EqualTo(PhaseTransition.Defeat));
             Assert.That(session.DefeatReason, Is.EqualTo(reason));
+        }
+
+        [Test]
+        public void ConfigurationOwnershipHasNoBaseOrReserveAmmoMirrors()
+        {
+            var config = TestConfigFactory.Create();
+            Assert.That(typeof(GameRulesConfig).GetField("BaseMaxHealth"), Is.Null);
+            Assert.That(typeof(GameRulesConfig).GetField("BasePhaseRecoveryFraction"), Is.Null);
+            Assert.That(typeof(WeaponConfig).GetField("ReserveAmmo"), Is.Null);
+            Assert.That(config.Base.MaxHealth, Is.EqualTo(1000f));
+            Assert.That(config.Ammo.ReserveAmmoMax, Is.EqualTo(240));
         }
     }
 }

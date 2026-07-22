@@ -9,13 +9,21 @@ namespace Telerobot.Game.Core
     public enum HitRegion { Body, Head }
     public enum RobotActivity { Idle, Patrol, Combat }
     public enum BatteryBand { Normal, LowPower, Critical, Depleted, Charging }
-    public enum RobotMode { Standby, Patrol, Engage, LowBattery, ReturnToCharge, Charging, Disabled, Recovery }
-    public enum RobotCommand { DefendPosition, PatrolRoute, ReturnToBase, Charge }
+    public enum RobotMode { Standby, Patrol, Engage, LowBattery, ReturnToCharge, Charging, Disabled, Recovery, Destroyed }
+    public enum RobotCommand { DefendPosition, PatrolRoute, ReturnToBase }
     public enum GameResult { InProgress, Victory, Defeat }
     public enum DefeatReason { None, BaseDestroyed, PlayerDeath }
     public enum SupplyKind { Safe, Risky }
     public enum WarningSeverity { None, Yellow, Red }
     public enum CameraPerspective { ThirdPerson, FirstPerson }
+    public enum SpawnTrimTarget { Runner, Bruiser, Ripper }
+    public enum ResupplyPolicy { FullReserve, FixedAmount }
+    public enum GrenadeResupplyPolicy { None, PhaseResetOnly }
+    [Flags] public enum BatteryEmitPolicy { None = 0, OnThresholdCrossing = 1, EveryNSeconds = 2 }
+    public enum SimProfileId { Novice, Baseline, Skilled }
+    public enum SimRoutePriorityPolicy { LateReactive, BalancedCoverage, HighestPressure }
+    public enum SimUpgradeSelectionPolicy { RandomOfThree, IntendedMeta, RiskAwareOptimal }
+    public enum SimGrenadeUsePolicy { Rarely, DenseClusters, DenseClustersAndBruisers }
     public enum UpgradeEffectType
     {
         MaxBattery,
@@ -69,9 +77,8 @@ namespace Telerobot.Game.Core
     public sealed class GameRulesConfig
     {
         public float PlayerMaxHealth;
-        public float BaseMaxHealth;
-        public float BasePhaseRecoveryFraction;
-        public float BaseWarningFraction;
+        public float TargetSessionMinimumSeconds;
+        public float TargetSessionMaximumSeconds;
         public float FixedStepSeconds;
         public float PlayerMoveSpeed;
         public float SprintMultiplier;
@@ -85,7 +92,6 @@ namespace Telerobot.Game.Core
         public float CameraCollisionPadding;
         public float JumpHeight;
         public float GroundedVelocity;
-        public float MinimumSpawnInterval;
         public string DataVersion;
     }
 
@@ -95,10 +101,31 @@ namespace Telerobot.Game.Core
         public float BaseDamage;
         public float HeadshotMultiplier;
         public int MagazineSize;
-        public int ReserveAmmo;
         public float ReloadSeconds;
+        public float FireIntervalSeconds;
         public int GrenadesPerPhase;
         public float Range;
+    }
+
+    [Serializable]
+    public sealed class BaseConfig
+    {
+        public float MaxHealth;
+        public float PhaseRecoveryFraction;
+        public float WarningFraction;
+        public bool AllowPlayerRepair;
+    }
+
+    [Serializable]
+    public sealed class AmmoConfig
+    {
+        public int StartReserveAmmo;
+        public int ReserveAmmoMax;
+        public ResupplyPolicy ResupplyPolicy;
+        public int ResupplyAmount;
+        public float ResupplyUseSeconds;
+        public float ResupplyCooldownSeconds;
+        public GrenadeResupplyPolicy GrenadeResupplyPolicy;
     }
 
     [Serializable]
@@ -137,10 +164,20 @@ namespace Telerobot.Game.Core
     {
         public float MaxHealth;
         public float MoveSpeed;
-        public float AttackDamage;
-        public float AttackInterval;
+        public float DashDamage;
+        public float BiteDamage;
+        public float BiteCooldownSeconds;
+        public float DashCooldownSeconds;
         public float DetectionRadius;
-        public float AttackRange;
+        public float EngageRange;
+        public float SeparationRadius;
+        public float SeparationStrength;
+        public float FormationSpacing;
+        public float DefendLeashRadius;
+        public float RunnerKillTargetMinimumSeconds;
+        public float RunnerKillTargetMaximumSeconds;
+        public float BruiserKillTargetMinimumSeconds;
+        public float BruiserKillTargetMaximumSeconds;
     }
 
     [Serializable]
@@ -162,9 +199,40 @@ namespace Telerobot.Game.Core
         public float RobotDamage;
         public float AttackInterval;
         public float AttackRange;
+        public float PathVariationFraction;
+        public float SeparationRadius;
+        public float SeparationStrength;
         public int ThreatCost;
         public int FirstPhase;
         public TargetKind[] TargetPriority;
+    }
+
+    [Serializable]
+    public sealed class IntRangeConfig
+    {
+        public int Min;
+        public int Max;
+
+        public int Sample(IDeterministicRng rng)
+        {
+            if (rng == null) throw new ArgumentNullException("rng");
+            if (Max < Min) throw new InvalidOperationException("Range maximum must be greater than or equal to minimum.");
+            return Min + (Max == Min ? 0 : rng.NextInt(Max - Min + 1));
+        }
+    }
+
+    [Serializable]
+    public sealed class RouteWeightConfig
+    {
+        public RouteId Route;
+        public float Weight;
+    }
+
+    [Serializable]
+    public sealed class ZombieRouteWeightConfig
+    {
+        public ZombieType Type;
+        public RouteWeightConfig[] Routes;
     }
 
     [Serializable]
@@ -174,9 +242,21 @@ namespace Telerobot.Game.Core
         public int ThreatBudget;
         public float TargetDurationSeconds;
         public RouteId[] OpenRoutes;
-        public int RunnerTarget;
-        public int BruiserTarget;
-        public int RipperTarget;
+        public RouteId NewlyOpenedRoute;
+        public IntRangeConfig RunnerCount;
+        public IntRangeConfig BruiserCount;
+        public IntRangeConfig RipperCount;
+        public IntRangeConfig LearningTotal;
+        public int RunnerMinimum;
+        public int BruiserMinimum;
+        public int RipperMinimum;
+        public SpawnTrimTarget[] TrimOrder;
+        public float PhaseStartDelaySeconds;
+        public float GroupIntervalSeconds;
+        public IntRangeConfig GroupSize;
+        public int MaxAliveConcurrent;
+        public RouteWeightConfig[] RouteWeights;
+        public ZombieRouteWeightConfig[] ZombieTypeRouteWeights;
     }
 
     [Serializable]
@@ -209,7 +289,6 @@ namespace Telerobot.Game.Core
     {
         public float BatteryYellowFraction;
         public float BatteryRedFraction;
-        public float BaseWarningFraction;
     }
 
     [Serializable]
@@ -224,6 +303,8 @@ namespace Telerobot.Game.Core
         public Float3 RiskySupply;
         public Float3 MedicalAnchor;
         public float SupplyInteractionRadius;
+        public float SupplyExitTolerance;
+        public float BaseChargingRadius;
         public float ChargingArrivalRadius;
     }
 
@@ -238,6 +319,27 @@ namespace Telerobot.Game.Core
     {
         public string[] EnabledEvents;
         public string SinkFolder;
+        public string[] RequiredFields;
+        public float SampleIntervalSeconds;
+        public float RoutePressureSampleIntervalSeconds;
+        public BatteryEmitPolicy BatteryEmitPolicy;
+        public float BatteryEmitIntervalSeconds;
+    }
+
+    [Serializable]
+    public sealed class SimPlayerProfileConfig
+    {
+        public SimProfileId Id;
+        public float AimAccuracy;
+        public float HeadshotRate;
+        public float ReactionDelaySeconds;
+        public float FireIntervalSeconds;
+        public SimRoutePriorityPolicy RoutePriorityPolicy;
+        public float RipperFocus;
+        public float RobotChargeThresholdFraction;
+        public SimUpgradeSelectionPolicy UpgradeSelectionPolicy;
+        public SimGrenadeUsePolicy GrenadeUsePolicy;
+        public int GrenadeClusterThreshold;
     }
 
     [Serializable]
@@ -252,6 +354,8 @@ namespace Telerobot.Game.Core
     {
         public GameRulesConfig Game;
         public WeaponConfig Weapon;
+        public BaseConfig Base;
+        public AmmoConfig Ammo;
         public GrenadeConfig Grenade;
         public BatteryConfig Battery;
         public RobotConfig Robot;
@@ -262,6 +366,7 @@ namespace Telerobot.Game.Core
         public CommandConfig Commands;
         public TelemetryConfig Telemetry;
         public ValidationConfig Validation;
+        public List<SimPlayerProfileConfig> SimPlayerProfiles = new List<SimPlayerProfileConfig>();
         public List<ZombieConfig> Zombies = new List<ZombieConfig>();
         public List<PhaseConfig> Phases = new List<PhaseConfig>();
         public List<RouteConfig> Routes = new List<RouteConfig>();
@@ -285,6 +390,13 @@ namespace Telerobot.Game.Core
         {
             var result = Routes.Find(item => item.Id == id);
             if (result == null) throw new InvalidOperationException("Missing route config: " + id);
+            return result;
+        }
+
+        public SimPlayerProfileConfig GetSimPlayerProfile(SimProfileId id)
+        {
+            var result = SimPlayerProfiles.Find(item => item.Id == id);
+            if (result == null) throw new InvalidOperationException("Missing simulation player profile: " + id);
             return result;
         }
     }

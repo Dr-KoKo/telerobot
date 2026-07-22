@@ -23,4 +23,6 @@ MonoBehaviour:
   riskySupply: {x: 0, y: 0.5, z: 18}
   medicalAnchor: {x: -4.5, y: 0.8, z: -4.5}
   supplyInteractionRadius: 2.5
+  supplyExitTolerance: 0.75
+  baseChargingRadius: 6
   chargingArrivalRadius: 1.2

@@ -1,6 +1,6 @@
 # Data Model: 「텔레 로봇팀, 출격하라」 MVP
 
-**Feature**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Plan**: [plan.md](./plan.md)
+**Feature**: `001-robot-base-defense-mvp` | **Date**: 2026-06-27 | **Last reconciled**: 2026-07-22 | **Plan**: [plan.md](./plan.md)
 
 All tunable values live in **ScriptableObject data assets** (Constitution II) that map to **plain config structs** consumed by the pure `Game.Core` (Constitution III). Values cite their spec FR; values labeled **(PLANNING — to balance)** are introduced by the plan (see research.md §4–5) and are not spec-derived. Runtime/simulation entity state is held in pure C# state objects driven by the core.
 
@@ -15,6 +15,12 @@ Session-level aggregate only — **owns `playerMaxHp` and holds references to th
 | playerMaxHp | 100 | FR-017 (owner; no PlayerConfig split in MVP) |
 | targetSessionMinutes | 10–15 | FR-006, SC-001 |
 | simFixedStepSeconds | 1/60 (tunable) | research.md §3 |
+| playerMoveSpeed / sprintMultiplier | 8 / 1.5 | FR-010/010B; data-driven playtest baseline |
+| gravity / jumpHeight / groundedVelocity | 24 / 1.35 / −2 | FR-010B; data-driven playtest baseline |
+| mouseSensitivity | 0.12 | FR-008; runtime default, bounded by PlayerSettings |
+| cameraDistance / thirdPersonFov / firstPersonFov | 6 / 65 / 75 | FR-010A/010C; data-driven playtest baseline |
+| firstPersonEyeHeight | 0.65 | FR-010A; data-driven playtest baseline |
+| cameraCollisionRadius / padding | 0.22 / 0.08 | FR-010C; data-driven playtest baseline |
 | baseConfigRef / weaponDefRef / … | asset refs | base HP/recovery/warning live in **BaseConfig**; magazine/reload live in **WeaponDef** |
 
 **Single source of truth (owners):** base maxHp/recovery/warning → `BaseConfig` only; magazine/reload → `WeaponDef` only; per-zombie base damage → `ZombieDef` only. Other assets reference these, never re-declare them. Any unavoidable mirror MUST be tagged `mirrored` and covered by a validation rule asserting equality (see data-config.contract.md).
@@ -26,8 +32,12 @@ Session-level aggregate only — **owns `playerMaxHp` and holds references to th
 | headshotMultiplier | 2.5 | FR-013 |
 | magazineSize | 30 | FR-014 |
 | reloadSeconds | 2 | FR-015 |
+| fireIntervalSeconds | 0.12 (약 500 RPM) | FR-011A |
+| recoilPitchRangeDegrees | 0.70–1.15 | FR-011B |
+| recoilYawMaximumDegrees | 0.32 | FR-011B |
+| recoilRecoveryDegreesPerSecond | 9 | FR-011B |
 | startGrenades | 2 (reset each phase) | FR-018, Assumptions |
-Validation: Runner body ≈3 hits, head 1–2 (FR-042 sanity); headshot applies only to head-hitbox zombies, not robots (Assumptions).
+Validation: Runner body ≈3 hits, head 1–2 (FR-042 sanity); headshot applies only to head-hitbox zombies, not robots (Assumptions). 클릭 유지 중에는 `fireIntervalSeconds`마다 발사하며, 매 발 반동은 명시된 범위 안에서 결정적 난수로 달라진다.
 
 ### GrenadeDef **(PLANNING — to balance)**
 | Field | Value | Source |
@@ -67,12 +77,17 @@ All routes converge on the central base (FR-025, FR-030). Waypoints are the auth
 | **attackIntervalSeconds** (PLANNING — to balance) | 1.0 | 1.5 | 1.0 |
 | **attackMode** | RepeatedUntilKilled | RepeatedUntilKilled | RepeatedUntilKilled |
 | **targetAttackRange** (PLANNING — to balance) | melee | melee | melee |
+| **pathVariationFraction** | 0.4 | 0.4 | 0.4 |
+| **separationRadius** | 1.1 | 1.9 | 1.3 |
+| **separationStrength** | 1.6 | 1.6 | 1.6 |
 | special | — | — | +5 robot battery drain per hit (FR-045) |
 | firstAppears | Phase 1 | Phase 2 | Phase 3 |
 | distinct A/V | — | — | required (FR-047): special icon + voice callout |
 Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 
 **Attack semantics** (resolves data-model ambiguity): a zombie that reaches its current target (base/player/robot) attacks **repeatedly** every `attackIntervalSeconds` for that type's damage until it is killed or the target is destroyed — **not** a one-shot on arrival. This is what makes "base HP drops 8씩" (US1.4) and robot HP 300 / medical HP 150 attrition testable. `robotDamage` is left as the spec's qualitative label; `robotDamageNumeric` is a **planning value** introduced so robot/medical attrition is quantifiable (see research.md §10) — to be balanced.
+
+**Runtime pathing policy**: every spawned zombie receives a seeded lateral variation of its route waypoints, including a separated spawn position inside the route width. Local separation steering then maintains distance from nearby zombies while preserving forward progress. Navigation waypoints are movement-only targets and can never apply damage; base/player/robot/barrier damage begins only after the route approach is complete and the real target is in attack range.
 
 ### PhaseDef ×3
 | Field | Phase 1 | Phase 2 | Phase 3 |
@@ -81,22 +96,22 @@ Source: FR-040..047, FR-052. Only these 3 types (FR-040, FR-140).
 | openRoutes (cumulative array) | [NorthRoad] | [NorthRoad, EastAlley] | [NorthRoad, EastAlley, SouthTunnel] |
 | newlyOpenedRoute (this phase) | NorthRoad | EastAlley | SouthTunnel |
 | threatBudget | 40 | 60 | 80 |
-| composition.runner (range) | 20–30 | 33–45 | 50–58 |
+| composition.runner (range) | 18–24 | 28–36 | 42–48 |
 | composition.bruiser (range) | 0 | 2–3 | 2–3 (clarify-confirmed min 2) |
-| composition.ripper (range) | 0 | 0 | 3–5 |
-| learningTargetTotalRange (FR-053) | 20–30 | 35–50 | 55–75 |
+| composition.ripper (range) | 0 | 0 | 3–4 |
+| learningTargetTotalRange (FR-053) | 18–24 | 30–39 | 47–55 |
 | specialMinimums | — | Bruiser ≥2 | Bruiser ≥2, Ripper ≥3 |
 | trimOrder (on budget conflict) | Runner | Runner → Bruiser | Runner → Bruiser (never below specialMinimums) |
 | targetDifficulty/duration | low / 2–3 min | medium / 3–4 min | high / 4–5 min |
 | deploysUnit | 2 Haetae (start) | — | Medical robot |
 | **spawnSchedule** (PLANNING — to balance): phaseStartDelaySeconds | 2 | 2 | 2 |
 | — groupIntervalSeconds | 4 | 3.5 | 3 |
-| — groupSizeRange | 3–5 | 4–6 | 5–8 |
-| **maxAliveConcurrent** (PLANNING — perf + pressure) | 18 | 24 | 30 |
+| — groupSizeRange | 3–4 | 3–5 | 4–6 |
+| **maxAliveConcurrent** (PLANNING — perf + pressure) | 15 | 20 | 24 |
 | **routeWeights** (share of spawns) | North 1.0 | North 0.55 / East 0.45 | North 0.4 / East 0.3 / South 0.3 |
 | **zombieTypeWeightsByRoute** (per-type route distribution, PLANNING) | — | Ripper — ; Bruiser {N 0.65, E 0.35}; Runner {N 0.6, E 0.4} | **Ripper {N 0.15, E 0.20, S 0.65}**; Bruiser {N 0.5, E 0.3, S 0.2}; Runner {N 0.4, E 0.3, S 0.3} |
 | **specialSpawnPolicy** | — | Bruiser min 2 across open routes | Ripper min 3, distributed by the weights above |
-Source: FR-003, FR-031, FR-051..055, FR-064, FR-034. **Continuous spawn + concurrent cap is now spec-mandated (FR-055):** the composition is spawned at intervals (`spawnSchedule`), not all at once, and field-alive count is bounded by `maxAliveConcurrent` — on reaching the cap, further spawns are delayed until zombies die; both are data-driven and deterministic-sim-reproducible (the numbers stay planning values, but the mechanism is required). Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total after budget trim lands inside `learningTargetTotalRange`** (FR-053): P2 runner 33–45 + bruiser 2–3 ⇒ total 35–48 at cost 43–60 ≤ 60; P3 runner 50–58 + bruiser 2 + ripper 3 (specials at minimum, runners fill to target) ⇒ total 55–63 at cost 72–80 ≤ 80 (budget caps the achievable upper near ~63, below FR-053's 75 — expected per the budget-wins Assumption). Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9, clarify-confirmed):** Phase 3 now requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so it reads as the all-types 종합 국면. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
+Source: FR-003, FR-031, FR-051..055, FR-064, FR-034. **Continuous spawn + concurrent cap is now spec-mandated (FR-055):** the composition is spawned at intervals (`spawnSchedule`), not all at once, and field-alive count is bounded by `maxAliveConcurrent` — on reaching the cap, further spawns are delayed until zombies die; both are data-driven and deterministic-sim-reproducible (the numbers stay planning values, but the mechanism is required). Composition is **per-type ranges** (not a prose string) so spawn tests assert bounds, and the ranges are tuned so the **achievable total lands inside `learningTargetTotalRange`** (FR-053): P2 runner 28–36 + bruiser 2–3 ⇒ total 30–39 at cost 38–51 ≤ 60; P3 runner 42–48 + bruiser 2–3 + ripper 3–4 ⇒ total 47–55 at cost 64–79 ≤ 80. Budget-vs-target reconciliation: budget is a hard cap; preserve `specialMinimums`, then trim per `trimOrder` (Assumptions "위협 예산 vs 목표 마릿수"). **`zombieTypeWeightsByRoute` is now a numeric matrix** — FR-034's "Ripper more frequent in South Tunnel" MUST is quantified as Ripper South weight 0.65 > other routes, and a spawn test asserts South-Tunnel Ripper count > other routes. **Note (P1-9, clarify-confirmed):** Phase 3 now requires **Bruiser ≥2 and Ripper ≥3** (spec Assumption "위협 예산 vs 목표 마릿수") so it reads as the all-types 종합 국면. All `spawnSchedule`/weight/matrix numbers are planning values flagged for balancing (research.md §11).
 
 ### RobotDef (Haetae) — 2 instances
 | Field | Value | Source |
@@ -117,7 +132,13 @@ Source: FR-003, FR-031, FR-051..055, FR-064, FR-034. **Continuous spawn + concur
 | dashCooldownSeconds | 3.0 | between dashes |
 | engageRange (m) | 2 | melee reach |
 | detectionRadius (m) | 15 | acquire target |
+| separationRadius (m) | 2.2 | minimum center distance between active Haetae robots |
+| separationStrength | 1.8 | local avoidance steering weight |
+| formationSpacing (m) | 3.0 | unique defend/patrol/base-rally slot spacing |
+| defendLeashRadius (m) | 14 | maximum base-centered operating radius for `DefendPosition` |
 Sanity vs bands: Runner 90 HP → dash 60 + 1 bite 40 ≈ 1 hit-cycle (~1–1.5 s ✓). Bruiser 500 HP → dash 60 then ~66 DPS (bite 40 / 0.6 s) ≈ ~7 s ✓. Strong vs normal zombies, weak to battery pressure + Ripper (FR-077). All values planning, flagged for balancing.
+
+**DefendPosition policy**: each Haetae owns a separate formation slot around the base. Initial acquisition only considers same-route zombies inside `defendLeashRadius` and ranks them by distance to the base rather than distance to the robot. After a kill, however, the robot immediately chains to the nearest zombie inside `detectionRadius`; this follow-up may cross route ownership but must still remain inside `defendLeashRadius`. It returns to its slot only when no valid follow-up remains or it leaves the leash. Local avoidance plus post-move minimum-distance resolution prevents the two robots from occupying or crossing through the same position while moving toward one target.
 
 ### BatteryConfig
 | Field | Value | Source |
@@ -145,7 +166,7 @@ Note (Assumptions): mechanical state bands (Low Power/Critical) and UI warning t
 hp 150 (FR-101); deploys Phase 3 (FR-100); stays near base (FR-102); non-combat, no attack (FR-103, Assumptions); heals player first (FR-104); healRate 8 HP/s (FR-105); radiusMeters 6 (FR-106); destructible (FR-107); destroyed zone not regenerated this session (Assumptions).
 
 ### UpgradeDef ×9 (FR-110..115)
-3-of-9 offered after Phase 1 and Phase 2; max 2 selections/session; the global candidate pool stays the same 9 definitions at every reward step (no per-phase gating, FR-115). **Offer policy (clarify-confirmed):** an **already-selected upgrade id is excluded from later offers in the same session**; **no stacking** — each upgrade is selectable at most once per session. `UpgradeService.Offer(rng)` draws 3 from the 9 minus already-selected ids; `selectedUpgradeIds` is tracked on `SessionState`.
+3-of-9 offered after Phase 1 and Phase 2; max 2 selections/session; the global candidate pool stays the same 9 definitions at every reward step (no per-phase gating, FR-115). **Offer policy (clarify-confirmed):** an **already-selected upgrade id is excluded from later offers in the same session**; **no stacking** — each upgrade is selectable at most once per session. `UpgradeService.Offer(rng, selectedUpgradeIds)` draws 3 from the 9 minus already-selected ids; `selectedUpgradeIds` is tracked on `SessionState`.
 
 | # | id | Effect | Apply rule |
 |---|----|--------|-----------|
@@ -161,7 +182,7 @@ hp 150 (FR-101); deploys Phase 3 (FR-100); stays near base (FR-102); non-combat,
 Mix includes numeric-improvement and playstyle-change types (FR-114).
 
 ### BarrierConfig **(PLANNING — to balance)**
-hp 300; one per open route at phase start (upgrade #6 active); placement = base-side choke anchor; lasts until destroyed or phase end; destroyed by cumulative zombie damage; must not permanently block player/robot nav. Source: research.md §5, FR-113#6, Assumptions.
+hp 300; one per open route at phase start (upgrade #6 active); placement = base-side choke anchor; rotation = local forward follows the final route segment toward the base so the wide face lies perpendicular across the approach; lasts until destroyed or phase end; destroyed by cumulative zombie damage; must not permanently block player/robot nav. Source: research.md §5, FR-113#6, Assumptions.
 
 ### AmmoConfig / SupplyPointConfig ×2
 `magazineSize` and `reloadSeconds` are **owned by `WeaponDef`** (FR-014/015) — AmmoConfig references them, does not re-declare. AmmoConfig owns the reserve-ammo economy (PLANNING — to balance, research.md §12):
@@ -175,13 +196,13 @@ hp 300; one per open route at phase start (upgrade #6 active); placement = base-
 | resupplyCooldownSeconds | 0 | per-point cooldown (0 = none in MVP) |
 | grenadeResupplyPolicy | **PhaseResetOnly** | **spec-determined** — grenades reset to 2 at each phase start (Assumptions "각 페이즈 시작 시 2개로 재설정"); no mid-phase grenade resupply |
 
-Two supply points (FR-037): `safe` (inside/adjacent base), `risky` (outside/near combat). Fire decrements loaded; reload moves reserve→loaded; resupply refills reserve per `resupplyPolicy` after `resupplyUseSeconds`. `grenadeResupplyPolicy` is the only spec-fixed value here; the rest are planning values to balance.
+Two supply points (FR-037): `safe` (inside/adjacent base), `risky` (outside/near combat). Interaction entry uses XZ-planar distance with `supplyInteractionRadius=2.5m`; an in-progress interaction cancels only beyond `radius + supplyExitTolerance(0.75m)` so jump height and small boundary jitter do not cause intermittent failures. Fire decrements loaded; reload moves reserve→loaded; resupply refills reserve per `resupplyPolicy` after `resupplyUseSeconds`. `grenadeResupplyPolicy` is the only spec-fixed value here; the rest are planning values to balance.
 
-### ChargingStationConfig
-id, anchor/location, `radiusMeters` (trigger radius), `maxConcurrentRobots` (MVP: both Haetae may charge — value to balance), `allowsCombat=false` (FR-097). **Charge rate is not here** — it lives in `BatteryConfig.chargeRate` (single-source); `charge_station_speedup` upgrade (#4) scales that rate. The station is otherwise a scene adapter (transform + trigger volume).
+### BaseChargingZoneConfig
+Base-centered `baseChargingRadius=6m`, `maxConcurrentRobots=2`, `allowsSimultaneousCombat=false` (FR-035/097). A robot with less than maximum battery and no valid combat target automatically enters Charging inside the zone. `allowsSimultaneousCombat=false` means the robot never attacks while remaining in `Charging`; while charging, target acquisition ignores the assigned route, interrupts charging into `Engage` for any valid nearby base threat, and retains that target across frames until invalid. `ReturnToBase` takes the robot to its unique rally slot inside this radius. **Charge rate is not here** — it lives in `BatteryConfig.chargeRate` (single-source); `charge_station_speedup` upgrade (#4) scales that rate. The visible station remains a scene landmark.
 
 ### CommandConfig (Robot Commands)
-Exactly 4 commands, no others (FR-085, FR-140): `DefendPosition`, `PatrolRoute`, `ReturnToBase`, `Charge`. **Selection (FR-087, MUST):** both **individual selection** and a **select-all toggle** are supported; commands are always applied **per robot** (select-all fans out to per-robot `IssueCommand`), so the two robots may hold different commands/routes. PatrolRoute takes an open-route target; DefendPosition takes a point/route (Assumptions). A `Destroyed` robot ignores commands until next-phase restore (FR-081).
+Exactly 3 commands, no others (FR-085): `DefendPosition`, `PatrolRoute`, `ReturnToBase`. Charging is automatic inside the base zone and is not a command. **Selection (FR-087, MUST):** both **individual selection** and a **select-all toggle** are supported; commands are always applied **per robot** (select-all fans out to per-robot `IssueCommand`), so the two robots may hold different commands/routes. PatrolRoute takes an open-route target; DefendPosition takes a point/route (Assumptions). A `Destroyed` robot ignores commands until next-phase restore (FR-081).
 
 ### WarningConfig / HudConfig
 HUD elements (FR-120): base HP, phase progress, route alert/minimap, robot battery, player HP, ammo, command quick-menu. Info priority: base HP > robot battery > route alert (FR-121). Thresholds: battery <25% yellow flash + callout (FR-123), <10% red flash + urgent callout (FR-124), base ≤30% edge warning + alarm (FR-125), Ripper appearance special icon + callout (FR-126), new route open highlight + radio (FR-122). Minimum combat HUD bundle ships with US1/US2; situational-awareness bundle with US5 (FR-120a). No info overload (FR-127).
@@ -264,7 +285,7 @@ currentPhase (1–3), result (InProgress/Victory/Defeat), defeatReason (BaseDest
 number, openRoutes, threatBudget, plannedComposition, spawnedCount, aliveCount, cleared(bool); spawn is **continuous** (interval-based) and gated by `maxAliveConcurrent` — spawning pauses while `aliveCount ≥ cap` and resumes as zombies die (FR-055). Transition (FR-061, ordered): ① all spawned → ② field cleared → ③ base alive → ④ phase cleared → ⑤ upgrade (if eligible) → ⑥ open next route → ⑦ start next phase. **At each phase start, any `Destroyed` Haetae is restored to hp=300 + usable battery (FR-081).**
 
 ### PlayerState
-hp (0–100), grenades, weapon ammo state (loaded, reserve). Death → defeat (FR-017).
+hp (0–100), grenades, weapon ammo state (loaded, reserve), currentPerspective, grounded/sprint intent. Saved sensitivity/audio/display/default-perspective preferences live outside deterministic session state. Death → defeat (FR-017).
 
 ### BaseState
 hp (0–1000), warningActive(≤30%). PhaseClear → +15% maxHp recovery (FR-021). 0 → defeat (FR-024).
@@ -283,21 +304,38 @@ stateDiagram-v2
     Standby --> Patrol: Patrol Route
     Standby --> Engage: 좀비 탐지
     Patrol --> Engage: 좀비 탐지
-    Engage --> Patrol: 표적 소멸
-    Patrol --> Standby
+    Engage --> Patrol: 표적 소멸 + Patrol Route
+    Engage --> Standby: 표적 소멸 + Defend Position
+    Patrol --> Standby: Defend Position
 
-    Standby --> ReturnToCharge: Charge 명령
-    Patrol --> ReturnToCharge: Charge 명령
-    Engage --> ReturnToCharge: Charge 명령
-    ReturnToCharge --> Charging: 충전소 도착
-    Charging --> Standby: 충전 완료 / 재명령
+    Standby --> ReturnToCharge: Return to Base
+    Patrol --> ReturnToCharge: Return to Base
+    Engage --> ReturnToCharge: Return to Base
+    LowBattery --> ReturnToCharge: Return to Base
+
+    Standby --> Charging: 기지 반경 + 미충전 + 유효 표적 없음
+    Patrol --> Charging: 기지 반경 + 미충전 + 유효 표적 없음
+    Engage --> Charging: 표적 소멸 + 기지 반경 + 미충전
+    LowBattery --> Charging: 기지 반경 + 미충전 + 유효 표적 없음
+    ReturnToCharge --> Charging: 기지 도착 + 유효 표적 없음
+    Charging --> Engage: 기지 위협 탐지 · 충전 중단 · 표적 유지
+    Charging --> Standby: 충전 완료
+    Charging --> ReturnToCharge: 충전 반경 이탈
 
     state "LowBattery (배터리 ≤ 30)" as LowBattery
     Standby --> LowBattery: 배터리 ≤ 30
     Patrol --> LowBattery: 배터리 ≤ 30
     Engage --> LowBattery: 배터리 ≤ 30
-    LowBattery --> Engage: 충전 후 31↑
+    LowBattery --> Engage: 유효 표적 탐지 · 저전력 성능 유지
+    LowBattery --> Patrol: 표적 없음 + Patrol Route
+    LowBattery --> Standby: 표적 없음 + Defend Position
+
+    Standby --> Disabled: 배터리 0 · Depleted
+    Patrol --> Disabled: 배터리 0 · Depleted
+    Engage --> Disabled: 배터리 0 · Depleted
     LowBattery --> Disabled: 배터리 0 · Depleted
+    ReturnToCharge --> Disabled: 배터리 0 · Depleted
+    Charging --> Disabled: 리퍼 피격 등으로 배터리 0
 
     Disabled --> Recovery: 5초 경과
     Recovery --> ReturnToCharge: 배터리 ≥ 5
@@ -320,7 +358,7 @@ stateDiagram-v2
     note right of Disabled: 이동·공격 불가 (FR-080)
     note right of Recovery: +0.5/s · 공격 불가
     note right of Destroyed: HP 0 (좀비 피해) · 명령/이동/공격/충전 불가 · 현재 페이즈 한정 (FR-081)
-    note right of Charging: +4/s · 전투 불가 (FR-097)
+    note right of Charging: +4/s · 공격과 동시 수행 불가 · 기지 위협 발견 시 Engage (FR-035/097)
 ```
 
 ### ZombieState
@@ -341,7 +379,7 @@ routeId, hp (0–300), placement (choke anchor), alive. Cumulative zombie damage
 - **Damage/headshot**: damage = baseDamage × (head ? 2.5 : 1); robots/medical not headshot-eligible (Assumptions).
 - **Death/defeat**: entity dies at hp ≤0; base 0 or player 0 → immediate defeat (FR-005/024).
 - **Base recovery**: on phase clear, hp += 0.15 × maxHp, capped at maxHp (FR-021).
-- **Ammo/reload/resupply**: fire decrements loaded; reload (2 s) moves reserve→loaded up to magazineSize; resupply refills reserve at a supply point; extended-magazine edge rule (Assumptions).
+- **Ammo/reload/resupply**: fire decrements loaded; held fire repeats every 0.12 s; each shot applies bounded random recoil; reload (2 s) moves reserve→loaded up to magazineSize; resupply refills reserve at a supply point; extended-magazine edge rule (Assumptions).
 - **Grenade**: per zombie in radius, damage = lerp(150→60, dist 2 m→5 m), full 150 within 2 m, 0 beyond 5 m, capped at 10 targets (PLANNING).
 - **Battery**: drain by activity, charge +4/s, thresholds set state + effects; Ripper −5; depletion→recovery→return-to-charge (Assumptions).
 - **Upgrade application**: numeric add (incl. current-value for +max), reservation for not-yet-present units (FR-115), playstyle effects (관통탄/긴급 방벽).
