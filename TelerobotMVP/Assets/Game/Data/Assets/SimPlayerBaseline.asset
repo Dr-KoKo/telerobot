@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 896b7cc0ce9a45448a9171cb01502888, type: 3}
+  m_Name: SimPlayerBaseline
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.SimPlayerProfileAsset
+  id: 1
+  aimAccuracy: 0.75
+  headshotRate: 0.25
+  reactionDelaySeconds: 0.6
+  fireIntervalSeconds: 1.8
+  routePriorityPolicy: 1
+  ripperFocus: 0.6
+  robotChargeThresholdFraction: 0.25
+  upgradeSelectionPolicy: 1
+  grenadeUsePolicy: 1
+  grenadeClusterThreshold: 4

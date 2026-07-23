@@ -1,0 +1,8 @@
+{
+  "name": "Game.TestFixtures",
+  "rootNamespace": "Telerobot.Game.Tests",
+  "references": ["Game.Core"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

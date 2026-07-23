@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68b1208ada91c1dea4c0549cd9df19fa, type: 3}
+  m_Name: MvpBalanceCatalog
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.MvpContentCatalog
+  dataVersion: mvp-1.4.5
+  game: {fileID: 11400000, guid: 385771c6190f7464b94ab07261ab172f, type: 2}
+  baseConfig: {fileID: 11400000, guid: 4af6770a95ffec643b43fec1691eeb02, type: 2}
+  ammo: {fileID: 11400000, guid: 4eba51f11dd168948b6f1b748ad35ed8, type: 2}
+  weapon: {fileID: 11400000, guid: d86c3fe4900caad4ebc06debb994cb7f, type: 2}
+  grenade: {fileID: 11400000, guid: 00f0a055643c00e4f99c63e725a9862f, type: 2}
+  battery: {fileID: 11400000, guid: 39fd1d9f9e7e0b048b68580fdce7ad6a, type: 2}
+  robot: {fileID: 11400000, guid: 5dd4f6d71d48b2e438df90d21aa62fed, type: 2}
+  medical: {fileID: 11400000, guid: adeaf7cc0bf7deb418b1717c12ebd8cd, type: 2}
+  barrier: {fileID: 11400000, guid: 89f3fa4a6a4cf0b43ae5d13ccba5419c, type: 2}
+  warnings: {fileID: 11400000, guid: b0ff9529bf43a9045b04e37cda569211, type: 2}
+  world: {fileID: 11400000, guid: d79e33a61dcc97b4a801e8097369e36e, type: 2}
+  commands: {fileID: 11400000, guid: 43ab398bf61b94444ab94ec16ff30301, type: 2}
+  hud: {fileID: 11400000, guid: d41f762b42074de4f9a25f1217f14e74, type: 2}
+  playerSettings: {fileID: 11400000, guid: 43e8df4d6b6c36f4cb068cf9fe653168, type: 2}
+  telemetry: {fileID: 11400000, guid: a61d8df013dcc9543a867b6836fac9cc, type: 2}
+  validation: {fileID: 11400000, guid: 050b3acbfc7e2fe44b3cc59136bc7b57, type: 2}
+  simPlayerProfiles:
+  - {fileID: 11400000, guid: 3a4d9c356d435c549818218de794ca70, type: 2}
+  - {fileID: 11400000, guid: 61ca86e96a06e3b4f8cb25d8eaf6f33b, type: 2}
+  - {fileID: 11400000, guid: ff9fb4dccaf531840bb7607dd91ead4d, type: 2}
+  supplyPoints:
+  - {fileID: 11400000, guid: 1d038c56d3ef3b84d84f8801964939f7, type: 2}
+  - {fileID: 11400000, guid: 2bcc5396643e21d4d9aac928ad7c07f1, type: 2}
+  zombies:
+  - {fileID: 11400000, guid: 71a3683e3be1dee438e076b3b92a4276, type: 2}
+  - {fileID: 11400000, guid: 8ee90b07a9ca29b479820063f3945f76, type: 2}
+  - {fileID: 11400000, guid: 79b87a1036dc41f47b60b4609ca1f5d9, type: 2}
+  phases:
+  - {fileID: 11400000, guid: 9435c01a0965a474eaf7b2db5651cb3a, type: 2}
+  - {fileID: 11400000, guid: 73c5724b8d9014d4d91fc209db2442c7, type: 2}
+  - {fileID: 11400000, guid: 2a24e6a568f6954448e87996fc99e77e, type: 2}
+  routes:
+  - {fileID: 11400000, guid: b9d4bf6e6110b8d4a88caaefc9055512, type: 2}
+  - {fileID: 11400000, guid: d48a8c21155bf5c46ba1cf11774883e7, type: 2}
+  - {fileID: 11400000, guid: 0087f0d7269efdb49b1ec208c92ad508, type: 2}
+  upgrades:
+  - {fileID: 11400000, guid: 57342afbe084c324b938b362d5953181, type: 2}
+  - {fileID: 11400000, guid: 6d25f5dc950e2b447bd0f7da564eb404, type: 2}
+  - {fileID: 11400000, guid: ccf90600f0d9e194ba3774402046cb78, type: 2}
+  - {fileID: 11400000, guid: 8fc7456ec2e044e43af941eb2fe02715, type: 2}
+  - {fileID: 11400000, guid: 87b3c278cfe9f7d418b8a99846b8e92d, type: 2}
+  - {fileID: 11400000, guid: 106a69df62d2f4e42a8398b4e1a59631, type: 2}
+  - {fileID: 11400000, guid: e35a5c2bce9348a4290db42f82d3d4fe, type: 2}
+  - {fileID: 11400000, guid: a3b956c562beb8b4f8c22087f3ff5301, type: 2}
+  - {fileID: 11400000, guid: 15174fb4c10b43e43a572958ddd92eec, type: 2}
+  strings: {fileID: 11400000, guid: 5b466b91ec0ebe141b818f7b5f1f4424, type: 2}
+  runtimeMaterialTemplate: {fileID: 2100000, guid: 3079b03709fc0fb4baa257a43c64b645, type: 2}

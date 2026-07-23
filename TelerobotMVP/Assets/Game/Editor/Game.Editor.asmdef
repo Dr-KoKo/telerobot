@@ -1,0 +1,7 @@
+{
+  "name": "Game.Editor",
+  "rootNamespace": "Telerobot.Game.Editor",
+  "references": ["Game.Core", "Game.Data", "Game.Runtime", "Unity.InputSystem"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

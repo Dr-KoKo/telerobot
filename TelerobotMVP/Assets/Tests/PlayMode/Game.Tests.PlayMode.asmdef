@@ -1,0 +1,7 @@
+{
+  "name": "Game.Tests.PlayMode",
+  "rootNamespace": "Telerobot.Game.Tests",
+  "references": ["Game.Core", "Game.Data", "Game.Runtime", "Game.TestFixtures"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

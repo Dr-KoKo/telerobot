@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34328ade741f7c120427f444ae39b70e, type: 3}
+  m_Name: Runner
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.ZombieDefinitionAsset
+  type: 0
+  maxHealth: 90
+  moveSpeed: 6.5
+  baseDamage: 8
+  playerDamage: 12
+  robotDamage: 8
+  attackInterval: 1
+  attackRange: 1.8
+  pathVariationFraction: 0.4
+  separationRadius: 1.1
+  separationStrength: 1.6
+  threatCost: 1
+  firstPhase: 1
+  targetPriority: 000000000100000002000000
+  displayColor: {r: 0.38, g: 0.9, b: 0.28, a: 1}
+  displayScale: {x: 0.72, y: 0.86, z: 0.72}
+  hitFlashSeconds: 0.12
+  deathEffectSeconds: 0.42
+  deathPulseSize: 0.9

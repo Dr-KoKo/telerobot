@@ -1,0 +1,7 @@
+{
+  "name": "Game.Simulation",
+  "rootNamespace": "Telerobot.Game.Simulation",
+  "references": ["Game.Core"],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}
