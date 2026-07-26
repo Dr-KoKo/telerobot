@@ -7,8 +7,8 @@
 - Package/Identity/Name: `Dr-Ko.telerobot`
 - Package/Identity/Publisher: `CN=D7C3F8A8-2C26-4CBC-BEDF-193632AAF7DC`
 - Package/Properties/PublisherDisplayName: `Dr-Ko`
-- Unity 게임 버전: `0.2.2`
-- Store 패키지 버전: `0.2.2.0`
+- Unity 게임 버전: `0.2.3`
+- Store 패키지 버전: `0.2.3.0`
 - 대상: Windows Desktop x64, Windows 10 2004(빌드 19041) 이상
 
 이 세 ID 값은 Partner Center에서 복사한 공개 패키지 식별자입니다. 계정 암호나 인증 키가 아니므로 프로젝트 설정에 저장해도 됩니다.
@@ -42,7 +42,7 @@ Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Filter MakeAppx.exe 
 
 성공하면 다음 파일이 만들어집니다.
 
-- `Builds/Store/TelerobotMVP-Store-v0.2.2.0-x64.msix`: Partner Center에 올릴 파일
+- `Builds/Store/TelerobotMVP-Store-v0.2.3.0-x64.msix`: Partner Center에 올릴 파일
 - `Builds/Store/Staging/AppxManifest.xml`: 실제 ID와 실행 파일 설정
 - `Builds/Store/STORE-SUBMISSION-KO.md`: 빌드 버전에 맞춘 짧은 안내
 
@@ -64,7 +64,7 @@ Add-AppxPackage -Register 'C:\Users\dongh\Documents\workspaces\telerobot\Telerob
 
 1. [Partner Center](https://partner.microsoft.com/dashboard)에서 `telerobot` 제품을 엽니다.
 2. 새 제출을 시작합니다.
-3. **Packages** 단계에 `TelerobotMVP-Store-v0.2.2.0-x64.msix`를 끌어 놓습니다.
+3. **Packages** 단계에 `TelerobotMVP-Store-v0.2.3.0-x64.msix`를 끌어 놓습니다.
 4. 자동 분석이 끝나면 오류가 없는지 확인합니다.
 5. **Properties**, **Age ratings**, **Store listings**를 채웁니다.
 6. Store listing에 게임 설명, 지원 연락처, 아이콘, 스크린샷을 넣습니다.
@@ -83,8 +83,8 @@ Store에서 설치한 빌드는 Microsoft가 서명합니다. 이 배포 경로�
 
 새 패키지는 이전 제출보다 높은 4자리 버전이어야 합니다.
 
-- 현재: Unity `0.2.2` → Store `0.2.2.0`
-- 예시 업데이트: Unity `0.2.3` → Store `0.2.3.0`
+- 현재: Unity `0.2.3` → Store `0.2.3.0`
+- 예시 업데이트: Unity `0.2.4` → Store `0.2.4.0`
 
 Unity의 **Project Settings > Player > Version**을 먼저 올린 뒤 Store 빌드 메뉴를 다시 실행합니다. Package Identity와 Publisher 값은 바꾸지 않습니다.
 

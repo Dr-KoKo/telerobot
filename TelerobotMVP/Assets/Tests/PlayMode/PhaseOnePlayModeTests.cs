@@ -35,12 +35,18 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
-        public IEnumerator EmptyCompletedWaveOpensUpgradeReward()
+        public IEnumerator EmptyCompletedWaveImmediatelyStartsPhaseTwoWithoutUpgradeView()
         {
             Game.ClearCurrentWaveForTests();
             yield return null;
             yield return null;
-            Assert.That(Game.UpgradeOpen, Is.True);
+            Assert.That(Game.CurrentPhase, Is.EqualTo(2));
+            Assert.That(Game.OpenRoutes, Does.Contain(RouteId.EastAlley));
+            Assert.That(GameObject.Find("MVP HUD").GetComponents<MonoBehaviour>()
+                .Any(item => item.GetType().Name == "UpgradeSelectionView"), Is.False);
+            Assert.That(Game.EventHistory.Any(item => item.Name == "radio_event" &&
+                item.Payload.ContainsKey("key") && item.Payload["key"] == "radio.phase_clear"), Is.True);
+            Assert.That(Game.EventHistory.Any(item => item.Name == "upgrade_selected"), Is.False);
         }
 
         [UnityTest]

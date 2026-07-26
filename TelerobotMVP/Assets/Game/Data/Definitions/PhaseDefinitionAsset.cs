@@ -9,6 +9,7 @@ namespace Telerobot.Game.Data
         public int threatBudget;
         public float targetDurationSeconds;
         public RouteId[] openRoutes;
+        public bool opensNewRoute;
         public RouteId newlyOpenedRoute;
         public IntRangeConfig runnerCount;
         public IntRangeConfig bruiserCount;

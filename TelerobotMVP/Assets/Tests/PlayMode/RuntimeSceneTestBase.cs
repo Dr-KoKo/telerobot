@@ -23,15 +23,13 @@ namespace Telerobot.Game.Tests
             Game.SetAcceleratedSpawningForTests(true);
         }
 
-        protected IEnumerator ClearAndChooseFirstUpgrade()
+        protected IEnumerator ClearAndAdvancePhase()
         {
+            var previousPhase = Game.CurrentPhase;
             Game.ClearCurrentWaveForTests();
             yield return null;
             yield return null;
-            Assert.That(Game.UpgradeOpen, Is.True);
-            Assert.That(Game.CurrentUpgradeOffer.Count, Is.EqualTo(3));
-            Game.SelectUpgrade(Game.CurrentUpgradeOffer[0]);
-            yield return null;
+            Assert.That(Game.CurrentPhase, Is.EqualTo(previousPhase + 1));
         }
     }
 }

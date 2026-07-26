@@ -24,6 +24,18 @@ MonoBehaviour:
   - key: radio.phase3
     value: "\uB0A8\uCABD \uD130\uB110 \uAC1C\uBC29. \uBA54\uB514\uCEEC \uB85C\uBD07
       \uD22C\uC785."
+  - key: radio.phase4
+    value: "\uD6C4\uBC18 \uACF5\uC138 \uAC1C\uC2DC. \uC138 \uACBD\uB85C\uB97C \uC0AC\uC218\uD558\uB77C."
+  - key: radio.phase5
+    value: "\uB3D9\uCABD \uACE8\uBAA9\uC758 \uC801 \uBC00\uB3C4\uAC00 \uC99D\uAC00\uD55C\uB2E4."
+  - key: radio.phase6
+    value: "\uBD81\uCABD \uB3C4\uB85C\uC5D0 \uC911\uC7A5 \uAC10\uC5FC\uCCB4\uAC00
+      \uC9D1\uACB0\uD55C\uB2E4."
+  - key: radio.phase7
+    value: "\uB0A8\uCABD \uD130\uB110 \uC555\uBC15\uC774 \uAC70\uC138\uC9C4\uB2E4."
+  - key: radio.phase8
+    value: "\uCD5C\uC885 \uACF5\uC138\uB2E4. \uAC70\uC810\uC744 \uB05D\uAE4C\uC9C0
+      \uC0AC\uC218\uD558\uB77C."
   - key: radio.battery_warning
     value: "\uD574\uD0DC 1\uD638, \uBC30\uD130\uB9AC \uC704\uD5D8."
   - key: radio.base_danger
@@ -44,24 +56,6 @@ MonoBehaviour:
     value: "\uB3D9\uCABD \uACE8\uBAA9"
   - key: route.south
     value: "\uB0A8\uCABD \uD130\uB110"
-  - key: upg.battery
-    value: "\uACE0\uD6A8\uC728 \uBC30\uD130\uB9AC"
-  - key: upg.powersave
-    value: "\uC804\uD22C \uC808\uC804 \uBAA8\uB4DC"
-  - key: upg.dash
-    value: "\uD574\uD0DC \uB3CC\uC9C4 \uAC15\uD654"
-  - key: upg.chargefast
-    value: "\uCDA9\uC804\uC18C \uACE0\uC18D\uD654"
-  - key: upg.armor
-    value: "\uAC70\uC810 \uC7A5\uAC11 \uBCF4\uAC15"
-  - key: upg.barrier
-    value: "\uAE34\uAE09 \uBC29\uBCBD"
-  - key: upg.pierce
-    value: "\uAD00\uD1B5\uD0C4"
-  - key: upg.mag
-    value: "\uD655\uC7A5 \uD0C4\uCC3D"
-  - key: upg.recovery
-    value: "\uC751\uAE09 \uD68C\uBCF5 \uD504\uB85C\uD1A0\uCF5C"
   - key: hud.base
     value: "\uAC70\uC810"
   - key: hud.phase
@@ -110,6 +104,68 @@ MonoBehaviour:
     value: "\uC704\uD5D8 \uBCF4\uAE09\uC9C0"
   - key: hud.reloading
     value: "\uC7AC\uC7A5\uC804 \uC911"
+  - key: hud.haetae_level
+    value: "\uB808\uBCA8"
+  - key: hud.haetae_experience
+    value: "\uACBD\uD5D8\uCE58"
+  - key: hud.haetae_health
+    value: "\uCCB4\uB825"
+  - key: hud.haetae_status
+    value: "\uC0C1\uD0DC"
+  - key: hud.haetae_battery
+    value: "\uBC30\uD130\uB9AC"
+  - key: hud.haetae_general
+    value: "\uC77C\uBC18\uD615"
+  - key: hud.haetae_specialization_ready
+    value: "\uC804\uBB38\uD654 \uAC00\uB2A5"
+  - key: hud.haetae_choose_specialization
+    value: "\uC804\uBB38\uD654 \uC120\uD0DD"
+  - key: hud.haetae_specialization_hint
+    value: "[B] \uD574\uD0DC \uBE4C\uB4DC"
+  - key: hud.haetae_mastery_points
+    value: "\uAC15\uD654 \uD3EC\uC778\uD2B8"
+  - key: haetae.specialization.melee
+    value: "\uADFC\uAC70\uB9AC\uD615"
+  - key: haetae.specialization.ranged
+    value: "\uC6D0\uAC70\uB9AC\uD615"
+  - key: haetae.specialization.balanced
+    value: "\uADE0\uD615\uD615"
+  - key: haetae.specialization.melee.description
+    value: "\uADFC\uC811 \uB3CC\uC785\uACFC \uB2E4\uC911 \uD0C0\uACA9\uC5D0 \uD2B9\uD654.
+      \uC804\uD22C \uBC30\uD130\uB9AC \uC18C\uBAA8\uAC00 \uC99D\uAC00\uD569\uB2C8\uB2E4."
+  - key: haetae.specialization.ranged.description
+    value: "\uC548\uC804 \uAC70\uB9AC\uB97C \uC720\uC9C0\uD558\uBA70 \uC0AC\uACA9.
+      \uBC1B\uB294 \uD53C\uD574\uAC00 \uC99D\uAC00\uD569\uB2C8\uB2E4."
+  - key: haetae.specialization.balanced.description
+    value: "\uC811\uADFC \uC911 \uC0AC\uACA9\uD558\uACE0 \uADFC\uAC70\uB9AC\uC5D0\uC11C\uB294
+      \uBB3C\uC5B4\uB72F\uAE30\uB85C \uC804\uD658\uD569\uB2C8\uB2E4."
+  - key: haetae.specialization.panel_title
+    value: "\uD574\uD0DC \uC804\uBB38\uD654"
+  - key: haetae.specialization.next_robot
+    value: "\uB2E4\uC74C \uD574\uD0DC"
+  - key: haetae.specialization.close
+    value: "\uB2EB\uAE30"
+  - key: haetae.mastery.panel_title
+    value: "\uD574\uD0DC \uAC15\uD654"
+  - key: haetae.mastery.power
+    value: "\uD654\uB825 \uAC15\uD654"
+  - key: haetae.mastery.power.description
+    value: "\uBAA8\uB4E0 \uACF5\uACA9 \uD53C\uD574\uAC00 \uB4F1\uAE09\uB2F9 10% \uC99D\uAC00\uD569\uB2C8\uB2E4."
+  - key: haetae.mastery.armor
+    value: "\uC7A5\uAC11 \uAC15\uD654"
+  - key: haetae.mastery.armor.description
+    value: "\uBC1B\uB294 \uD53C\uD574\uAC00 \uB4F1\uAE09\uB2F9 8% \uAC10\uC18C\uD569\uB2C8\uB2E4.
+      \uCD5C\uB300 50%\uAE4C\uC9C0 \uAC10\uC18C\uD569\uB2C8\uB2E4."
+  - key: haetae.mastery.efficiency
+    value: "\uB3D9\uB825 \uD6A8\uC728"
+  - key: haetae.mastery.efficiency.description
+    value: "\uC804\uD22C \uC911 \uBC30\uD130\uB9AC \uC18C\uBAA8\uAC00 \uB4F1\uAE09\uB2F9
+      8% \uAC10\uC18C\uD569\uB2C8\uB2E4. \uCD5C\uB300 50%\uAE4C\uC9C0 \uAC10\uC18C\uD569\uB2C8\uB2E4."
+  - key: haetae.mastery.attack_speed
+    value: "\uACF5\uACA9 \uC18D\uB3C4"
+  - key: haetae.mastery.attack_speed.description
+    value: "\uBAA8\uB4E0 \uD574\uD0DC \uACF5\uACA9 \uAC04\uACA9\uC774 \uB4F1\uAE09\uB2F9
+      10% \uAC10\uC18C\uD569\uB2C8\uB2E4. \uCD5C\uB300 50%\uAE4C\uC9C0 \uAC10\uC18C\uD569\uB2C8\uB2E4."
   - key: menu.title
     value: "\uD154\uB808 \uB85C\uBD07\uD300, \uCD9C\uACA9\uD558\uB77C"
   - key: menu.subtitle

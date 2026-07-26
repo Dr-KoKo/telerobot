@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04809b29a5204b45c5ba4c8bc0ca2f59, type: 3}
+  m_Name: Phase8
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.PhaseDefinitionAsset
+  number: 8
+  threatBudget: 379
+  targetDurationSeconds: 100
+  openRoutes: 000000000100000002000000
+  opensNewRoute: 0
+  newlyOpenedRoute: 2
+  runnerCount:
+    Min: 115
+    Max: 125
+  bruiserCount:
+    Min: 28
+    Max: 30
+  ripperCount:
+    Min: 24
+    Max: 26
+  learningTotal:
+    Min: 167
+    Max: 181
+  runnerMinimum: 0
+  bruiserMinimum: 28
+  ripperMinimum: 24
+  trimOrder: 0000000001000000
+  phaseStartDelaySeconds: 2
+  groupIntervalSeconds: 3
+  groupSize:
+    Min: 4
+    Max: 6
+  maxAliveConcurrent: 24
+  routeWeights:
+  - Route: 0
+    Weight: 0.34
+  - Route: 1
+    Weight: 0.33
+  - Route: 2
+    Weight: 0.33
+  zombieTypeRouteWeights:
+  - Type: 0
+    Routes:
+    - Route: 0
+      Weight: 0.34
+    - Route: 1
+      Weight: 0.33
+    - Route: 2
+      Weight: 0.33
+  - Type: 1
+    Routes:
+    - Route: 0
+      Weight: 0.34
+    - Route: 1
+      Weight: 0.33
+    - Route: 2
+      Weight: 0.33
+  - Type: 2
+    Routes:
+    - Route: 0
+      Weight: 0.34
+    - Route: 1
+      Weight: 0.33
+    - Route: 2
+      Weight: 0.33

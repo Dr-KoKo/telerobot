@@ -6,6 +6,7 @@ namespace Telerobot.Game.Data
     public sealed class ZombieDefinitionAsset : ScriptableObject
     {
         public ZombieType type;
+        [Min(1)] public int haetaeExperienceReward;
         public float maxHealth;
         public float moveSpeed;
         public float baseDamage;

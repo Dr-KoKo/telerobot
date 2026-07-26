@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.PhaseDefinitionAsset
   number: 1
   threatBudget: 40
-  targetDurationSeconds: 150
+  targetDurationSeconds: 35
   openRoutes: 00000000
+  opensNewRoute: 1
   newlyOpenedRoute: 0
   runnerCount:
     Min: 18

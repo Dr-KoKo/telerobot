@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using Telerobot.Game.Core;
 
@@ -46,20 +47,56 @@ namespace Telerobot.Game.Tests
             Assert.That(phaseTwo.MaxAliveConcurrent, Is.EqualTo(20));
             Assert.That(phaseThree.LearningTotal.Max, Is.EqualTo(55));
             Assert.That(phaseThree.MaxAliveConcurrent, Is.EqualTo(24));
+            Assert.That(phaseOne.GroupSize.Min, Is.EqualTo(3));
+            Assert.That(phaseOne.GroupSize.Max, Is.EqualTo(4));
+            Assert.That(phaseTwo.GroupSize.Min, Is.EqualTo(3));
+            Assert.That(phaseTwo.GroupSize.Max, Is.EqualTo(5));
+            Assert.That(phaseThree.GroupSize.Min, Is.EqualTo(4));
+            Assert.That(phaseThree.GroupSize.Max, Is.EqualTo(6));
         }
 
         [Test]
-        public void ClearRequiresAllSpawnedNoAliveAndBaseAlive()
+        public void EightPhaseSessionPreservesOpeningPressureAndTargetsTenMinutes()
         {
             var config = TestConfigFactory.Create();
-            var system = new PhaseSystem(config.Base);
+
+            Assert.That(config.Phases.Count, Is.EqualTo(8));
+            Assert.That(config.Phases.ConvertAll(item => item.Number),
+                Is.EqualTo(new[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
+            Assert.That(config.Phases.ConvertAll(item => item.TargetDurationSeconds).ToArray(),
+                Is.EqualTo(new[] { 35f, 40f, 40f, 100f, 100f, 100f, 100f, 100f }));
+            Assert.That(config.Phases.Sum(item => item.TargetDurationSeconds), Is.EqualTo(615f));
+
+            for (var number = 4; number <= 8; number++)
+            {
+                var phase = config.GetPhase(number);
+                Assert.That(phase.OpenRoutes, Is.EqualTo(new[]
+                {
+                    RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel
+                }));
+                Assert.That(phase.GroupIntervalSeconds, Is.EqualTo(3f));
+                Assert.That(phase.GroupSize.Min, Is.EqualTo(4));
+                Assert.That(phase.GroupSize.Max, Is.EqualTo(6));
+                Assert.That(phase.MaxAliveConcurrent, Is.EqualTo(24));
+                Assert.That(phase.OpensNewRoute, Is.False);
+            }
+        }
+
+        [Test]
+        public void PhaseOneClearImmediatelyAdvancesAndRecoversBase()
+        {
+            var config = TestConfigFactory.Create();
+            var system = new PhaseSystem(config.Base, config.Phases.Count);
             var session = new SessionState(1001);
             var phase = new PhaseState(1, new[] { RouteId.NorthRoad });
             var baseState = new BaseState(1000f);
             var player = new PlayerState(100f, 30, 180, 2);
             Assert.That(system.Evaluate(session, phase, baseState, player), Is.EqualTo(PhaseTransition.None));
+            baseState.Health.Current = 500f;
             phase.AllSpawned = true;
-            Assert.That(system.Evaluate(session, phase, baseState, player), Is.EqualTo(PhaseTransition.AwaitingUpgrade));
+            Assert.That(system.Evaluate(session, phase, baseState, player), Is.EqualTo(PhaseTransition.NextPhase));
+            Assert.That(baseState.Health.Current,
+                Is.EqualTo(500f + baseState.Health.Maximum * config.Base.PhaseRecoveryFraction));
         }
 
         [TestCase(true, false, DefeatReason.BaseDestroyed)]
@@ -67,7 +104,7 @@ namespace Telerobot.Game.Tests
         public void BaseOrPlayerDeathImmediatelyDefeats(bool killBase, bool killPlayer, DefeatReason reason)
         {
             var config = TestConfigFactory.Create();
-            var system = new PhaseSystem(config.Base);
+            var system = new PhaseSystem(config.Base, config.Phases.Count);
             var session = new SessionState(1);
             var phase = new PhaseState(1, new[] { RouteId.NorthRoad });
             var baseState = new BaseState(1000f);

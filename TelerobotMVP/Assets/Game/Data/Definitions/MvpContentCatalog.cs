@@ -23,12 +23,13 @@ namespace Telerobot.Game.Data
         public PlayerSettingsAsset playerSettings;
         public TelemetryConfigAsset telemetry;
         public ValidationConfigAsset validation;
+        public HaetaeProgressionDefinitionAsset haetaeProgression;
+        public HaetaeSpecializationDefinitionAsset[] haetaeSpecializations;
         public SimPlayerProfileAsset[] simPlayerProfiles;
         public SupplyPointDefinitionAsset[] supplyPoints;
         public ZombieDefinitionAsset[] zombies;
         public PhaseDefinitionAsset[] phases;
         public RouteDefinitionAsset[] routes;
-        public UpgradeDefinitionAsset[] upgrades;
         public StringTableAsset strings;
         public Material runtimeMaterialTemplate;
 

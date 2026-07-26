@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56ffc4bd2b612274e8ed7f7a81d8a1e1, type: 3}
+  m_Name: HaetaeProgression
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.HaetaeProgressionDefinitionAsset
+  experiencePerLevel: 75
+  readyAlertSeconds: 4
+  powerDamageBonusPerRank: 0.1
+  armorDamageReductionPerRank: 0.08
+  efficiencyBatteryReductionPerRank: 0.08
+  attackSpeedBonusPerRank: 0.1
+  minimumReductionMultiplier: 0.5
+  specializations:
+  - {fileID: 11400000, guid: 873b4c6d806087842880cd0e525f5b37, type: 2}
+  - {fileID: 11400000, guid: 1bbb515b150dc974f989a8fc7336d2d9, type: 2}
+  - {fileID: 11400000, guid: b29342b07895c4a4bbb979a685c19ae9, type: 2}

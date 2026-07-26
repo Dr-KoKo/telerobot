@@ -16,7 +16,7 @@ namespace Telerobot.Game.Tests
         }
 
         [Test]
-        public void RipperPrefersRobotAndFinalClearWins()
+        public void RipperPrefersRobotAndConfiguredFinalClearWins()
         {
             var config = TestConfigFactory.Create();
             var target = RipperRules.SelectTarget(config.GetZombie(ZombieType.Ripper),
@@ -25,9 +25,9 @@ namespace Telerobot.Game.Tests
                 new TargetCandidate("player", TargetKind.Player, 2f, true));
             Assert.That(target.Kind, Is.EqualTo(TargetKind.Robot));
 
-            var phaseSystem = new PhaseSystem(config.Base);
-            var session = new SessionState(1) { CurrentPhase = 3 };
-            var phase = new PhaseState(3, config.GetPhase(3).OpenRoutes) { AllSpawned = true };
+            var phaseSystem = new PhaseSystem(config.Base, config.Phases.Count);
+            var session = new SessionState(1) { CurrentPhase = 8 };
+            var phase = new PhaseState(8, config.GetPhase(8).OpenRoutes) { AllSpawned = true };
             Assert.That(phaseSystem.Evaluate(session, phase, new BaseState(1000f), new PlayerState(100f, 30, 180, 2)), Is.EqualTo(PhaseTransition.Victory));
             Assert.That(session.Result, Is.EqualTo(GameResult.Victory));
         }

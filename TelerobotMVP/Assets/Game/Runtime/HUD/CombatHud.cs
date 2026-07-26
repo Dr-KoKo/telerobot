@@ -9,6 +9,12 @@ namespace Telerobot.Game.Runtime
     {
         private const float MinimumBodyLineHeight = 31f;
         private const float MinimumHeaderLineHeight = 39f;
+        private const float RobotStatusLineHeight = 22f;
+        private const float RobotMasteryLineHeight = 20f;
+        private const float RobotBarHeight = 20f;
+        private const float RobotElementGap = 3f;
+        private const float RobotBottomPadding = 8f;
+        private const float RobotSelectionColumnWidth = 22f;
 
         private MvpGameController game;
         private StringTableAsset strings;
@@ -18,10 +24,16 @@ namespace Telerobot.Game.Runtime
         private float hitMarkerUntil;
         private float headshotUntil;
         private float damageIndicatorUntil;
+        private float progressionNotificationUntil;
+        private string progressionNotificationRobotId;
         private float lastDamageAngle;
         private GUIStyle label;
         private GUIStyle header;
         private GUIStyle centered;
+        private GUIStyle robotDetail;
+        private GUIStyle robotMastery;
+        private GUIStyle barText;
+        private GUIStyle selectionMarker;
         private DomainEventBus eventBus;
         private AudioSource calloutAudio;
         private AudioClip calloutBeep;
@@ -36,6 +48,11 @@ namespace Telerobot.Game.Runtime
         public float HeaderLineHeight { get { return headerLineHeight; } }
         public float StatusPanelHeight { get { return CalculateStatusPanelHeight(); } }
         public TextClipping TextClippingMode { get { return TextClipping.Overflow; } }
+        public bool ProgressionNotificationActive
+        {
+            get { return Time.unscaledTime < progressionNotificationUntil; }
+        }
+        public string ProgressionNotificationRobotId { get { return progressionNotificationRobotId; } }
         public bool LowAmmoWarningActive
         {
             get
@@ -104,6 +121,148 @@ namespace Telerobot.Game.Runtime
                 if (gameEvent.Payload.TryGetValue("directionAngle", out var angle))
                     float.TryParse(angle, NumberStyles.Float, CultureInfo.InvariantCulture, out lastDamageAngle);
             }
+            if (gameEvent.Name == "haetae_specialization_ready" &&
+                gameEvent.Payload.TryGetValue("robotId", out var robotId))
+            {
+                progressionNotificationRobotId = robotId;
+                progressionNotificationUntil = Time.unscaledTime +
+                    game.Config.HaetaeProgression.ReadyAlertSeconds;
+                PlayCallout(1.18f);
+            }
+        }
+
+        public string GetRobotProgressionText(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null) return string.Empty;
+            return GetRobotIdentityText(robot) + "\n" +
+                   GetRobotStatusText(robot) + "\n" +
+                   GetRobotMasteryText(robot);
+        }
+
+        public float GetRobotHealthProgress(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null || robot.State.Health.Maximum <= 0f) return 0f;
+            return Mathf.Clamp01(robot.State.Health.Current / robot.State.Health.Maximum);
+        }
+
+        public string GetRobotHealthBarText(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null) return string.Empty;
+            return strings.Get("hud.haetae_health") + " " +
+                   Mathf.Max(0f, robot.State.Health.Current).ToString("0") + " / " +
+                   robot.State.Health.Maximum.ToString("0");
+        }
+
+        public float GetRobotBatteryProgress(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null || robot.State.MaximumBattery <= 0f) return 0f;
+            return Mathf.Clamp01(robot.State.Battery / robot.State.MaximumBattery);
+        }
+
+        public string GetRobotBatteryBarText(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null) return string.Empty;
+            return strings.Get("hud.haetae_battery") + " " +
+                   Mathf.Max(0f, robot.State.Battery).ToString("0") + " / " +
+                   robot.State.MaximumBattery.ToString("0");
+        }
+
+        public WarningSeverity GetRobotBatteryWarningSeverity(string robotId)
+        {
+            if (game == null || FindRobot(robotId) == null) return WarningSeverity.None;
+            var ratio = GetRobotBatteryProgress(robotId);
+            if (ratio < game.Config.Warnings.BatteryRedFraction) return WarningSeverity.Red;
+            if (ratio < game.Config.Warnings.BatteryYellowFraction) return WarningSeverity.Yellow;
+            return WarningSeverity.None;
+        }
+
+        public float GetRobotExperienceProgress(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null) return 0f;
+
+            var experiencePerLevel = game.Config.HaetaeProgression.ExperiencePerLevel;
+            if (experiencePerLevel <= 0) return 0f;
+            return GetExperienceInCurrentLevel(robot) / (float)experiencePerLevel;
+        }
+
+        public string GetRobotExperienceBarText(string robotId)
+        {
+            var robot = FindRobot(robotId);
+            if (robot == null) return string.Empty;
+
+            var experiencePerLevel = game.Config.HaetaeProgression.ExperiencePerLevel;
+            if (experiencePerLevel <= 0) return string.Empty;
+            return strings.Get("hud.haetae_experience") + " " +
+                   GetExperienceInCurrentLevel(robot) + " / " + experiencePerLevel;
+        }
+
+        private HaetaeRobotActor FindRobot(string robotId)
+        {
+            if (game == null) return null;
+            return game.Robots.Find(item => item != null && item.State.Id == robotId);
+        }
+
+        private int GetExperienceInCurrentLevel(HaetaeRobotActor robot)
+        {
+            var experiencePerLevel = game.Config.HaetaeProgression.ExperiencePerLevel;
+            if (experiencePerLevel <= 0) return 0;
+
+            var progression = robot.State.Progression;
+            var currentLevelStart = (long)Mathf.Max(0, progression.Level - 1) * experiencePerLevel;
+            var experienceInCurrentLevel = System.Math.Max(0L,
+                (long)progression.Experience - currentLevelStart);
+            return (int)System.Math.Min(experienceInCurrentLevel, experiencePerLevel);
+        }
+
+        private string GetRobotIdentityText(HaetaeRobotActor robot)
+        {
+            var progression = robot.State.Progression;
+            var role = RoleName(progression.Specialization);
+            var ready = progression.SpecializationReady
+                ? "  " + strings.Get("hud.haetae_specialization_ready")
+                : string.Empty;
+            return robot.State.Id + "  " + strings.Get("hud.haetae_level") + " " + progression.Level +
+                   "  " + role + ready;
+        }
+
+        private string GetRobotStatusText(HaetaeRobotActor robot)
+        {
+            return strings.Get("hud.haetae_status") + " " + robot.State.Mode;
+        }
+
+        private string GetRobotMasteryText(HaetaeRobotActor robot)
+        {
+            var progression = robot.State.Progression;
+            return "P" + progression.PowerRank +
+                   "/A" + progression.ArmorRank +
+                   "/E" + progression.EfficiencyRank +
+                   "/S" + progression.AttackSpeedRank +
+                   "  " + strings.Get("hud.haetae_mastery_points") + " " +
+                   progression.UnspentMasteryPoints;
+        }
+
+        public bool IsProgressionReadyHighlighted(string robotId)
+        {
+            if (game == null) return false;
+            var robot = game.Robots.Find(item => item != null && item.State.Id == robotId);
+            return robot != null && robot.State.Progression.SpecializationReady;
+        }
+
+        private string RoleName(HaetaeSpecialization specialization)
+        {
+            if (specialization == HaetaeSpecialization.Melee)
+                return strings.Get("haetae.specialization.melee");
+            if (specialization == HaetaeSpecialization.Ranged)
+                return strings.Get("haetae.specialization.ranged");
+            if (specialization == HaetaeSpecialization.Balanced)
+                return strings.Get("haetae.specialization.balanced");
+            return strings.Get("hud.haetae_general");
         }
 
         private void PlayCallout(float pitch)
@@ -152,6 +311,25 @@ namespace Telerobot.Game.Runtime
                 fontStyle = FontStyle.Bold
             };
             centered = new GUIStyle(header) { alignment = TextAnchor.MiddleCenter };
+            robotDetail = new GUIStyle(label)
+            {
+                fontSize = 14,
+                alignment = TextAnchor.MiddleLeft
+            };
+            robotMastery = new GUIStyle(robotDetail) { fontSize = 13 };
+            barText = new GUIStyle(robotDetail)
+            {
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Clip
+            };
+            selectionMarker = new GUIStyle(label)
+            {
+                fontSize = 18,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter
+            };
             bodyLineHeight = Mathf.Ceil(Mathf.Max(MinimumBodyLineHeight,
                 label.CalcHeight(new GUIContent(strings.Get("hud.player") + " Ag 100 / 100"), 340f) + 8f));
             headerLineHeight = Mathf.Ceil(Mathf.Max(MinimumHeaderLineHeight,
@@ -161,7 +339,17 @@ namespace Telerobot.Game.Runtime
         private float CalculateStatusPanelHeight()
         {
             var robotRows = game == null ? 0 : game.Robots.Count;
-            return Mathf.Max(228f, 14f + headerLineHeight + bodyLineHeight * (3f + robotRows) + 14f);
+            return Mathf.Max(228f, 14f + headerLineHeight + bodyLineHeight * 3f +
+                RobotRowHeight * robotRows + 14f);
+        }
+
+        private float RobotRowHeight
+        {
+            get
+            {
+                return bodyLineHeight + RobotStatusLineHeight + RobotMasteryLineHeight +
+                       RobotBarHeight * 3f + RobotElementGap * 5f + RobotBottomPadding;
+            }
         }
 
         private static void DrawSolidRect(Rect rect, Color color)
@@ -170,6 +358,28 @@ namespace Telerobot.Game.Runtime
             GUI.color = color;
             GUI.DrawTexture(rect, Texture2D.whiteTexture);
             GUI.color = previous;
+        }
+
+        private void DrawLabeledStatusBar(Rect rect, float progress, Color fillColor, string text)
+        {
+            DrawSolidRect(rect, new Color(0.04f, 0.08f, 0.12f, 0.96f));
+            var inner = new Rect(rect.x + 2f, rect.y + 2f,
+                (rect.width - 4f) * Mathf.Clamp01(progress), rect.height - 4f);
+            if (inner.width > 0f) DrawSolidRect(inner, fillColor);
+            var previous = GUI.color;
+            GUI.color = Color.white;
+            GUI.Label(rect, text, barText);
+            GUI.color = previous;
+        }
+
+        private Color GetRobotBatteryBarColor(string robotId, bool flashOn)
+        {
+            var severity = GetRobotBatteryWarningSeverity(robotId);
+            if (severity == WarningSeverity.Red)
+                return flashOn ? new Color(1f, 0.12f, 0.08f) : new Color(0.65f, 0.04f, 0.03f);
+            if (severity == WarningSeverity.Yellow)
+                return flashOn ? new Color(1f, 0.72f, 0.08f) : new Color(0.72f, 0.48f, 0.03f);
+            return new Color(0.12f, 0.72f, 1f);
         }
 
         private void DrawAimFeedback()
@@ -283,20 +493,61 @@ namespace Telerobot.Game.Runtime
                 "   " + strings.Get("hud.grenade") + " " + game.PlayerState.Grenades, label);
             rowY += bodyLineHeight;
 
+            var selectedRobots = game.SelectedRobots;
             foreach (var robot in game.Robots)
             {
-                var selected = game.SelectedRobot == robot ? "▶ " : "";
-                var ratio = robot.State.MaximumBattery <= 0f ? 0f : robot.State.Battery / robot.State.MaximumBattery;
+                var selected = selectedRobots.Contains(robot);
                 var flashOn = Mathf.PingPong(Time.unscaledTime * 5f, 1f) > 0.42f;
-                GUI.color = ratio < game.Config.Warnings.BatteryRedFraction
-                    ? (flashOn ? Color.red : new Color(0.3f, 0f, 0f))
-                    : ratio < game.Config.Warnings.BatteryYellowFraction
-                        ? (flashOn ? Color.yellow : new Color(0.35f, 0.25f, 0f))
-                        : Color.cyan;
-                GUI.Label(new Rect(panel.x + 16f, rowY, 350f, bodyLineHeight),
-                    selected + robot.State.Id + "  " + robot.State.Battery.ToString("0") + " / " +
-                    robot.State.MaximumBattery.ToString("0") + "  " + robot.State.Mode, label);
-                rowY += bodyLineHeight;
+                if (robot.State.Progression.SpecializationReady)
+                    DrawSolidRect(new Rect(panel.x + 10f, rowY, panel.width - 20f, RobotRowHeight),
+                        new Color(0.22f, 0.55f, 1f, flashOn ? 0.38f : 0.2f));
+
+                if (selected)
+                {
+                    GUI.color = new Color(1f, 0.82f, 0.16f);
+                    GUI.Label(new Rect(panel.x + 10f, rowY, RobotSelectionColumnWidth,
+                        bodyLineHeight), "▶", selectionMarker);
+                }
+
+                var contentX = panel.x + 14f + RobotSelectionColumnWidth;
+                var contentWidth = panel.width - 28f - RobotSelectionColumnWidth;
+                var contentY = rowY;
+
+                GUI.color = Color.cyan;
+                GUI.Label(new Rect(contentX, contentY, contentWidth, bodyLineHeight),
+                    GetRobotIdentityText(robot), label);
+                contentY += bodyLineHeight;
+
+                GUI.color = Color.cyan;
+                GUI.Label(new Rect(contentX, contentY, contentWidth, RobotStatusLineHeight),
+                    GetRobotStatusText(robot), robotDetail);
+                contentY += RobotStatusLineHeight;
+
+                GUI.color = Color.white;
+                GUI.Label(new Rect(contentX, contentY, contentWidth, RobotMasteryLineHeight),
+                    GetRobotMasteryText(robot), robotMastery);
+                contentY += RobotMasteryLineHeight + RobotElementGap;
+
+                DrawLabeledStatusBar(
+                    new Rect(contentX, contentY, contentWidth, RobotBarHeight),
+                    GetRobotHealthProgress(robot.State.Id),
+                    new Color(0.16f, 0.78f, 0.34f, 1f),
+                    GetRobotHealthBarText(robot.State.Id));
+                contentY += RobotBarHeight + RobotElementGap;
+
+                DrawLabeledStatusBar(
+                    new Rect(contentX, contentY, contentWidth, RobotBarHeight),
+                    GetRobotBatteryProgress(robot.State.Id),
+                    GetRobotBatteryBarColor(robot.State.Id, flashOn),
+                    GetRobotBatteryBarText(robot.State.Id));
+                contentY += RobotBarHeight + RobotElementGap;
+
+                DrawLabeledStatusBar(
+                    new Rect(contentX, contentY, contentWidth, RobotBarHeight),
+                    GetRobotExperienceProgress(robot.State.Id),
+                    new Color(0.12f, 0.72f, 1f, 1f),
+                    GetRobotExperienceBarText(robot.State.Id));
+                rowY += RobotRowHeight;
             }
             GUI.color = Color.white;
 
@@ -353,6 +604,17 @@ namespace Telerobot.Game.Runtime
                 GUI.Box(new Rect(Screen.width * 0.5f - 330f, Screen.height - 110f, 660f, 58f), GUIContent.none);
                 GUI.color = Color.white;
                 GUI.Label(new Rect(Screen.width * 0.5f - 315f, Screen.height - 100f, 630f, 40f), radioCaption, centered);
+            }
+
+            if (ProgressionNotificationActive && !string.IsNullOrEmpty(progressionNotificationRobotId))
+            {
+                GUI.color = new Color(0.05f, 0.28f, 0.55f, 0.94f);
+                GUI.Box(new Rect(Screen.width * 0.5f - 220f, 136f, 440f, 56f), GUIContent.none);
+                GUI.color = Color.white;
+                GUI.Label(new Rect(Screen.width * 0.5f - 210f, 145f, 420f, 38f),
+                    progressionNotificationRobotId + "  " +
+                    strings.Get("hud.haetae_specialization_ready") + "  " +
+                    strings.Get("hud.haetae_specialization_hint"), centered);
             }
 
             if (game.IsPaused)

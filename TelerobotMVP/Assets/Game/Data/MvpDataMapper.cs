@@ -146,14 +146,47 @@ namespace Telerobot.Game.Data
                 {
                     Seeds = (int[])source.validation.seeds.Clone(),
                     FixedStepSeconds = source.validation.fixedStepSeconds
+                },
+                HaetaeProgression = new HaetaeProgressionConfig
+                {
+                    ExperiencePerLevel = source.haetaeProgression.experiencePerLevel,
+                    ReadyAlertSeconds = source.haetaeProgression.readyAlertSeconds,
+                    PowerDamageBonusPerRank = source.haetaeProgression.powerDamageBonusPerRank,
+                    ArmorDamageReductionPerRank = source.haetaeProgression.armorDamageReductionPerRank,
+                    EfficiencyBatteryReductionPerRank = source.haetaeProgression.efficiencyBatteryReductionPerRank,
+                    AttackSpeedBonusPerRank = source.haetaeProgression.attackSpeedBonusPerRank,
+                    MinimumReductionMultiplier = source.haetaeProgression.minimumReductionMultiplier
                 }
             };
 
+            foreach (var specialization in source.haetaeSpecializations)
+            {
+                result.HaetaeSpecializations.Add(new HaetaeSpecializationConfig
+                {
+                    Id = specialization.id,
+                    DisplayNameKey = specialization.displayNameKey,
+                    DescriptionKey = specialization.descriptionKey,
+                    Combat = new RobotCombatProfileConfig
+                    {
+                        PreferredMinRange = specialization.preferredMinRange,
+                        PreferredMaxRange = specialization.preferredMaxRange,
+                        DashDamageMultiplier = specialization.dashDamageMultiplier,
+                        BiteDamageMultiplier = specialization.biteDamageMultiplier,
+                        RangedDamage = specialization.rangedDamage,
+                        RangedCooldownSeconds = specialization.rangedCooldownSeconds,
+                        CleaveRadius = specialization.cleaveRadius,
+                        MaximumTargets = specialization.maximumTargets,
+                        IncomingDamageMultiplier = specialization.incomingDamageMultiplier,
+                        CombatBatteryMultiplier = specialization.combatBatteryMultiplier
+                    }
+                });
+            }
             foreach (var zombie in source.zombies)
             {
                 result.Zombies.Add(new ZombieConfig
                 {
                     Type = zombie.type,
+                    HaetaeExperienceReward = zombie.haetaeExperienceReward,
                     MaxHealth = zombie.maxHealth,
                     MoveSpeed = zombie.moveSpeed,
                     BaseDamage = zombie.baseDamage,
@@ -177,6 +210,7 @@ namespace Telerobot.Game.Data
                     ThreatBudget = phase.threatBudget,
                     TargetDurationSeconds = phase.targetDurationSeconds,
                     OpenRoutes = (RouteId[])phase.openRoutes.Clone(),
+                    OpensNewRoute = phase.opensNewRoute,
                     NewlyOpenedRoute = phase.newlyOpenedRoute,
                     RunnerCount = Range(phase.runnerCount),
                     BruiserCount = Range(phase.bruiserCount),
@@ -208,16 +242,6 @@ namespace Telerobot.Game.Data
                     Width = route.width
                 });
             }
-            foreach (var upgrade in source.upgrades)
-            {
-                result.Upgrades.Add(new UpgradeConfig
-                {
-                    Id = upgrade.id,
-                    DisplayNameKey = upgrade.displayNameKey,
-                    EffectType = upgrade.effectType,
-                    Amount = upgrade.amount
-                });
-            }
             foreach (var profile in source.simPlayerProfiles)
             {
                 result.SimPlayerProfiles.Add(new SimPlayerProfileConfig
@@ -230,9 +254,11 @@ namespace Telerobot.Game.Data
                     RoutePriorityPolicy = profile.routePriorityPolicy,
                     RipperFocus = profile.ripperFocus,
                     RobotChargeThresholdFraction = profile.robotChargeThresholdFraction,
-                    UpgradeSelectionPolicy = profile.upgradeSelectionPolicy,
                     GrenadeUsePolicy = profile.grenadeUsePolicy,
-                    GrenadeClusterThreshold = profile.grenadeClusterThreshold
+                    GrenadeClusterThreshold = profile.grenadeClusterThreshold,
+                    DefaultSpecializationLoadout = new HaetaeSpecializationPair(
+                        profile.defaultSpecializationLoadout.Haetae1,
+                        profile.defaultSpecializationLoadout.Haetae2)
                 });
             }
             return result;
@@ -244,15 +270,28 @@ namespace Telerobot.Game.Data
             if (source.game == null || source.baseConfig == null || source.ammo == null || source.weapon == null || source.grenade == null || source.battery == null ||
                 source.robot == null || source.medical == null || source.barrier == null || source.warnings == null ||
                 source.world == null || source.commands == null || source.hud == null || source.playerSettings == null || source.telemetry == null ||
-                source.validation == null || source.strings == null || source.runtimeMaterialTemplate == null ||
+                source.validation == null || source.haetaeProgression == null || source.strings == null || source.runtimeMaterialTemplate == null ||
                 source.runtimeMaterialTemplate.shader == null)
                 throw new InvalidOperationException("Catalog is missing a required shared asset.");
+            if (source.haetaeSpecializations == null || source.haetaeSpecializations.Length != 3)
+                throw new InvalidOperationException("Exactly three Haetae specialization definitions are required.");
+            if (source.haetaeProgression.experiencePerLevel <= 0 ||
+                source.haetaeProgression.readyAlertSeconds <= 0f ||
+                source.haetaeProgression.powerDamageBonusPerRank <= 0f ||
+                source.haetaeProgression.armorDamageReductionPerRank <= 0f ||
+                source.haetaeProgression.efficiencyBatteryReductionPerRank <= 0f ||
+                source.haetaeProgression.attackSpeedBonusPerRank <= 0f ||
+                source.haetaeProgression.minimumReductionMultiplier <= 0f ||
+                source.haetaeProgression.minimumReductionMultiplier > 1f)
+                throw new InvalidOperationException("Haetae progression configuration is invalid.");
+            if (source.haetaeProgression.specializations == null ||
+                source.haetaeProgression.specializations.Length != source.haetaeSpecializations.Length)
+                throw new InvalidOperationException("Haetae progression must reference all three specializations.");
             if (source.zombies == null || source.zombies.Length != 3) throw new InvalidOperationException("Exactly three zombie definitions are required.");
-            if (source.phases == null || source.phases.Length != 3) throw new InvalidOperationException("Exactly three phase definitions are required.");
+            if (source.phases == null || source.phases.Length != 8) throw new InvalidOperationException("Exactly eight phase definitions are required.");
             if (source.simPlayerProfiles == null || source.simPlayerProfiles.Length != 3)
                 throw new InvalidOperationException("Exactly three simulation player profiles are required.");
             if (source.routes == null || source.routes.Length != 3) throw new InvalidOperationException("Exactly three route definitions are required.");
-            if (source.upgrades == null || source.upgrades.Length != 9) throw new InvalidOperationException("Exactly nine upgrade definitions are required.");
             if (source.supplyPoints == null || source.supplyPoints.Length != 2 ||
                 Array.FindAll(source.supplyPoints, item => item != null && item.kind == SupplyKind.Safe).Length != 1 ||
                 Array.FindAll(source.supplyPoints, item => item != null && item.kind == SupplyKind.Risky).Length != 1)
@@ -328,16 +367,29 @@ namespace Telerobot.Game.Data
                 if (zombie == null || zombie.hitFlashSeconds <= 0f || zombie.deathEffectSeconds <= 0f ||
                     zombie.deathPulseSize <= 0f || zombie.pathVariationFraction <= 0f ||
                     zombie.pathVariationFraction > 0.45f || zombie.separationRadius <= 0f ||
-                    zombie.separationStrength <= 0f)
+                    zombie.separationStrength <= 0f || zombie.haetaeExperienceReward <= 0)
                     throw new InvalidOperationException("Zombie presentation tuning is invalid.");
             }
 
+            var targetSessionSeconds = 0f;
             for (var index = 0; index < source.phases.Length; index++)
             {
                 var phase = source.phases[index];
-                if (phase == null || phase.openRoutes == null || phase.openRoutes.Length != phase.number ||
-                    Array.IndexOf(phase.openRoutes, phase.newlyOpenedRoute) < 0)
-                    throw new InvalidOperationException("Phase routes must be cumulative and contain the newly opened route.");
+                var expectedNumber = index + 1;
+                var expectedRouteCount = Math.Min(expectedNumber, source.routes.Length);
+                if (phase == null || phase.number != expectedNumber || phase.openRoutes == null ||
+                    phase.openRoutes.Length != expectedRouteCount)
+                    throw new InvalidOperationException("Phase definitions must be contiguous and routes must remain cumulative.");
+                var shouldOpenRoute = expectedNumber <= source.routes.Length;
+                if (phase.opensNewRoute != shouldOpenRoute)
+                    throw new InvalidOperationException("Only phases that introduce a route may declare a route opening.");
+                if (phase.opensNewRoute &&
+                    Array.Find(source.routes, route => route != null && route.id == phase.newlyOpenedRoute &&
+                        route.openPhase == phase.number) == null)
+                    throw new InvalidOperationException("The newly opened route must declare the same phase.");
+                if (phase.targetDurationSeconds <= 0f)
+                    throw new InvalidOperationException("Phase target duration must be positive.");
+                targetSessionSeconds += phase.targetDurationSeconds;
                 ValidateRange(phase.runnerCount, "runner composition");
                 ValidateRange(phase.bruiserCount, "bruiser composition");
                 ValidateRange(phase.ripperCount, "ripper composition");
@@ -354,13 +406,72 @@ namespace Telerobot.Game.Data
                     ValidateRouteWeights(phase.openRoutes, typedWeights.Routes, typedWeights.Type + " route weights");
                 }
             }
+            if (targetSessionSeconds < source.game.targetSessionMinimumSeconds ||
+                targetSessionSeconds > source.game.targetSessionMaximumSeconds)
+                throw new InvalidOperationException("Phase target durations must add up to the configured session target.");
 
-            var ids = new HashSet<string>();
-            foreach (var upgrade in source.upgrades)
+            var specializationIds = new HashSet<HaetaeSpecialization>();
+            foreach (var specialization in source.haetaeSpecializations)
             {
-                if (upgrade == null || string.IsNullOrWhiteSpace(upgrade.id) || !ids.Add(upgrade.id))
-                    throw new InvalidOperationException("Upgrade ids must be non-empty and unique.");
+                if (specialization == null || !IsSelectable(specialization.id) || !specializationIds.Add(specialization.id) ||
+                    string.IsNullOrWhiteSpace(specialization.displayNameKey) ||
+                    string.IsNullOrWhiteSpace(specialization.descriptionKey) ||
+                    specialization.preferredMinRange < 0f ||
+                    specialization.preferredMaxRange < specialization.preferredMinRange ||
+                    specialization.dashDamageMultiplier < 0f || specialization.biteDamageMultiplier < 0f ||
+                    specialization.rangedDamage < 0f || specialization.rangedCooldownSeconds < 0f ||
+                    specialization.cleaveRadius < 0f || specialization.maximumTargets < 1 ||
+                    specialization.incomingDamageMultiplier <= 0f || specialization.combatBatteryMultiplier <= 0f ||
+                    specialization.scaleMultiplier.x <= 0f || specialization.scaleMultiplier.y <= 0f ||
+                    specialization.scaleMultiplier.z <= 0f)
+                    throw new InvalidOperationException("Haetae specialization definitions are invalid.");
+                if ((specialization.id == HaetaeSpecialization.Ranged ||
+                     specialization.id == HaetaeSpecialization.Balanced) &&
+                    (specialization.rangedDamage <= 0f || specialization.rangedCooldownSeconds <= 0f))
+                    throw new InvalidOperationException("Ranged Haetae profiles require positive damage and cooldown.");
+                if (specialization.id == HaetaeSpecialization.Melee)
+                {
+                    if (specialization.cleaveRadius <= 0f || specialization.maximumTargets < 2)
+                        throw new InvalidOperationException("Melee Haetae profile requires cleave.");
+                }
+                else if (specialization.cleaveRadius > 0f)
+                {
+                    throw new InvalidOperationException("Only the Melee Haetae profile may cleave.");
+                }
+
+                if (Array.IndexOf(source.haetaeProgression.specializations, specialization) < 0)
+                    throw new InvalidOperationException("Progression specialization references do not match the catalog.");
+                RequireString(source, specialization.displayNameKey);
+                RequireString(source, specialization.descriptionKey);
             }
+            if (!specializationIds.SetEquals(new[]
+                {
+                    HaetaeSpecialization.Melee,
+                    HaetaeSpecialization.Ranged,
+                    HaetaeSpecialization.Balanced
+                }))
+                throw new InvalidOperationException("Melee, Ranged, and Balanced Haetae specializations are required.");
+
+            RequireStringValue(source, "haetae.specialization.melee", "근거리형");
+            RequireStringValue(source, "haetae.specialization.ranged", "원거리형");
+            RequireStringValue(source, "haetae.specialization.balanced", "균형형");
+            foreach (var key in new[]
+                {
+                    "hud.haetae_level", "hud.haetae_experience", "hud.haetae_general",
+                    "hud.haetae_specialization_ready", "hud.haetae_choose_specialization",
+                    "hud.haetae_specialization_hint", "hud.haetae_mastery_points",
+                    "haetae.specialization.melee.description",
+                    "haetae.specialization.ranged.description",
+                    "haetae.specialization.balanced.description",
+                    "haetae.mastery.panel_title",
+                    "haetae.mastery.power", "haetae.mastery.power.description",
+                    "haetae.mastery.armor", "haetae.mastery.armor.description",
+                    "haetae.mastery.efficiency", "haetae.mastery.efficiency.description",
+                    "haetae.mastery.attack_speed", "haetae.mastery.attack_speed.description",
+                    "radio.phase1", "radio.phase2", "radio.phase3", "radio.phase4",
+                    "radio.phase5", "radio.phase6", "radio.phase7", "radio.phase8"
+                })
+                RequireString(source, key);
 
             var profileIds = new HashSet<SimProfileId>();
             foreach (var profile in source.simPlayerProfiles)
@@ -369,9 +480,32 @@ namespace Telerobot.Game.Data
                     profile.headshotRate < 0f || profile.headshotRate > 1f || profile.reactionDelaySeconds < 0f ||
                     profile.fireIntervalSeconds <= 0f || profile.ripperFocus < 0f || profile.ripperFocus > 1f ||
                     profile.robotChargeThresholdFraction < 0f || profile.robotChargeThresholdFraction > 1f ||
-                    profile.grenadeClusterThreshold < 1)
+                    profile.grenadeClusterThreshold < 1 || profile.defaultSpecializationLoadout == null ||
+                    !IsSelectable(profile.defaultSpecializationLoadout.Haetae1) ||
+                    !IsSelectable(profile.defaultSpecializationLoadout.Haetae2))
                     throw new InvalidOperationException("Simulation player profiles are invalid.");
             }
+        }
+
+        private static bool IsSelectable(HaetaeSpecialization specialization)
+        {
+            return specialization == HaetaeSpecialization.Melee ||
+                   specialization == HaetaeSpecialization.Ranged ||
+                   specialization == HaetaeSpecialization.Balanced;
+        }
+
+        private static void RequireString(MvpContentCatalog source, string key)
+        {
+            if (source.strings.entries == null ||
+                !source.strings.entries.Exists(item => item != null && item.key == key && !string.IsNullOrWhiteSpace(item.value)))
+                throw new InvalidOperationException("Missing required string: " + key);
+        }
+
+        private static void RequireStringValue(MvpContentCatalog source, string key, string expected)
+        {
+            RequireString(source, key);
+            if (source.strings.Get(key) != expected)
+                throw new InvalidOperationException("Required string value does not match: " + key);
         }
 
         private static Float3 Point(UnityEngine.Vector3 value)

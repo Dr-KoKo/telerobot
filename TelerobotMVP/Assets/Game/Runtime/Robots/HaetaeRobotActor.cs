@@ -9,6 +9,7 @@ namespace Telerobot.Game.Runtime
         private RobotConfig config;
         private BatterySystem batterySystem;
         private RobotAttackSystem attackSystem;
+        private RobotCombatPolicy combatPolicy;
         private readonly RobotDurabilitySystem durabilitySystem = new RobotDurabilitySystem();
         private float telemetryTimer;
         private RobotMode previousMode;
@@ -19,9 +20,13 @@ namespace Telerobot.Game.Runtime
         private Quaternion activeRotation;
         private Vector3 activeScale;
         private ZombieActor followUpTarget;
+        private HaetaeSpecialization presentedSpecialization = (HaetaeSpecialization)(-1);
 
         public RobotState State { get; private set; }
         public float SeparationRadius { get { return config == null ? 1f : config.SeparationRadius; } }
+        public RobotMovementIntent LastMovementIntent { get; private set; }
+        public RobotAttackKind LastAttackKind { get; private set; }
+        public GameObject LastAttackCue { get; private set; }
 
         public void Initialize(MvpGameController owner, string id, RobotConfig robotConfig, BatteryConfig batteryConfig, RouteId route)
         {
@@ -29,6 +34,7 @@ namespace Telerobot.Game.Runtime
             config = robotConfig;
             batterySystem = new BatterySystem(batteryConfig);
             attackSystem = new RobotAttackSystem(robotConfig);
+            combatPolicy = new RobotCombatPolicy(owner.Config);
             State = new RobotState(id, robotConfig.MaxHealth, batteryConfig.Maximum) { AssignedRoute = route };
             previousMode = State.Mode;
             previousBatteryBand = State.BatteryBand;
@@ -37,11 +43,13 @@ namespace Telerobot.Game.Runtime
             activeColor = visualRenderer == null ? Color.white : visualRenderer.material.color;
             activeRotation = transform.rotation;
             activeScale = transform.localScale;
+            RefreshSpecializationPresentation();
         }
 
         private void Update()
         {
             if (game == null || game.IsFinished || State.IsDestroyed) return;
+            RefreshSpecializationPresentation();
             if (State.Mode == RobotMode.Disabled || State.Mode == RobotMode.Recovery)
             {
                 batterySystem.TickDisabledRecovery(State, Time.deltaTime);
@@ -106,16 +114,44 @@ namespace Telerobot.Game.Runtime
             {
                 activity = RobotActivity.Combat;
                 State.Mode = RobotMode.Engage;
-                MoveTo(target.transform.position, config.MoveSpeed * batterySystem.MoveMultiplier(State), config.EngageRange * 0.8f);
                 var distance = Vector3.Distance(transform.position, target.transform.position);
-                var damage = attackSystem.Advance(State, target.State.Id,
-                    Time.deltaTime * batterySystem.AttackMultiplier(State), distance <= config.EngageRange,
-                    game.Modifiers.FirstDashDamageMultiplier);
-                if (damage > 0f)
+                attackSystem.Tick(State, Time.deltaTime * batterySystem.AttackMultiplier(State));
+                attackSystem.BeginEngagement(State, target.State.Id);
+                var decision = combatPolicy.Decide(State, distance);
+                var profile = combatPolicy.ActiveProfile(State);
+                LastMovementIntent = decision.Movement;
+                if (decision.Movement == RobotMovementIntent.Approach)
                 {
-                    target.ReceiveDamage(damage, State.Id);
-                    game.SpawnPulse(target.transform.position + Vector3.up * target.VisualHeight * 0.3f, 0.42f,
-                        activeColor, 0.12f, State.Id + " Attack");
+                    var stopDistance = State.Progression.Specialization == HaetaeSpecialization.Ranged
+                        ? profile.PreferredMaxRange
+                        : config.EngageRange * 0.8f;
+                    MoveTo(target.transform.position, config.MoveSpeed * batterySystem.MoveMultiplier(State), stopDistance);
+                }
+                else if (decision.Movement == RobotMovementIntent.Retreat)
+                {
+                    MoveAwayFrom(target.transform.position, config.MoveSpeed * batterySystem.MoveMultiplier(State));
+                }
+                else if (decision.Movement == RobotMovementIntent.Hold)
+                {
+                    MoveTo(transform.position, config.MoveSpeed * batterySystem.MoveMultiplier(State));
+                }
+                var attack = attackSystem.Advance(State, target.State.Id, decision, profile,
+                    game.Modifiers.FirstDashDamageMultiplier,
+                    game.Config.HaetaeProgression.AttackCooldownMultiplier(State.Progression));
+                attack.Damage *= game.Config.HaetaeProgression.DamageMultiplier(State.Progression);
+                if (attack.Damage > 0f)
+                {
+                    LastAttackKind = attack.Kind;
+                    var affected = game.GetRobotAttackTargets(this, target, attack);
+                    foreach (var affectedTarget in affected)
+                        affectedTarget.ReceiveDamage(attack.Damage, DamageSource.Haetae(State.Id));
+                    LastAttackCue = attack.Kind == RobotAttackKind.Ranged
+                        ? game.SpawnTracer(transform.position + Vector3.up * 0.4f,
+                            target.transform.position + Vector3.up * target.VisualHeight * 0.3f,
+                            SpecializationTracerColor(), State.Id + " Ranged")
+                        : game.SpawnPulse(target.transform.position + Vector3.up * target.VisualHeight * 0.3f,
+                            attack.AreaRadius > 0f ? attack.AreaRadius * 2f : 0.42f,
+                            SpecializationPulseColor(), 0.12f, State.Id + " Attack");
                     if (target.State.Health.IsDead)
                     {
                         followUpTarget = game.FindRobotFollowUpTarget(this, config.DetectionRadius);
@@ -132,7 +168,14 @@ namespace Telerobot.Game.Runtime
             }
 
             if (activity != RobotActivity.Idle || !IsInsideBaseChargingZone())
-                batterySystem.Drain(State, activity, Time.deltaTime, game.Modifiers.CombatDrainMultiplier);
+            {
+                var roleMultiplier = activity == RobotActivity.Combat
+                    ? combatPolicy.ActiveProfile(State).CombatBatteryMultiplier *
+                      game.Config.HaetaeProgression.CombatBatteryMultiplier(State.Progression)
+                    : 1f;
+                batterySystem.Drain(State, activity, Time.deltaTime,
+                    game.Modifiers.CombatDrainMultiplier * roleMultiplier);
+            }
             EmitStateChanges();
         }
 
@@ -196,6 +239,14 @@ namespace Telerobot.Game.Runtime
             transform.rotation = Quaternion.LookRotation(movement);
         }
 
+        private void MoveAwayFrom(Vector3 threat, float speed)
+        {
+            var direction = transform.position - threat;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.0001f) direction = transform.right;
+            MoveTo(transform.position + direction.normalized * 2f, speed);
+        }
+
         private void EmitStateChanges()
         {
             telemetryTimer += Time.deltaTime;
@@ -235,7 +286,11 @@ namespace Telerobot.Game.Runtime
         {
             if (State.IsDestroyed) return;
             var before = State.Health.Current;
-            var destroyed = durabilitySystem.ApplyDamage(State, damage);
+            var multiplier = combatPolicy == null
+                ? 1f
+                : combatPolicy.ActiveProfile(State).IncomingDamageMultiplier *
+                  game.Config.HaetaeProgression.IncomingDamageMultiplier(State.Progression);
+            var destroyed = durabilitySystem.ApplyDamage(State, damage * multiplier);
             var applied = before - State.Health.Current;
             game.Emit("robot_damaged", "robotId", State.Id, "amount", applied.ToString("F1"),
                 "hp", State.Health.Current.ToString("F1"));
@@ -251,8 +306,8 @@ namespace Telerobot.Game.Runtime
             followUpTarget = null;
             durabilitySystem.RestoreAtPhaseStart(State, config.MaxHealth, State.MaximumBattery);
             transform.rotation = activeRotation;
-            transform.localScale = activeScale;
-            if (visualRenderer != null) visualRenderer.material.color = activeColor;
+            presentedSpecialization = (HaetaeSpecialization)(-1);
+            RefreshSpecializationPresentation();
             foreach (var robotCollider in GetComponentsInChildren<Collider>()) robotCollider.enabled = true;
             previousMode = State.Mode;
         }
@@ -263,6 +318,37 @@ namespace Telerobot.Game.Runtime
             transform.rotation = Quaternion.Euler(90f, transform.eulerAngles.y, 0f);
             transform.localScale = new Vector3(activeScale.x, activeScale.y * 0.55f, activeScale.z);
             if (visualRenderer != null) visualRenderer.material.color = new Color(0.16f, 0.17f, 0.18f);
+        }
+
+        private void RefreshSpecializationPresentation()
+        {
+            if (State == null || State.Progression.Specialization == presentedSpecialization) return;
+            presentedSpecialization = State.Progression.Specialization;
+            if (presentedSpecialization == HaetaeSpecialization.Unselected)
+            {
+                transform.localScale = activeScale;
+                if (visualRenderer != null) visualRenderer.material.color = activeColor;
+                return;
+            }
+            var definition = System.Array.Find(game.Catalog.haetaeSpecializations,
+                item => item != null && item.id == presentedSpecialization);
+            if (definition == null) return;
+            transform.localScale = Vector3.Scale(activeScale, definition.scaleMultiplier);
+            if (visualRenderer != null) visualRenderer.material.color = definition.bodyColor;
+        }
+
+        private Color SpecializationPulseColor()
+        {
+            var definition = System.Array.Find(game.Catalog.haetaeSpecializations,
+                item => item != null && item.id == State.Progression.Specialization);
+            return definition == null ? activeColor : definition.attackPulseColor;
+        }
+
+        private Color SpecializationTracerColor()
+        {
+            var definition = System.Array.Find(game.Catalog.haetaeSpecializations,
+                item => item != null && item.id == State.Progression.Specialization);
+            return definition == null ? activeColor : definition.tracerColor;
         }
     }
 }

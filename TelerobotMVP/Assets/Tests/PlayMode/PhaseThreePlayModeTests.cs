@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using Telerobot.Game.Core;
 using Telerobot.Game.Runtime;
@@ -10,15 +11,35 @@ namespace Telerobot.Game.Tests
     public sealed class PhaseThreePlayModeTests : RuntimeSceneTestBase
     {
         [UnityTest]
-        public IEnumerator SecondRewardDeploysMedicalAndRippersOnThreeRoutesThenVictory()
+        public IEnumerator PhaseThreeDeploysMedicalThenLatePhasesContinueToFinalVictory()
         {
-            yield return ClearAndChooseFirstUpgrade();
-            yield return ClearAndChooseFirstUpgrade();
+            yield return ClearAndAdvancePhase();
+            yield return ClearAndAdvancePhase();
             Assert.That(Game.CurrentPhase, Is.EqualTo(3));
             Assert.That(Game.OpenRoutes.Count, Is.EqualTo(3));
-            Assert.That(Object.FindFirstObjectByType<MedicalRobotActor>(), Is.Not.Null);
+            var medical = Object.FindFirstObjectByType<MedicalRobotActor>();
+            Assert.That(medical, Is.Not.Null);
             Game.SpawnAllNowForTests();
             Assert.That(Game.AliveZombies.Exists(item => item.Type == ZombieType.Ripper), Is.True);
+            yield return ClearAndAdvancePhase();
+            Assert.That(Game.CurrentPhase, Is.EqualTo(4));
+            Assert.That(Game.Session.Result, Is.EqualTo(GameResult.InProgress));
+            Assert.That(Game.MedicalActor, Is.SameAs(medical));
+            Assert.That(Game.EventHistory.Count(item => item.Name == "radio_event" &&
+                item.Payload["key"] == "radio.phase3"), Is.EqualTo(1));
+            Assert.That(Game.EventHistory.Count(item => item.Name == "radio_event" &&
+                item.Payload["key"] == "radio.phase4"), Is.EqualTo(1));
+
+            while (Game.CurrentPhase < 8)
+                yield return ClearAndAdvancePhase();
+
+            Assert.That(Game.CurrentPhase, Is.EqualTo(8));
+            Assert.That(Game.EventHistory.Count(item => item.Name == "route_opened"), Is.EqualTo(3));
+            for (var phase = 4; phase <= 8; phase++)
+                Assert.That(Game.EventHistory.Count(item => item.Name == "radio_event" &&
+                    item.Payload["key"] == "radio.phase" + phase), Is.EqualTo(1));
+            Assert.That(Game.EventHistory.Count(item => item.Name == "radio_event" &&
+                item.Payload["key"] == "radio.phase3"), Is.EqualTo(1));
             Game.ClearCurrentWaveForTests();
             yield return null;
             yield return null;
@@ -28,8 +49,8 @@ namespace Telerobot.Game.Tests
         [UnityTest]
         public IEnumerator DestroyedMedicalRobotDisablesZoneAndDoesNotRegenerate()
         {
-            yield return ClearAndChooseFirstUpgrade();
-            yield return ClearAndChooseFirstUpgrade();
+            yield return ClearAndAdvancePhase();
+            yield return ClearAndAdvancePhase();
             var medical = Game.MedicalActor;
             Assert.That(medical, Is.Not.Null);
             medical.ReceiveDamage(medical.CurrentHealth);
@@ -53,8 +74,8 @@ namespace Telerobot.Game.Tests
         public IEnumerator SideRouteEmergencyBarriersRotateAcrossTheirApproachDirections()
         {
             Game.Modifiers.EmergencyBarrier = true;
-            yield return ClearAndChooseFirstUpgrade();
-            yield return ClearAndChooseFirstUpgrade();
+            yield return ClearAndAdvancePhase();
+            yield return ClearAndAdvancePhase();
 
             foreach (var routeId in new[] { RouteId.EastAlley, RouteId.SouthTunnel })
             {

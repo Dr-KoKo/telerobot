@@ -211,7 +211,7 @@ namespace Telerobot.Game.Tests
                 if (gameEvent.Name == "robot_destroyed" && gameEvent.Payload["robotId"].ToString() == robot.State.Id) destructionEvents++;
             Assert.That(destructionEvents, Is.EqualTo(1));
 
-            yield return ClearAndChooseFirstUpgrade();
+            yield return ClearAndAdvancePhase();
 
             Assert.That(Game.CurrentPhase, Is.EqualTo(2));
             Assert.That(robot.State.Mode, Is.EqualTo(RobotMode.Standby));

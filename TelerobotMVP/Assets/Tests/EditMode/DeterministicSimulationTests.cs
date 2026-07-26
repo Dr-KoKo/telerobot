@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Linq;
 using Telerobot.Game.Core;
 using Telerobot.Game.Simulation;
 
@@ -81,7 +82,120 @@ namespace Telerobot.Game.Tests
         {
             Assert.That(TelemetryEventNames.ConstitutionMinimum, Does.Contain("simulation_run_completed"));
             Assert.That(TelemetryEventNames.ConstitutionMinimum, Does.Contain("ripper_attacked_robot"));
-            Assert.That(TelemetryEventNames.ConstitutionMinimum.Length, Is.EqualTo(17));
+            Assert.That(TelemetryEventNames.ConstitutionMinimum, Does.Contain("haetae_xp_gained"));
+            Assert.That(TelemetryEventNames.ConstitutionMinimum, Does.Contain("haetae_specialization_selected"));
+            Assert.That(TelemetryEventNames.ConstitutionMinimum, Does.Not.Contain("upgrade_selected"));
+            Assert.That(TelemetryEventNames.ConstitutionMinimum.Length, Is.EqualTo(20));
+        }
+
+        [Test]
+        public void ProgressionEventsAreDeterministicAndSharedContributorsReceiveFullReward()
+        {
+            var config = TestConfigFactory.Create();
+            var simulator = new DeterministicSessionSimulator(config);
+            var first = new InMemoryTelemetrySink();
+            var second = new InMemoryTelemetrySink();
+
+            simulator.Run(1001, SimProfileId.Baseline, first);
+            simulator.Run(1001, SimProfileId.Baseline, second);
+
+            var firstProgression = first.Records.Where(item => item.EventName.StartsWith("haetae_")).ToArray();
+            var secondProgression = second.Records.Where(item => item.EventName.StartsWith("haetae_")).ToArray();
+            Assert.That(firstProgression.Length, Is.GreaterThan(0));
+            Assert.That(firstProgression.Select(JsonLinesTelemetrySink.ToJson),
+                Is.EqualTo(secondProgression.Select(JsonLinesTelemetrySink.ToJson)));
+
+            var sharedZombie = firstProgression.Where(item => item.EventName == "haetae_xp_gained")
+                .GroupBy(item => item.Payload["zombieId"])
+                .FirstOrDefault(group => group.Select(item => item.Payload["robotId"]).Distinct().Count() == 2);
+            Assert.That(sharedZombie, Is.Not.Null);
+            Assert.That(sharedZombie.All(item => item.Payload["rewardAmount"] == item.Payload["appliedAmount"]), Is.True);
+        }
+
+        [Test]
+        public void SpecializationLoadoutOverrideDoesNotChangeSpawnStream()
+        {
+            var config = TestConfigFactory.Create();
+            var simulator = new DeterministicSessionSimulator(config);
+            var meleeRanged = new InMemoryTelemetrySink();
+            var rangedMelee = new InMemoryTelemetrySink();
+
+            simulator.Run(1001, SimProfileId.Baseline, meleeRanged, new SimulationRunOptions
+            {
+                SpecializationLoadout =
+                    new HaetaeSpecializationPair(HaetaeSpecialization.Melee, HaetaeSpecialization.Ranged)
+            });
+            simulator.Run(1001, SimProfileId.Baseline, rangedMelee, new SimulationRunOptions
+            {
+                SpecializationLoadout =
+                    new HaetaeSpecializationPair(HaetaeSpecialization.Ranged, HaetaeSpecialization.Melee)
+            });
+
+            var firstSpawns = meleeRanged.Records.Where(item => item.EventName == "zombie_spawned")
+                .Select(item => item.Phase + ":" + item.Payload["type"] + ":" + item.Payload["routeId"]);
+            var secondSpawns = rangedMelee.Records.Where(item => item.EventName == "zombie_spawned")
+                .Select(item => item.Phase + ":" + item.Payload["type"] + ":" + item.Payload["routeId"]);
+            Assert.That(firstSpawns, Is.EqualTo(secondSpawns));
+        }
+
+        [Test]
+        public void EightPhasesProgressWithoutUpgradeSelectionOrUpgradeRandomness()
+        {
+            var config = TestConfigFactory.Create();
+            config.Base.MaxHealth = 100000f;
+            config.Game.PlayerMaxHealth = 100000f;
+            config.Game.TargetSessionMaximumSeconds = 5000f;
+            foreach (var zombie in config.Zombies)
+            {
+                zombie.MaxHealth = 1f;
+                zombie.BaseDamage = 0f;
+                zombie.PlayerDamage = 0f;
+                zombie.RobotDamage = 0f;
+            }
+            var simulator = new DeterministicSessionSimulator(config);
+            var first = new InMemoryTelemetrySink();
+            var second = new InMemoryTelemetrySink();
+
+            var firstSummary = simulator.Run(1001, SimProfileId.Baseline, first);
+            var secondSummary = simulator.Run(1001, SimProfileId.Baseline, second);
+
+            Assert.That(firstSummary.PhasesCleared, Is.EqualTo(8));
+            Assert.That(firstSummary.Result, Is.EqualTo(GameResult.Victory));
+            Assert.That(first.Records.Count(item => item.EventName == "phase_started"), Is.EqualTo(8));
+            Assert.That(first.Records.Count(item => item.EventName == "phase_started" && item.Phase == 8),
+                Is.EqualTo(1));
+            Assert.That(first.Records.Any(item => item.EventName == "upgrade_selected"), Is.False);
+            Assert.That(second.Records.Any(item => item.EventName == "upgrade_selected"), Is.False);
+            Assert.That(first.CanonicalText(), Is.EqualTo(second.CanonicalText()));
+        }
+
+        [Test]
+        public void AllNineOrderedLoadoutsProduceDeterministicPerRobotRoleMetrics()
+        {
+            var roles = new[]
+            {
+                HaetaeSpecialization.Melee,
+                HaetaeSpecialization.Ranged,
+                HaetaeSpecialization.Balanced
+            };
+            var config = TestConfigFactory.Create();
+            var simulator = new DeterministicSessionSimulator(config);
+            foreach (var firstRole in roles)
+            foreach (var secondRole in roles)
+            {
+                var options = new SimulationRunOptions
+                {
+                    SpecializationLoadout = new HaetaeSpecializationPair(firstRole, secondRole)
+                };
+                var first = simulator.Run(1001, SimProfileId.Baseline, new InMemoryTelemetrySink(), options);
+                var second = simulator.Run(1001, SimProfileId.Baseline, new InMemoryTelemetrySink(), options);
+                Assert.That(first.Haetae1Specialization, Is.EqualTo(firstRole));
+                Assert.That(first.Haetae2Specialization, Is.EqualTo(secondRole));
+                Assert.That(first.Haetae1DamageDealt, Is.EqualTo(second.Haetae1DamageDealt));
+                Assert.That(first.Haetae2DamageDealt, Is.EqualTo(second.Haetae2DamageDealt));
+                Assert.That(first.Haetae1CombatBatterySpent, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(first.Haetae2CombatBatterySpent, Is.GreaterThanOrEqualTo(0f));
+            }
         }
     }
 }

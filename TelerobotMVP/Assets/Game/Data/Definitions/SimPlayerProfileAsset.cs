@@ -13,8 +13,8 @@ namespace Telerobot.Game.Data
         public SimRoutePriorityPolicy routePriorityPolicy;
         [Range(0f, 1f)] public float ripperFocus;
         [Range(0f, 1f)] public float robotChargeThresholdFraction;
-        public SimUpgradeSelectionPolicy upgradeSelectionPolicy;
         public SimGrenadeUsePolicy grenadeUsePolicy;
         public int grenadeClusterThreshold;
+        public HaetaeSpecializationPair defaultSpecializationLoadout = new HaetaeSpecializationPair();
     }
 }

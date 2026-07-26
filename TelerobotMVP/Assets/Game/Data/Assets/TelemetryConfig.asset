@@ -27,7 +27,6 @@ MonoBehaviour:
   - robot_auto_charge_started
   - robot_disabled
   - ripper_attacked_robot
-  - upgrade_selected
   - route_pressure_sampled
   - simulation_run_completed
   - base_hp_sampled
@@ -51,6 +50,12 @@ MonoBehaviour:
   - game_paused
   - session_restarted
   - returned_to_main_menu
+  - haetae_xp_gained
+  - haetae_level_reached
+  - haetae_specialization_ready
+  - haetae_specialization_selected
+  - haetae_mastery_point_gained
+  - haetae_mastery_selected
   sinkFolder: Telerobot/Telemetry
   requiredFields:
   - buildVersion
