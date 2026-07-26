@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Bruiser
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.ZombieDefinitionAsset
   type: 1
+  haetaeExperienceReward: 25
   maxHealth: 500
   moveSpeed: 2.6
   baseDamage: 60

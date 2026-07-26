@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Ripper
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.ZombieDefinitionAsset
   type: 2
+  haetaeExperienceReward: 20
   maxHealth: 180
   moveSpeed: 7.2
   baseDamage: 10

@@ -45,6 +45,7 @@ namespace Telerobot.Game.Core
         public bool JumpPressed;
         public bool SprintHeld;
         public bool TogglePerspectivePressed;
+        public bool SpecializationPressed;
         public bool PausePressed;
     }
 

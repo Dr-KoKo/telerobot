@@ -12,6 +12,7 @@ namespace Telerobot.Game.Runtime
         private InputAction attack;
         private InputAction interact;
         private InputAction jump;
+        private InputAction specialization;
 
         public void Initialize(InputActionAsset source)
         {
@@ -22,6 +23,7 @@ namespace Telerobot.Game.Runtime
             attack = actions.FindAction("Player/Attack", true);
             interact = actions.FindAction("Player/Interact", false);
             jump = actions.FindAction("Player/Jump", false);
+            specialization = actions.FindAction("Player/Specialization", false);
             actions.Enable();
         }
 
@@ -50,6 +52,8 @@ namespace Telerobot.Game.Runtime
                 JumpPressed = (jump != null && jump.WasPressedThisFrame()) || keyboard != null && keyboard.spaceKey.wasPressedThisFrame,
                 SprintHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed),
                 TogglePerspectivePressed = keyboard != null && keyboard.vKey.wasPressedThisFrame,
+                SpecializationPressed = (specialization != null && specialization.WasPressedThisFrame()) ||
+                    keyboard != null && keyboard.bKey.wasPressedThisFrame,
                 PausePressed = keyboard != null && keyboard.escapeKey.wasPressedThisFrame
             };
         }

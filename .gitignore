@@ -11,6 +11,8 @@ Thumbs.db
 TelerobotMVP/Library/
 TelerobotMVP/Temp/
 TelerobotMVP/Obj/
+TelerobotMVP/**/bin/
+TelerobotMVP/**/obj/
 TelerobotMVP/Logs/
 TelerobotMVP/UserSettings/
 TelerobotMVP/Build/
@@ -20,3 +22,7 @@ TelerobotMVP/Telemetry/
 
 # Local validation output
 artifacts/
+
+# C# IDE outputs
+*.user
+*.suo

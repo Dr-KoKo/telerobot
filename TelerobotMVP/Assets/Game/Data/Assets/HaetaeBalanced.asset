@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f912346963123984590348acab8a2a2b, type: 3}
+  m_Name: HaetaeBalanced
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.HaetaeSpecializationDefinitionAsset
+  id: 3
+  displayNameKey: haetae.specialization.balanced
+  descriptionKey: haetae.specialization.balanced.description
+  preferredMinRange: 0
+  preferredMaxRange: 8
+  dashDamageMultiplier: 2.5
+  biteDamageMultiplier: 2.5
+  rangedDamage: 190
+  rangedCooldownSeconds: 0.35
+  cleaveRadius: 0
+  maximumTargets: 1
+  incomingDamageMultiplier: 1
+  combatBatteryMultiplier: 0.9
+  bodyColor: {r: 0.68, g: 0.38, b: 0.95, a: 1}
+  scaleMultiplier: {x: 1, y: 1, z: 1}
+  attackPulseColor: {r: 0.78, g: 0.45, b: 1, a: 1}
+  tracerColor: {r: 0.65, g: 0.55, b: 1, a: 1}

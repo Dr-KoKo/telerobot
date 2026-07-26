@@ -14,7 +14,9 @@ namespace Telerobot.Game.Simulation
             "session_started", "session_ended", "phase_started", "phase_cleared", "phase_failed",
             "zombie_spawned", "zombie_killed", "base_damaged", "player_damaged", "player_died",
             "robot_battery_changed", "robot_auto_charge_started", "robot_disabled", "ripper_attacked_robot",
-            "upgrade_selected", "route_pressure_sampled", "simulation_run_completed"
+            "route_pressure_sampled", "simulation_run_completed",
+            "haetae_xp_gained", "haetae_level_reached", "haetae_specialization_ready",
+            "haetae_specialization_selected"
         };
     }
 

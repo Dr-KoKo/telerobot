@@ -60,39 +60,51 @@ namespace Telerobot.Game.Tests
         }
 
         [Test]
-        public void OfferHasThreeUniqueChoicesAndSelectionAppliesImmediately()
+        public void PhaseTwoClearImmediatelyAdvancesAndPreservesSpecializationReadyState()
         {
             var config = TestConfigFactory.Create();
-            var system = new UpgradeSystem(config);
-            var offer = system.Offer(new XorShiftRng(2));
-            Assert.That(offer.Count, Is.EqualTo(3));
-            Assert.That(new HashSet<string>(offer.ConvertAll(item => item.Id)).Count, Is.EqualTo(3));
+            var system = new PhaseSystem(config.Base, config.Phases.Count);
             var session = new SessionState(2);
             var baseState = new BaseState(1000f);
-            var robot = new RobotState("one", 300f, 100f);
             var player = new PlayerState(100f, 30, 180, 2);
-            var modifiers = new RuntimeModifiers();
-            Assert.That(system.Apply(config.Upgrades[0], session, baseState, new[] { robot }, player, modifiers), Is.True);
-            Assert.That(robot.MaximumBattery, Is.EqualTo(120f));
-            Assert.That(robot.Battery, Is.EqualTo(120f));
+            var phase = new PhaseState(2, new[] { RouteId.NorthRoad, RouteId.EastAlley })
+            {
+                AllSpawned = true
+            };
+            var robot = new RobotState("haetae-1", 300f, 100f);
+            robot.Progression.Level = 2;
+            robot.Progression.Experience = config.HaetaeProgression.ExperiencePerLevel;
+
+            Assert.That(system.Evaluate(session, phase, baseState, player), Is.EqualTo(PhaseTransition.NextPhase));
+            Assert.That(robot.Progression.Level, Is.EqualTo(2));
+            Assert.That(robot.Progression.SpecializationReady, Is.True);
+            Assert.That(robot.Progression.Specialization, Is.EqualTo(HaetaeSpecialization.Unselected));
         }
 
         [Test]
-        public void SecondOfferExcludesAlreadySelectedUpgradeAndCannotStackIt()
+        public void PhaseThreeAndSevenAdvanceWhilePhaseEightEndsInVictory()
         {
             var config = TestConfigFactory.Create();
-            var system = new UpgradeSystem(config);
+            var system = new PhaseSystem(config.Base, config.Phases.Count);
             var session = new SessionState(2);
-            var selected = config.Upgrades[0];
-            Assert.That(system.Apply(selected, session, new BaseState(1000f),
-                new[] { new RobotState("one", 300f, 100f) }, new PlayerState(100f, 30, 120, 2),
-                new RuntimeModifiers()), Is.True);
+            var baseState = new BaseState(1000f);
+            var player = new PlayerState(100f, 30, 180, 2);
 
-            var secondOffer = system.Offer(new XorShiftRng(3), session.SelectedUpgrades);
-            Assert.That(secondOffer.ConvertAll(item => item.Id), Does.Not.Contain(selected.Id));
-            Assert.That(system.Apply(selected, session, new BaseState(1000f),
-                new[] { new RobotState("one", 300f, 100f) }, new PlayerState(100f, 30, 120, 2),
-                new RuntimeModifiers()), Is.False);
+            foreach (var phaseNumber in new[] { 3, 7 })
+            {
+                var phase = new PhaseState(phaseNumber, config.GetPhase(phaseNumber).OpenRoutes)
+                {
+                    AllSpawned = true
+                };
+                Assert.That(system.Evaluate(session, phase, baseState, player),
+                    Is.EqualTo(PhaseTransition.NextPhase));
+                Assert.That(session.Result, Is.EqualTo(GameResult.InProgress));
+            }
+
+            var finalPhase = new PhaseState(8, config.GetPhase(8).OpenRoutes) { AllSpawned = true };
+            Assert.That(system.Evaluate(session, finalPhase, baseState, player),
+                Is.EqualTo(PhaseTransition.Victory));
+            Assert.That(session.Result, Is.EqualTo(GameResult.Victory));
         }
 
         [Test]

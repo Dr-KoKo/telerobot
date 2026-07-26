@@ -6,7 +6,6 @@ namespace Telerobot.Game.Core
     {
         None,
         Defeat,
-        AwaitingUpgrade,
         NextPhase,
         Victory
     }
@@ -14,11 +13,14 @@ namespace Telerobot.Game.Core
     public sealed class PhaseSystem
     {
         private readonly BaseConfig config;
+        private readonly int finalPhaseNumber;
 
-        public PhaseSystem(BaseConfig config)
+        public PhaseSystem(BaseConfig config, int finalPhaseNumber)
         {
             if (config == null) throw new ArgumentNullException("config");
+            if (finalPhaseNumber <= 0) throw new ArgumentOutOfRangeException("finalPhaseNumber");
             this.config = config;
+            this.finalPhaseNumber = finalPhaseNumber;
         }
 
         public PhaseTransition Evaluate(SessionState session, PhaseState phase, BaseState baseState, PlayerState player)
@@ -41,12 +43,12 @@ namespace Telerobot.Game.Core
 
             phase.Cleared = true;
             CombatRules.RecoverBase(baseState, config.PhaseRecoveryFraction);
-            if (phase.Number >= 3)
+            if (phase.Number >= finalPhaseNumber)
             {
                 session.Result = GameResult.Victory;
                 return PhaseTransition.Victory;
             }
-            return session.SelectedUpgrades.Count < phase.Number ? PhaseTransition.AwaitingUpgrade : PhaseTransition.NextPhase;
+            return PhaseTransition.NextPhase;
         }
 
         public PhaseState StartNext(SessionState session, PhaseConfig next)

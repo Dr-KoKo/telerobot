@@ -20,6 +20,8 @@ MonoBehaviour:
   routePriorityPolicy: 1
   ripperFocus: 0.6
   robotChargeThresholdFraction: 0.25
-  upgradeSelectionPolicy: 1
   grenadeUsePolicy: 1
   grenadeClusterThreshold: 4
+  defaultSpecializationLoadout:
+    Haetae1: 1
+    Haetae2: 2

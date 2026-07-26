@@ -62,6 +62,84 @@ namespace Telerobot.Game.Core
     }
 
     [Serializable]
+    public sealed class HaetaeProgressionState
+    {
+        public int Level = 1;
+        public int Experience;
+        public HaetaeSpecialization Specialization = HaetaeSpecialization.Unselected;
+        public int UnspentMasteryPoints;
+        public int PowerRank;
+        public int ArmorRank;
+        public int EfficiencyRank;
+        public int AttackSpeedRank;
+
+        public bool SpecializationReady
+        {
+            get { return Level >= 2 && Specialization == HaetaeSpecialization.Unselected; }
+        }
+    }
+
+    [Serializable]
+    public sealed class CombatContributionState
+    {
+        public HashSet<string> HaetaeIds = new HashSet<string>(StringComparer.Ordinal);
+        public bool ExperienceAwarded;
+    }
+
+    [Serializable]
+    public struct DamageSource
+    {
+        public DamageSourceKind Kind;
+        public string SourceId;
+
+        public DamageSource(DamageSourceKind kind, string sourceId)
+        {
+            Kind = kind;
+            SourceId = sourceId ?? string.Empty;
+        }
+
+        public static DamageSource Player(string playerId)
+        {
+            return new DamageSource(DamageSourceKind.Player, playerId);
+        }
+
+        public static DamageSource Haetae(string robotId)
+        {
+            return new DamageSource(DamageSourceKind.Haetae, robotId);
+        }
+    }
+
+    [Serializable]
+    public struct RobotAttackResult
+    {
+        public RobotAttackKind Kind;
+        public float Damage;
+        public float Range;
+        public float CooldownSeconds;
+        public float AreaRadius;
+        public int MaximumTargets;
+
+        public static RobotAttackResult None
+        {
+            get
+            {
+                return new RobotAttackResult
+                {
+                    Kind = RobotAttackKind.None,
+                    MaximumTargets = 1
+                };
+            }
+        }
+    }
+
+    [Serializable]
+    public struct RobotCombatDecision
+    {
+        public RobotMovementIntent Movement;
+        public RobotAttackResult Attack;
+    }
+
+    [Serializable]
     public sealed class RobotState
     {
         public string Id;
@@ -77,6 +155,7 @@ namespace Telerobot.Game.Core
         public string CurrentTargetId;
         public float AttackCooldownRemaining;
         public float DashCooldownRemaining;
+        public HaetaeProgressionState Progression;
 
         public RobotState(string id, float health, float battery)
         {
@@ -88,6 +167,7 @@ namespace Telerobot.Game.Core
             Mode = RobotMode.Standby;
             Command = RobotCommand.DefendPosition;
             AssignedRoute = RouteId.NorthRoad;
+            Progression = new HaetaeProgressionState();
         }
 
         public bool IsDestroyed { get { return Mode == RobotMode.Destroyed || Health.IsDead; } }
@@ -104,6 +184,7 @@ namespace Telerobot.Game.Core
         public RouteId Route;
         public HealthState Health;
         public float Progress;
+        public CombatContributionState Contribution;
 
         public ZombieState(string id, ZombieType type, RouteId route, float health)
         {
@@ -111,6 +192,7 @@ namespace Telerobot.Game.Core
             Type = type;
             Route = route;
             Health = new HealthState(health);
+            Contribution = new CombatContributionState();
         }
     }
 
@@ -138,12 +220,24 @@ namespace Telerobot.Game.Core
         public int CurrentPhase;
         public GameResult Result = GameResult.InProgress;
         public DefeatReason DefeatReason = DefeatReason.None;
-        public List<string> SelectedUpgrades = new List<string>();
 
         public SessionState(int seed)
         {
             Seed = seed;
             CurrentPhase = 1;
+        }
+    }
+
+    [Serializable]
+    public sealed class BarrierState
+    {
+        public RouteId Route;
+        public HealthState Health;
+
+        public BarrierState(RouteId route, float health)
+        {
+            Route = route;
+            Health = new HealthState(health);
         }
     }
 

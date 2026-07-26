@@ -17,7 +17,7 @@ namespace Telerobot.Game.Tests
                     ThirdPersonFieldOfView = 65f, FirstPersonFieldOfView = 75f,
                     FirstPersonEyeHeight = 0.65f, CameraCollisionRadius = 0.22f,
                     CameraCollisionPadding = 0.08f, JumpHeight = 1.35f, GroundedVelocity = -2f,
-                    DataVersion = "test-v1"
+                    DataVersion = "mvp-2.0.0"
                 },
                 Base = new BaseConfig { MaxHealth = 1000f, PhaseRecoveryFraction = 0.15f, WarningFraction = 0.30f },
                 Ammo = new AmmoConfig
@@ -74,34 +74,53 @@ namespace Telerobot.Game.Tests
                     BatteryEmitPolicy = BatteryEmitPolicy.OnThresholdCrossing | BatteryEmitPolicy.EveryNSeconds,
                     BatteryEmitIntervalSeconds = 1f
                 },
+                HaetaeProgression = new HaetaeProgressionConfig
+                {
+                    ExperiencePerLevel = 75,
+                    ReadyAlertSeconds = 4f,
+                    PowerDamageBonusPerRank = 0.10f,
+                    ArmorDamageReductionPerRank = 0.08f,
+                    EfficiencyBatteryReductionPerRank = 0.08f,
+                    AttackSpeedBonusPerRank = 0.10f,
+                    MinimumReductionMultiplier = 0.50f
+                },
                 Validation = new ValidationConfig { Seeds = new[] { 1001, 1002, 1003 }, FixedStepSeconds = 1f / 60f }
             };
+            config.HaetaeSpecializations.AddRange(new[]
+            {
+                Specialization(HaetaeSpecialization.Melee, "haetae.specialization.melee",
+                    0f, 2f, 4f, 4f, 0f, 0f, 2.5f, 3, 0.7f, 1.2f),
+                Specialization(HaetaeSpecialization.Ranged, "haetae.specialization.ranged",
+                    6f, 12f, 0f, 0f, 200f, 0.35f, 0f, 1, 1.15f, 1f),
+                Specialization(HaetaeSpecialization.Balanced, "haetae.specialization.balanced",
+                    0f, 8f, 2.5f, 2.5f, 190f, 0.35f, 0f, 1, 1f, 0.9f)
+            });
             config.Zombies.Add(new ZombieConfig
             {
-                Type = ZombieType.Runner, MaxHealth = 90f, MoveSpeed = 6.5f, BaseDamage = 8f,
+                Type = ZombieType.Runner, HaetaeExperienceReward = 5, MaxHealth = 90f, MoveSpeed = 6.5f, BaseDamage = 8f,
                 PlayerDamage = 12f, RobotDamage = 8f, AttackInterval = 1f, AttackRange = 1.8f, ThreatCost = 1, FirstPhase = 1,
                 PathVariationFraction = 0.4f, SeparationRadius = 1.1f, SeparationStrength = 1.6f,
                 TargetPriority = new[] { TargetKind.Base, TargetKind.Player, TargetKind.Robot }
             });
             config.Zombies.Add(new ZombieConfig
             {
-                Type = ZombieType.Bruiser, MaxHealth = 500f, MoveSpeed = 2.6f, BaseDamage = 60f,
+                Type = ZombieType.Bruiser, HaetaeExperienceReward = 25, MaxHealth = 500f, MoveSpeed = 2.6f, BaseDamage = 60f,
                 PlayerDamage = 30f, RobotDamage = 25f, AttackInterval = 2f, AttackRange = 1.8f, ThreatCost = 5, FirstPhase = 2,
                 PathVariationFraction = 0.4f, SeparationRadius = 1.9f, SeparationStrength = 1.6f,
                 TargetPriority = new[] { TargetKind.Base, TargetKind.Robot, TargetKind.Player }
             });
             config.Zombies.Add(new ZombieConfig
             {
-                Type = ZombieType.Ripper, MaxHealth = 180f, MoveSpeed = 7.2f, BaseDamage = 10f,
+                Type = ZombieType.Ripper, HaetaeExperienceReward = 20, MaxHealth = 180f, MoveSpeed = 7.2f, BaseDamage = 10f,
                 PlayerDamage = 18f, RobotDamage = 18f, AttackInterval = 0.9f, AttackRange = 1.8f, ThreatCost = 4, FirstPhase = 3,
                 PathVariationFraction = 0.4f, SeparationRadius = 1.3f, SeparationStrength = 1.6f,
                 TargetPriority = new[] { TargetKind.Robot, TargetKind.Player, TargetKind.Base }
             });
-            config.Phases.Add(Phase(1, 40, 150f, new[] { RouteId.NorthRoad },
+            config.Phases.Add(Phase(1, 40, 35f, new[] { RouteId.NorthRoad },
                 Range(18, 24), Range(0, 0), Range(0, 0), Range(18, 24), 0, 0,
                 4f, Range(3, 4), 15, Weights(RouteId.NorthRoad, 1f),
                 new[] { TypeWeights(ZombieType.Runner, Weights(RouteId.NorthRoad, 1f)) }));
-            config.Phases.Add(Phase(2, 60, 210f, new[] { RouteId.NorthRoad, RouteId.EastAlley },
+            config.Phases.Add(Phase(2, 60, 40f, new[] { RouteId.NorthRoad, RouteId.EastAlley },
                 Range(28, 36), Range(2, 3), Range(0, 0), Range(30, 39), 2, 0,
                 3.5f, Range(3, 5), 20, Weights(RouteId.NorthRoad, 0.55f, RouteId.EastAlley, 0.45f),
                 new[]
@@ -109,7 +128,7 @@ namespace Telerobot.Game.Tests
                     TypeWeights(ZombieType.Runner, Weights(RouteId.NorthRoad, 0.6f, RouteId.EastAlley, 0.4f)),
                     TypeWeights(ZombieType.Bruiser, Weights(RouteId.NorthRoad, 0.65f, RouteId.EastAlley, 0.35f))
                 }));
-            config.Phases.Add(Phase(3, 80, 270f, new[] { RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel },
+            config.Phases.Add(Phase(3, 80, 40f, new[] { RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel },
                 Range(42, 48), Range(2, 3), Range(3, 4), Range(47, 55), 2, 3,
                 3f, Range(4, 6), 24, Weights(RouteId.NorthRoad, 0.4f, RouteId.EastAlley, 0.3f, RouteId.SouthTunnel, 0.3f),
                 new[]
@@ -118,21 +137,14 @@ namespace Telerobot.Game.Tests
                     TypeWeights(ZombieType.Bruiser, Weights(RouteId.NorthRoad, 0.5f, RouteId.EastAlley, 0.3f, RouteId.SouthTunnel, 0.2f)),
                     TypeWeights(ZombieType.Ripper, Weights(RouteId.NorthRoad, 0.15f, RouteId.EastAlley, 0.2f, RouteId.SouthTunnel, 0.65f))
                 }));
+            config.Phases.Add(LatePhase(4, 255, Range(135, 145), Range(12, 14), Range(8, 10), Range(155, 169)));
+            config.Phases.Add(LatePhase(5, 286, Range(130, 140), Range(16, 18), Range(12, 14), Range(158, 172)));
+            config.Phases.Add(LatePhase(6, 317, Range(125, 135), Range(20, 22), Range(16, 18), Range(161, 175)));
+            config.Phases.Add(LatePhase(7, 348, Range(120, 130), Range(24, 26), Range(20, 22), Range(164, 178)));
+            config.Phases.Add(LatePhase(8, 379, Range(115, 125), Range(28, 30), Range(24, 26), Range(167, 181)));
             config.Routes.Add(new RouteConfig { Id = RouteId.NorthRoad, OpenPhase = 1, DisplayNameKey = "route.north", Width = 9f, Waypoints = new[] { new Float3(0, 0, 20), new Float3(0, 0, 0) } });
             config.Routes.Add(new RouteConfig { Id = RouteId.EastAlley, OpenPhase = 2, DisplayNameKey = "route.east", Width = 5f, Waypoints = new[] { new Float3(20, 0, 0), new Float3(0, 0, 0) } });
             config.Routes.Add(new RouteConfig { Id = RouteId.SouthTunnel, OpenPhase = 3, DisplayNameKey = "route.south", Width = 6f, Waypoints = new[] { new Float3(-20, 0, 0), new Float3(0, 0, 0) } });
-            config.Upgrades.AddRange(new[]
-            {
-                Upgrade("high_efficiency_battery", UpgradeEffectType.MaxBattery, 20f),
-                Upgrade("combat_power_save", UpgradeEffectType.CombatDrainMultiplier, 0.8f),
-                Upgrade("haetae_charge_boost", UpgradeEffectType.FirstDashDamageMultiplier, 1.4f),
-                Upgrade("charge_station_speedup", UpgradeEffectType.ChargeRateMultiplier, 1.3f),
-                Upgrade("base_armor", UpgradeEffectType.BaseMaxHealth, 200f),
-                Upgrade("emergency_barrier", UpgradeEffectType.EmergencyBarrier, 1f),
-                Upgrade("piercing_rounds", UpgradeEffectType.PiercingRounds, 1f),
-                Upgrade("extended_magazine", UpgradeEffectType.MagazineCapacity, 15f),
-                Upgrade("emergency_recovery_protocol", UpgradeEffectType.MedicalHealMultiplier, 1.3f)
-            });
             config.SimPlayerProfiles.AddRange(new[]
             {
                 Profile(SimProfileId.Novice, 0.55f, 0.10f, 1.2f, 2.6f, 0.2f, 0.10f),
@@ -142,9 +154,30 @@ namespace Telerobot.Game.Tests
             return config;
         }
 
-        private static UpgradeConfig Upgrade(string id, UpgradeEffectType type, float amount)
+        private static HaetaeSpecializationConfig Specialization(
+            HaetaeSpecialization id, string displayNameKey, float minRange, float maxRange,
+            float dashMultiplier, float biteMultiplier, float rangedDamage, float rangedCooldown,
+            float cleaveRadius, int maximumTargets, float incomingMultiplier, float batteryMultiplier)
         {
-            return new UpgradeConfig { Id = id, DisplayNameKey = id, EffectType = type, Amount = amount };
+            return new HaetaeSpecializationConfig
+            {
+                Id = id,
+                DisplayNameKey = displayNameKey,
+                DescriptionKey = displayNameKey + ".description",
+                Combat = new RobotCombatProfileConfig
+                {
+                    PreferredMinRange = minRange,
+                    PreferredMaxRange = maxRange,
+                    DashDamageMultiplier = dashMultiplier,
+                    BiteDamageMultiplier = biteMultiplier,
+                    RangedDamage = rangedDamage,
+                    RangedCooldownSeconds = rangedCooldown,
+                    CleaveRadius = cleaveRadius,
+                    MaximumTargets = maximumTargets,
+                    IncomingDamageMultiplier = incomingMultiplier,
+                    CombatBatteryMultiplier = batteryMultiplier
+                }
+            };
         }
 
         private static PhaseConfig Phase(int number, int budget, float duration, RouteId[] routes,
@@ -158,6 +191,7 @@ namespace Telerobot.Game.Tests
                 ThreatBudget = budget,
                 TargetDurationSeconds = duration,
                 OpenRoutes = routes,
+                OpensNewRoute = number <= 3,
                 NewlyOpenedRoute = routes[routes.Length - 1],
                 RunnerCount = runners,
                 BruiserCount = bruisers,
@@ -173,6 +207,31 @@ namespace Telerobot.Game.Tests
                 RouteWeights = routeWeights,
                 ZombieTypeRouteWeights = typeWeights
             };
+        }
+
+        private static PhaseConfig LatePhase(int number, int budget, IntRangeConfig runners,
+            IntRangeConfig bruisers, IntRangeConfig rippers, IntRangeConfig learningTotal)
+        {
+            var routes = new[] { RouteId.NorthRoad, RouteId.EastAlley, RouteId.SouthTunnel };
+            return Phase(number, budget, 100f, routes, runners, bruisers, rippers, learningTotal,
+                bruisers.Min, rippers.Min, 3f, Range(4, 6), 24, LatePhaseWeights(number),
+                new[]
+                {
+                    TypeWeights(ZombieType.Runner, LatePhaseWeights(number)),
+                    TypeWeights(ZombieType.Bruiser, LatePhaseWeights(number)),
+                    TypeWeights(ZombieType.Ripper, LatePhaseWeights(number))
+                });
+        }
+
+        private static RouteWeightConfig[] LatePhaseWeights(int number)
+        {
+            if (number == 5)
+                return Weights(RouteId.NorthRoad, 0.25f, RouteId.EastAlley, 0.5f, RouteId.SouthTunnel, 0.25f);
+            if (number == 6)
+                return Weights(RouteId.NorthRoad, 0.5f, RouteId.EastAlley, 0.25f, RouteId.SouthTunnel, 0.25f);
+            if (number == 7)
+                return Weights(RouteId.NorthRoad, 0.25f, RouteId.EastAlley, 0.25f, RouteId.SouthTunnel, 0.5f);
+            return Weights(RouteId.NorthRoad, 0.34f, RouteId.EastAlley, 0.33f, RouteId.SouthTunnel, 0.33f);
         }
 
         private static IntRangeConfig Range(int minimum, int maximum)
@@ -211,11 +270,14 @@ namespace Telerobot.Game.Tests
                     : id == SimProfileId.Baseline ? SimRoutePriorityPolicy.BalancedCoverage : SimRoutePriorityPolicy.HighestPressure,
                 RipperFocus = ripperFocus,
                 RobotChargeThresholdFraction = chargeThreshold,
-                UpgradeSelectionPolicy = id == SimProfileId.Novice ? SimUpgradeSelectionPolicy.RandomOfThree
-                    : id == SimProfileId.Baseline ? SimUpgradeSelectionPolicy.IntendedMeta : SimUpgradeSelectionPolicy.RiskAwareOptimal,
                 GrenadeUsePolicy = id == SimProfileId.Novice ? SimGrenadeUsePolicy.Rarely
                     : id == SimProfileId.Baseline ? SimGrenadeUsePolicy.DenseClusters : SimGrenadeUsePolicy.DenseClustersAndBruisers,
-                GrenadeClusterThreshold = id == SimProfileId.Novice ? 8 : id == SimProfileId.Baseline ? 4 : 3
+                GrenadeClusterThreshold = id == SimProfileId.Novice ? 8 : id == SimProfileId.Baseline ? 4 : 3,
+                DefaultSpecializationLoadout = id == SimProfileId.Novice
+                    ? new HaetaeSpecializationPair(HaetaeSpecialization.Balanced, HaetaeSpecialization.Balanced)
+                    : id == SimProfileId.Baseline
+                        ? new HaetaeSpecializationPair(HaetaeSpecialization.Melee, HaetaeSpecialization.Ranged)
+                        : new HaetaeSpecializationPair(HaetaeSpecialization.Ranged, HaetaeSpecialization.Melee)
             };
         }
     }

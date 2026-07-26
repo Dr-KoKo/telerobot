@@ -92,6 +92,7 @@ namespace Telerobot.Game.Runtime
                 game.TogglePause();
                 return;
             }
+            if (frame.SpecializationPressed) game.ToggleSpecializationPanel();
             if (game.IsPaused) return;
             UpdateRecoil();
             if (frame.TogglePerspectivePressed && !game.InputBlocked) TogglePerspective();
@@ -272,7 +273,7 @@ namespace Telerobot.Game.Runtime
             var region = hit.point.y >= headLine ? HitRegion.Head : HitRegion.Body;
             var damage = CombatRules.CalculateBulletDamage(weapon, region);
             SpawnImpact(hit.point, region, true);
-            zombie.ReceiveDamage(damage, "player");
+            zombie.ReceiveDamage(damage, DamageSource.Player("player"));
             PlayHitSound(region);
             game.NotifyPlayerHit(region, damage, zombie.State.Health.IsDead);
         }
@@ -313,7 +314,7 @@ namespace Telerobot.Game.Runtime
                 lookup[zombie.State.Id] = zombie;
             }
             var affected = CombatRules.ApplyGrenade(game.Config.Grenade, candidates);
-            foreach (var id in affected) lookup[id].RefreshAfterCoreDamage("grenade");
+            foreach (var id in affected) lookup[id].RefreshAfterCoreDamage(DamageSource.Player("player"));
             game.Emit("grenade_used", new Dictionary<string, string>
             {
                 { "affectedCount", affected.Count.ToString() },

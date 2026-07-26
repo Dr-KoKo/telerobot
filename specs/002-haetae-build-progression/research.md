@@ -6,7 +6,7 @@
 
 ## 1. Progression State Ownership
 
-**Decision**: Compose a session-local `HaetaeProgressionState` into each `RobotState`. It owns level, XP, and selected specialization. `SpecializationReady` is derived from `Level == 2 && Specialization == Unselected`.
+**Decision**: Compose a session-local `HaetaeProgressionState` into each `RobotState`. It owns level, cumulative XP, and selected specialization. `SpecializationReady` is derived from `Level >= 2 && Specialization == Unselected`.
 
 **Rationale**: `RobotState` already has one instance per Haetae, survives phase transitions, and is shared by runtime and simulation. Phase-start durability restoration can continue to reset only HP/battery/combat fields while leaving progression untouched. A derived readiness property avoids contradictory stored flags.
 
@@ -31,14 +31,15 @@ Only a positive applied damage amount records contribution. On death, contributo
 
 ## 3. XP Values and Level Threshold
 
-**Decision**: Use initial planning values of Runner 5 XP, Bruiser 25 XP, Ripper 20 XP, and a 100 XP level-2 threshold. XP clamps at 100; later rewards have zero applied amount.
+**Decision**: Use Runner 5 XP, Bruiser 25 XP, Ripper 20 XP, and a flat 75 XP interval for every level. Level 2 remains the specialization unlock point, but cumulative XP is not clamped and every additional 75 XP advances another level. The interval was reduced after the 20-seed × 9-loadout matrix showed that 100 XP left the second Haetae un-specialized too often before Phase 3.
 
-**Rationale**: Rewards are five times the existing threat costs, preserving a simple relative value across zombie types. Phase 1 contains 18–24 Runners, so split participation should usually put both robots below or near the threshold; Phase 2 Bruisers and additional Runners then make specialization available during active play. This is a starting hypothesis measured against SC-002 and SC-003.
+**Rationale**: Rewards are five times the existing threat costs, preserving a simple relative value across zombie types. Phase 1 contains 18–24 Runners, so split participation should usually put both robots below or near the first threshold; Phase 2 Bruisers and additional Runners then make specialization available during active play. Continuing levels preserve feedback through the added late phases without changing combat balance.
 
 **Alternatives considered**:
 - Threshold 8 with rewards equal to threat cost: mathematically equivalent pacing but exposes tiny values that are less legible in the HUD.
 - Per-second passive XP: violates contribution-based growth and reduces the incentive to assign roles.
-- XP beyond level 2: has no in-scope use and creates false expectations for level 3.
+- Automatic post-level-2 stat bonuses without player choice: rejected because they do not create a build decision.
+- A second choice at every later level: rejected because the user only established level 2 as the specialization decision point.
 
 ## 4. Specialization as Per-Robot Combat Profiles
 
@@ -49,9 +50,9 @@ Initial role baselines:
 | Role | Initial behavior and trade-off |
 |------|--------------------------------|
 | General | Existing 60 dash + 40 bite, 2 m engage range, current cooldowns |
-| Melee | Existing dash/bite; 2.5 m cleave up to 3 targets; incoming damage ×0.80; combat drain ×1.20 |
-| Ranged | 30 direct damage every 0.6 s; hold 6–12 m; no normal dash; incoming damage ×1.15 |
-| Balanced | 15 ranged damage every 1.0 s while approaching; switch to dash/bite ×0.85 inside the existing chassis melee range (2 m); no cleave or defensive advantage |
+| Melee | Dash/bite ×4.0; 2.5 m cleave up to 3 targets; incoming damage ×0.70; combat drain ×1.20 |
+| Ranged | 200 direct damage every 0.35 s; hold 6–12 m; no normal dash; incoming damage ×1.15 |
+| Balanced | 190 ranged damage every 0.35 s while approaching; switch to dash/bite ×2.5 inside the existing chassis melee range (2 m); no cleave; combat drain ×0.90 |
 
 **Rationale**: Per-robot profiles allow one Melee and one Ranged Haetae simultaneously without global modifier leakage. Each role changes attack mode plus engagement/approach behavior, meeting the spec's behavioral distinction.
 
@@ -97,7 +98,7 @@ The full-screen `UpgradeSelectionView` is not reused.
 
 ## 8. Deterministic Simulation
 
-**Decision**: Extend simulation with `SimRobotRuntime` distance/route position and use the shared progression/combat policy. Simulated player profiles contain two deterministic specialization choices; choosing a specialization consumes no RNG. Spawn composition and route allocation retain the existing seeded RNG stream.
+**Decision**: Extend simulation with `SimRobotRuntime` distance/route position and use the shared progression/combat policy. Each simulated player profile contains a two-entry default specialization loadout, while `SimulationRunOptions` may supply an ordered two-entry override for an individual run. Matrix and A/B validation use the run override so the same player profile can exercise all nine ordered combinations. Choosing a specialization consumes no RNG, and spawn composition and route allocation retain the existing seeded RNG stream.
 
 For each specialization, the simulator models approach/hold/retreat, attack range and cadence, melee cleave, battery multiplier, incoming-damage multiplier, and destroyed/disabled behavior. Targets and contributors use stable progress-then-ID ordering.
 
@@ -105,6 +106,7 @@ For each specialization, the simulator models approach/hold/retreat, attack rang
 
 **Alternatives considered**:
 - Runtime-only playtests: cannot reproduce SC-002/003/008/010 balance outcomes.
+- Profile-only fixed loadouts: cannot compare all nine ordered combinations under the same player behavior without mutating shared configuration.
 - Random specialization choices from the spawn RNG: changes later spawn composition and invalidates build A/B comparisons.
 - Full NavMesh simulation: unnecessary and constitutionally unsuitable for determinism.
 
@@ -117,7 +119,7 @@ For each specialization, the simulator models approach/hold/retreat, attack rang
 - `haetae_specialization_ready`
 - `haetae_specialization_selected`
 
-The first event carries reward amount and applied amount separately so capped XP is visible. Simulation summaries include level-2 timing, specialization, damage, kills, battery use, Disabled count, and Destroyed count per Haetae.
+The first event carries reward amount and applied amount separately; after the change they are equal for all valid awards because XP is no longer capped. Simulation summaries include level-2 timing, specialization, damage, kills, battery use, Disabled count, and Destroyed count per Haetae.
 
 Continue the recorded `robot_charge_commanded` → `robot_auto_charge_started` substitution. Mark `upgrade_selected` not applicable and replace it with `haetae_specialization_selected`, recording the exception in plan Complexity Tracking.
 
@@ -130,9 +132,9 @@ Continue the recorded `robot_charge_commanded` → `robot_auto_charge_started` s
 
 ## 10. Data Assets and Versioning
 
-**Decision**: Add a progression asset, three specialization assets, zombie XP fields, HUD timing/presentation fields, and string-table entries. Map them into pure configs and validate positive rewards, level cap/threshold, exactly one definition per required specialization, unique IDs, ordered range bands, positive cooldown/damage, and legal multipliers. Advance `dataVersion` from `mvp-1.4.5` to `mvp-2.0.0`.
+**Decision**: Add a progression asset, three specialization assets, zombie XP fields, HUD timing/presentation fields, and string-table entries. Map them into pure configs and validate positive rewards, a positive XP-per-level interval, exactly one definition per required specialization, unique IDs, ordered range bands, positive cooldown/damage, and legal multipliers. Promote `dataVersion` from `mvp-1.4.5` to `mvp-2.0.0` only after the active upgrade catalog, UI, runtime, and simulation paths have been removed in the same integration step.
 
-**Rationale**: The schema breaks active upgrade assumptions and adds new balance dimensions. `MvpProjectBuilder` overwrites generated assets, so definition classes, builder defaults, serialized assets, mapper, and tests must change together.
+**Rationale**: The schema breaks active upgrade assumptions and adds new balance dimensions. An early version bump would allow a partial v2 catalog to coexist with the legacy upgrade flow. `MvpProjectBuilder` also overwrites generated assets, so definition classes, builder defaults, serialized assets, mapper, and tests must change together.
 
 **Alternatives considered**:
 - Put fields directly on the actor: violates data-driven balance.
@@ -151,3 +153,51 @@ Use the existing 20 balance seeds. SC-002 passes at 16/20 eligible Phase-2 basel
 - Reuse only old upgrade tests: does not exercise contribution, independence, readiness, or role behavior.
 - Make human outcomes automated pass/fail gates: cannot verify comprehension or preference.
 - Rebalance spawning together with specialization: confounds the experiment and contradicts the user's baseline instruction.
+
+## 12. Session Length Through Additional Phases
+
+**Decision**: Preserve Phase 1–3 exactly as the accepted early-game pace and add Phase 4–8. The five new phases reuse the three existing routes and zombie types, retain the Phase 3 spawn cadence/group/cap, and increase finite phase composition so each contributes approximately 100 seconds. Victory becomes data-driven from the final configured phase rather than fixed to Phase 3.
+
+Phase target contributions are `35/40/40/100/100/100/100/100` seconds, totaling `615s` (`10:15`). Phase 4–8 rotate route emphasis and progressively exchange Runner volume for Bruiser/Ripper pressure without exceeding 24 simultaneous enemies.
+
+**Rationale**: The first uninterrupted human victory completed in `108.8s`, while the player explicitly approved the Phase 1–3 speed. Slowing those phases would damage the accepted opening. Adding post-specialization phases gives the selected builds meaningful usage time and satisfies the 10–15 minute target using already-supported content.
+
+**Alternatives considered**:
+- Slow Phase 1–3 spawn intervals: rejected because the player approved their current speed and those values are regression baselines.
+- Hold a cleared phase open until a timer expires: rejected because it creates empty downtime.
+- Repeat waves inside the original three phases: rejected because it obscures progression milestones and provides fewer tactical reset points.
+- Add new routes or zombie types: rejected as unnecessary scope expansion.
+
+## 13. Continuing Levels After Specialization
+
+**Decision**: Replace the level-2 cap with cumulative XP and a data-backed `experiencePerLevel` value of 75. The pure progression rule derives level as `1 + floor(total XP / experiencePerLevel)`. Crossing level 2 raises specialization readiness once; later level transitions emit the normal level event but never re-emit the specialization-ready event. Selection remains legal at any level 2 or higher while still unselected. Every level above 2 grants one mastery point.
+
+**Rationale**: The five added late phases expose a dead progression bar immediately after specialization. Preserving XP overflow keeps combat contribution meaningful throughout the session.
+
+**Alternatives considered**:
+- Keep the level-2 cap: rejected by the observed playtest feedback.
+- Reset XP to zero on every level: rejected because cumulative XP makes telemetry, HUD bar derivation, and deterministic replay easier to audit.
+- Add automatic stat scaling: rejected in favor of explicit point spending.
+
+## 14. Repeatable Mastery Choices
+
+**Decision**: Add four repeatable, per-Haetae ranks: Power (+10% all attack damage), Armor (-8% incoming damage), Efficiency (-8% combat battery drain), and Attack Speed (-10% Dash/Bite/Ranged attack interval). Armor, Efficiency, and Attack Speed multipliers clamp at 0.50. Points are earned for each level above 2, remain unspent through phases, and cannot be spent before specialization. The non-modal specialization panel becomes a shared build panel and shows mastery choices after specialization. A successful final-point click stops the active GUI render so a removed panel target is never read again in the same frame.
+
+**Rationale**: Four orthogonal choices create meaningful sub-builds without adding new commands, attacks, RNG, or another full skill tree. Additive rank bonuses are easy to explain; clamped multiplicative application against existing role multipliers prevents immunity, free combat, or unbounded attack cadence.
+
+**Alternatives considered**:
+- Specialization-specific skill trees: deferred because nine or more unique nodes substantially expand UI and balance scope.
+- Random three-card offers: rejected because they consume RNG and complicate reproducibility.
+- Automatic runtime round-robin upgrades: rejected because the user requested player
+  choices. The deterministic simulator uses round-robin auto-spend solely as a reproducible
+  non-player policy and does not consume spawn RNG.
+
+## 15. Phase-Specific Radio
+
+**Decision**: Store `radio.phase1` through `radio.phase8` in the string table and resolve the current phase's exact key. Only `radio.phase3` announces the medical robot. Phase 4–8 messages describe route pressure/final assault and do not recreate or re-announce medical deployment.
+
+**Rationale**: Reusing `radio.phase3` for every phase number above 2 made correct runtime state sound incorrect to the player.
+
+**Alternatives considered**:
+- Suppress all radio after Phase 3: rejected because phase starts would lose useful feedback.
+- Hard-code late-phase captions in the controller: rejected because player-facing text must remain data-controlled.

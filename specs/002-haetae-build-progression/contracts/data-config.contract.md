@@ -8,20 +8,25 @@
 
 | Data | Authoritative owner | Must not be duplicated in |
 |------|---------------------|---------------------------|
-| Level-2 XP threshold and maximum level | `HaetaeProgressionDefinitionAsset` | robot actor, HUD, simulator |
+| XP interval per level | `HaetaeProgressionDefinitionAsset` | robot actor, HUD, simulator |
+| Mastery rank bonuses and reduction floor | `HaetaeProgressionDefinitionAsset` | robot actor, HUD, simulator |
 | Zombie XP reward | each `ZombieDefinitionAsset` | progression asset, kill adapter |
 | General chassis and level-1 melee values | `RobotDefinitionAsset` | specialization assets |
 | Specialization combat/presentation values | each `HaetaeSpecializationDefinitionAsset` | actor subclasses, global runtime modifiers |
 | Player-facing names/descriptions/status labels | `StringTableAsset` | runtime GUI code |
 | Telemetry event declaration | `TelemetryConfigAsset` | simulator-only constants |
+| Default simulation specialization pair | `SimPlayerProfileAsset` | simulator branch logic |
 
 ## `HaetaeProgressionDefinitionAsset`
 
 | Field | Type | Initial | Validation |
 |-------|------|---------|------------|
-| `maximumLevel` | int | 2 | exactly 2 |
-| `level2Experience` | int | 100 | > 0 |
+| `experiencePerLevel` | int | 75 | > 0 |
 | `readyAlertSeconds` | float | 4 | > 0 |
+| `powerDamageBonusPerRank` | float | 0.10 | > 0 |
+| `armorDamageReductionPerRank` | float | 0.08 | > 0 |
+| `efficiencyBatteryReductionPerRank` | float | 0.08 | > 0 |
+| `minimumReductionMultiplier` | float | 0.50 | > 0 and <= 1 |
 | `specializations` | array ref | 3 refs | non-null; exactly Melee/Ranged/Balanced once each |
 
 ## `ZombieDefinitionAsset` addition
@@ -58,9 +63,9 @@ These are initial balance values. Existing threat cost, HP, damage, spawn cadenc
 
 | Asset | ID | Required behavior values |
 |-------|----|--------------------------|
-| `HaetaeMelee.asset` | Melee | min/max range 0/2; cleave radius 2.5; max targets 3; incoming ×0.80; combat drain ×1.20 |
-| `HaetaeRanged.asset` | Ranged | preferred range 6/12; ranged 30 every 0.6 s; dash/bite multiplier 0; incoming ×1.15 |
-| `HaetaeBalanced.asset` | Balanced | preferred range 0/8; ranged 15 every 1.0 s; switch to dash/bite ×0.85 at the chassis melee range (2 m baseline); max targets 1 |
+| `HaetaeMelee.asset` | Melee | min/max range 0/2; dash/bite ×4.0; cleave radius 2.5; max targets 3; incoming ×0.70; combat drain ×1.20 |
+| `HaetaeRanged.asset` | Ranged | preferred range 6/12; ranged 200 every 0.35 s; dash/bite multiplier 0; incoming ×1.15 |
+| `HaetaeBalanced.asset` | Balanced | preferred range 0/8; ranged 190 every 0.35 s; switch to dash/bite ×2.5 at the chassis melee range (2 m baseline); max targets 1; combat drain ×0.90 |
 
 ## String Keys
 
@@ -79,11 +84,21 @@ Supporting HUD keys must exist in the string table:
 - `hud.haetae_general`
 - `hud.haetae_specialization_ready`
 - `hud.haetae_choose_specialization`
+- `hud.haetae_specialization_hint`
+- `hud.haetae_mastery_points`
 - `haetae.specialization.melee.description`
 - `haetae.specialization.ranged.description`
 - `haetae.specialization.balanced.description`
+- `haetae.mastery.panel_title`
+- `haetae.mastery.power` / `haetae.mastery.power.description`
+- `haetae.mastery.armor` / `haetae.mastery.armor.description`
+- `haetae.mastery.efficiency` / `haetae.mastery.efficiency.description`
+- `haetae.mastery.attack_speed` / `haetae.mastery.attack_speed.description`
 
 Supporting copy remains data-controlled and may not be embedded directly in GUI code.
+
+Phase-start radio keys `radio.phase1` through `radio.phase8` must all resolve. Only
+`radio.phase3` may contain the medical robot deployment announcement.
 
 ## Catalog and Mapper
 
@@ -92,6 +107,7 @@ The active catalog must contain:
 - one progression definition;
 - three unique specialization definitions;
 - three zombie definitions with positive XP;
+- eight contiguous phase definitions; Phase 1–3 retain their accepted values and Phase 4–8 reuse all three routes;
 - the existing robot, battery, phase, route, HUD, telemetry, and string assets.
 
 The active mapper must:
@@ -104,10 +120,27 @@ The active mapper must:
 
 Legacy upgrade assets may remain on disk but are not active catalog dependencies.
 
+## Eight-Phase Session Contract
+
+| Phase | Target seconds | Group interval | Group size | Alive cap | Total composition |
+|-------|----------------|----------------|------------|-----------|-------------------|
+| 1 | 35 | 4.0 | 3–4 | 15 | 18–24 |
+| 2 | 40 | 3.5 | 3–5 | 20 | 30–39 |
+| 3 | 40 | 3.0 | 4–6 | 24 | 47–55 |
+| 4 | 100 | 3.0 | 4–6 | 24 | 155–169 |
+| 5 | 100 | 3.0 | 4–6 | 24 | 158–172 |
+| 6 | 100 | 3.0 | 4–6 | 24 | 161–175 |
+| 7 | 100 | 3.0 | 4–6 | 24 | 164–178 |
+| 8 | 100 | 3.0 | 4–6 | 24 | 167–181 |
+
+Phase 1–3 set `opensNewRoute = true`; Phase 4–8 set it to false and keep all three routes open. The mapper rejects missing, duplicated, non-contiguous, or extra phase definitions and rejects a configured target-duration sum outside 600–900 seconds.
+
+The catalog must not claim `mvp-2.0.0` until the active upgrade mapping, UI, runtime, and simulation paths are all removed. Schema staging during implementation is not a releasable or telemetry-compatible v2 catalog.
+
 ## Acceptance
 
 - Mapper rejects missing, duplicate, or fourth specialization definitions.
-- Mapper rejects zero/negative XP or threshold.
+- Mapper rejects zero/negative XP rewards or XP-per-level values.
 - Mapper rejects invalid range ordering, cooldown, target count, or multiplier.
 - All required string keys resolve.
 - Rebuilding generated project data preserves the same progression values instead of reverting serialized assets.

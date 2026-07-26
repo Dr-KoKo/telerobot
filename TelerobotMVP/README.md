@@ -20,13 +20,13 @@ Unity 6.3 LTS로 만든 3단계 좀비 거점 방어 게임입니다. 플레이�
 
 Unity에서 새 빌드를 만들려면 **Tools > Telerobot > Build Windows Playtest**를 누릅니다. 결과는 같은 `Builds/Windows/` 폴더에 생성되고, 그 안의 `README-KO.txt`에도 실행 방법이 적혀 있습니다.
 
-이전 빌드에서 `ArgumentNullException: shader` 오류가 보이거나 HUD 한글의 위아래가 잘린다면 현재의 `Builds/Windows` 폴더 전체를 사용하십시오. 실행 파일만 따로 복사하면 필요한 `TelerobotMVP_Data`와 Unity 런타임 파일이 빠집니다. 수정된 플레이어 버전은 `0.2.2`입니다.
+이전 빌드에서 `ArgumentNullException: shader` 오류가 보이거나 HUD 한글의 위아래가 잘린다면 현재의 `Builds/Windows` 폴더 전체를 사용하십시오. 실행 파일만 따로 복사하면 필요한 `TelerobotMVP_Data`와 Unity 런타임 파일이 빠집니다. 현재 플레이어 버전은 `0.2.3`입니다.
 
 ## 주변 테스터에게 공유하기
 
 Unity 메뉴에서 **Tools > Telerobot > Build Shareable Windows Package**를 누르면 비개발 Windows 빌드와 단일 배포 ZIP이 함께 생성됩니다.
 
-- 공유 파일: `Builds/Distribution/TelerobotMVP-Windows-v0.2.2.zip`
+- 공유 파일: `Builds/Distribution/TelerobotMVP-Windows-v0.2.3.zip`
 - itch.io 업로드 안내: `Builds/Distribution/ITCH-IO-UPLOAD-KO.md`
 - 설문 작성 템플릿: `Builds/Distribution/FEEDBACK-FORM-KO.md`
 - 테스터 실행 안내: ZIP 내부 `START-HERE-KO.txt`
@@ -88,7 +88,7 @@ Unity.exe -batchmode -projectPath . -executeMethod Telerobot.Game.Editor.Windows
 
 Windows의 “인식할 수 없는 앱” 경고 없이 외부 테스터에게 제공하려면 Unity 메뉴 **Tools > Telerobot > Build Microsoft Store MSIX**를 사용합니다. 이 메뉴는 Partner Center에 예약된 `Dr-Ko.telerobot` / `Dr-Ko` ID로 Windows x64 패키지를 만듭니다.
 
-처음 한 번은 Visual Studio Installer에서 Windows 10/11 SDK를 설치해야 합니다. 결과 파일은 `Builds/Store/TelerobotMVP-Store-v0.2.2.0-x64.msix`이며, 이 무서명 파일을 직접 배포하지 않고 Partner Center에 업로드합니다. 자세한 순서는 `Documentation/Store/STORE-SUBMISSION-KO.md`를 따릅니다.
+처음 한 번은 Visual Studio Installer에서 Windows 10/11 SDK를 설치해야 합니다. 결과 파일은 `Builds/Store/TelerobotMVP-Store-v0.2.3.0-x64.msix`이며, 이 무서명 파일을 직접 배포하지 않고 Partner Center에 업로드합니다. 자세한 순서는 `Documentation/Store/STORE-SUBMISSION-KO.md`를 따릅니다.
 
 ## 현재 그래픽 범위
 

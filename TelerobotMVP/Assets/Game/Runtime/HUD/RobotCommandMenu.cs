@@ -18,15 +18,14 @@ namespace Telerobot.Game.Runtime
         private void Update()
         {
             var keyboard = Keyboard.current;
-            if (game == null || keyboard == null || game.UpgradeOpen) return;
+            if (game == null || keyboard == null || game.SpecializationOpen) return;
             if (keyboard.digit1Key.wasPressedThisFrame && game.Robots.Count > 0) game.SelectedRobot = game.Robots[0];
             if (keyboard.digit2Key.wasPressedThisFrame && game.Robots.Count > 1) game.SelectedRobot = game.Robots[1];
             if (keyboard.digit3Key.wasPressedThisFrame) game.ToggleSelectAllRobots(!game.AreAllRobotsSelected);
             if (keyboard.tabKey.wasPressedThisFrame)
             {
                 IsOpen = !IsOpen;
-                Cursor.lockState = IsOpen ? CursorLockMode.None : CursorLockMode.Locked;
-                Cursor.visible = IsOpen;
+                game.RefreshCursorState();
             }
             if (IsOpen && keyboard.qKey.wasPressedThisFrame && game.OpenRoutes.Count > 0)
                 routeIndex = (routeIndex + 1) % game.OpenRoutes.Count;
@@ -54,9 +53,14 @@ namespace Telerobot.Game.Runtime
         {
             if (!GUI.Button(rect, game.Catalog.strings.Get(key))) return;
             game.IssueCommandToSelected(command, route);
+            Close();
+        }
+
+        public void Close()
+        {
+            if (!IsOpen) return;
             IsOpen = false;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            if (game != null) game.RefreshCursorState();
         }
     }
 }

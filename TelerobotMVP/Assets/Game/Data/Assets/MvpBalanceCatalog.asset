@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b1208ada91c1dea4c0549cd9df19fa, type: 3}
   m_Name: MvpBalanceCatalog
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.MvpContentCatalog
-  dataVersion: mvp-1.4.5
+  dataVersion: mvp-2.0.0
   game: {fileID: 11400000, guid: 385771c6190f7464b94ab07261ab172f, type: 2}
   baseConfig: {fileID: 11400000, guid: 4af6770a95ffec643b43fec1691eeb02, type: 2}
   ammo: {fileID: 11400000, guid: 4eba51f11dd168948b6f1b748ad35ed8, type: 2}
@@ -29,6 +29,11 @@ MonoBehaviour:
   playerSettings: {fileID: 11400000, guid: 43e8df4d6b6c36f4cb068cf9fe653168, type: 2}
   telemetry: {fileID: 11400000, guid: a61d8df013dcc9543a867b6836fac9cc, type: 2}
   validation: {fileID: 11400000, guid: 050b3acbfc7e2fe44b3cc59136bc7b57, type: 2}
+  haetaeProgression: {fileID: 11400000, guid: 5e384840a7534064fb968c6d799f2a47, type: 2}
+  haetaeSpecializations:
+  - {fileID: 11400000, guid: 873b4c6d806087842880cd0e525f5b37, type: 2}
+  - {fileID: 11400000, guid: 1bbb515b150dc974f989a8fc7336d2d9, type: 2}
+  - {fileID: 11400000, guid: b29342b07895c4a4bbb979a685c19ae9, type: 2}
   simPlayerProfiles:
   - {fileID: 11400000, guid: 3a4d9c356d435c549818218de794ca70, type: 2}
   - {fileID: 11400000, guid: 61ca86e96a06e3b4f8cb25d8eaf6f33b, type: 2}
@@ -44,19 +49,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9435c01a0965a474eaf7b2db5651cb3a, type: 2}
   - {fileID: 11400000, guid: 73c5724b8d9014d4d91fc209db2442c7, type: 2}
   - {fileID: 11400000, guid: 2a24e6a568f6954448e87996fc99e77e, type: 2}
+  - {fileID: 11400000, guid: 9a10741ddbe183e44a058659b8029027, type: 2}
+  - {fileID: 11400000, guid: ed451868d46b0574cb644bc813fbebbc, type: 2}
+  - {fileID: 11400000, guid: f24ecaebc50e88a4ca3f7ae303a6477c, type: 2}
+  - {fileID: 11400000, guid: 60857a37e4aad6d4794694f2edd3ea53, type: 2}
+  - {fileID: 11400000, guid: 4771bf83a65685e459dc1f0216c31b07, type: 2}
   routes:
   - {fileID: 11400000, guid: b9d4bf6e6110b8d4a88caaefc9055512, type: 2}
   - {fileID: 11400000, guid: d48a8c21155bf5c46ba1cf11774883e7, type: 2}
   - {fileID: 11400000, guid: 0087f0d7269efdb49b1ec208c92ad508, type: 2}
-  upgrades:
-  - {fileID: 11400000, guid: 57342afbe084c324b938b362d5953181, type: 2}
-  - {fileID: 11400000, guid: 6d25f5dc950e2b447bd0f7da564eb404, type: 2}
-  - {fileID: 11400000, guid: ccf90600f0d9e194ba3774402046cb78, type: 2}
-  - {fileID: 11400000, guid: 8fc7456ec2e044e43af941eb2fe02715, type: 2}
-  - {fileID: 11400000, guid: 87b3c278cfe9f7d418b8a99846b8e92d, type: 2}
-  - {fileID: 11400000, guid: 106a69df62d2f4e42a8398b4e1a59631, type: 2}
-  - {fileID: 11400000, guid: e35a5c2bce9348a4290db42f82d3d4fe, type: 2}
-  - {fileID: 11400000, guid: a3b956c562beb8b4f8c22087f3ff5301, type: 2}
-  - {fileID: 11400000, guid: 15174fb4c10b43e43a572958ddd92eec, type: 2}
   strings: {fileID: 11400000, guid: 5b466b91ec0ebe141b818f7b5f1f4424, type: 2}
   runtimeMaterialTemplate: {fileID: 2100000, guid: 3079b03709fc0fb4baa257a43c64b645, type: 2}

@@ -22,8 +22,12 @@ namespace Telerobot.Game.Core
     [Flags] public enum BatteryEmitPolicy { None = 0, OnThresholdCrossing = 1, EveryNSeconds = 2 }
     public enum SimProfileId { Novice, Baseline, Skilled }
     public enum SimRoutePriorityPolicy { LateReactive, BalancedCoverage, HighestPressure }
-    public enum SimUpgradeSelectionPolicy { RandomOfThree, IntendedMeta, RiskAwareOptimal }
     public enum SimGrenadeUsePolicy { Rarely, DenseClusters, DenseClustersAndBruisers }
+    public enum HaetaeSpecialization { Unselected, Melee, Ranged, Balanced }
+    public enum HaetaeMasteryUpgrade { Power, Armor, Efficiency, AttackSpeed }
+    public enum DamageSourceKind { Player, Haetae, Environment, Debug, Other }
+    public enum RobotMovementIntent { Approach, Hold, Retreat, ReturnToCommandAnchor, None }
+    public enum RobotAttackKind { None, Dash, Bite, Ranged }
     public enum UpgradeEffectType
     {
         MaxBattery,
@@ -192,6 +196,7 @@ namespace Telerobot.Game.Core
     public sealed class ZombieConfig
     {
         public ZombieType Type;
+        public int HaetaeExperienceReward;
         public float MaxHealth;
         public float MoveSpeed;
         public float BaseDamage;
@@ -242,6 +247,7 @@ namespace Telerobot.Game.Core
         public int ThreatBudget;
         public float TargetDurationSeconds;
         public RouteId[] OpenRoutes;
+        public bool OpensNewRoute;
         public RouteId NewlyOpenedRoute;
         public IntRangeConfig RunnerCount;
         public IntRangeConfig BruiserCount;
@@ -267,15 +273,6 @@ namespace Telerobot.Game.Core
         public string DisplayNameKey;
         public Float3[] Waypoints;
         public float Width;
-    }
-
-    [Serializable]
-    public sealed class UpgradeConfig
-    {
-        public string Id;
-        public string DisplayNameKey;
-        public UpgradeEffectType EffectType;
-        public float Amount;
     }
 
     [Serializable]
@@ -337,9 +334,119 @@ namespace Telerobot.Game.Core
         public SimRoutePriorityPolicy RoutePriorityPolicy;
         public float RipperFocus;
         public float RobotChargeThresholdFraction;
-        public SimUpgradeSelectionPolicy UpgradeSelectionPolicy;
         public SimGrenadeUsePolicy GrenadeUsePolicy;
         public int GrenadeClusterThreshold;
+        public HaetaeSpecializationPair DefaultSpecializationLoadout;
+    }
+
+    [Serializable]
+    public sealed class HaetaeSpecializationPair
+    {
+        public HaetaeSpecialization Haetae1;
+        public HaetaeSpecialization Haetae2;
+
+        public HaetaeSpecializationPair()
+            : this(HaetaeSpecialization.Balanced, HaetaeSpecialization.Balanced)
+        {
+        }
+
+        public HaetaeSpecializationPair(HaetaeSpecialization haetae1, HaetaeSpecialization haetae2)
+        {
+            Haetae1 = haetae1;
+            Haetae2 = haetae2;
+        }
+
+        public HaetaeSpecialization ForIndex(int index)
+        {
+            if (index == 0) return Haetae1;
+            if (index == 1) return Haetae2;
+            throw new ArgumentOutOfRangeException("index");
+        }
+    }
+
+    [Serializable]
+    public sealed class SimulationRunOptions
+    {
+        public HaetaeSpecializationPair SpecializationLoadout;
+    }
+
+    [Serializable]
+    public sealed class RobotCombatProfileConfig
+    {
+        public float PreferredMinRange;
+        public float PreferredMaxRange;
+        public float DashDamageMultiplier;
+        public float BiteDamageMultiplier;
+        public float RangedDamage;
+        public float RangedCooldownSeconds;
+        public float CleaveRadius;
+        public int MaximumTargets;
+        public float IncomingDamageMultiplier;
+        public float CombatBatteryMultiplier;
+    }
+
+    [Serializable]
+    public sealed class HaetaeSpecializationConfig
+    {
+        public HaetaeSpecialization Id;
+        public string DisplayNameKey;
+        public string DescriptionKey;
+        public RobotCombatProfileConfig Combat;
+    }
+
+    [Serializable]
+    public sealed class HaetaeProgressionConfig
+    {
+        public int ExperiencePerLevel;
+        public float ReadyAlertSeconds;
+        public float PowerDamageBonusPerRank;
+        public float ArmorDamageReductionPerRank;
+        public float EfficiencyBatteryReductionPerRank;
+        public float AttackSpeedBonusPerRank;
+        public float MinimumReductionMultiplier;
+
+        public int LevelForExperience(int experience)
+        {
+            if (ExperiencePerLevel <= 0)
+                throw new InvalidOperationException("Experience per level must be positive.");
+            var level = 1L + Math.Max(0, experience) / (long)ExperiencePerLevel;
+            return (int)Math.Min(int.MaxValue, level);
+        }
+
+        public int ExperienceRequiredForNextLevel(int currentLevel)
+        {
+            if (ExperiencePerLevel <= 0)
+                throw new InvalidOperationException("Experience per level must be positive.");
+            var required = Math.Max(1L, currentLevel) * ExperiencePerLevel;
+            return (int)Math.Min(int.MaxValue, required);
+        }
+
+        public float DamageMultiplier(HaetaeProgressionState progression)
+        {
+            return 1f + Math.Max(0, progression == null ? 0 : progression.PowerRank) *
+                Math.Max(0f, PowerDamageBonusPerRank);
+        }
+
+        public float IncomingDamageMultiplier(HaetaeProgressionState progression)
+        {
+            var multiplier = 1f - Math.Max(0, progression == null ? 0 : progression.ArmorRank) *
+                Math.Max(0f, ArmorDamageReductionPerRank);
+            return Math.Max(MinimumReductionMultiplier, multiplier);
+        }
+
+        public float CombatBatteryMultiplier(HaetaeProgressionState progression)
+        {
+            var multiplier = 1f - Math.Max(0, progression == null ? 0 : progression.EfficiencyRank) *
+                Math.Max(0f, EfficiencyBatteryReductionPerRank);
+            return Math.Max(MinimumReductionMultiplier, multiplier);
+        }
+
+        public float AttackCooldownMultiplier(HaetaeProgressionState progression)
+        {
+            var multiplier = 1f - Math.Max(0, progression == null ? 0 : progression.AttackSpeedRank) *
+                Math.Max(0f, AttackSpeedBonusPerRank);
+            return Math.Max(MinimumReductionMultiplier, multiplier);
+        }
     }
 
     [Serializable]
@@ -366,12 +473,12 @@ namespace Telerobot.Game.Core
         public CommandConfig Commands;
         public TelemetryConfig Telemetry;
         public ValidationConfig Validation;
+        public HaetaeProgressionConfig HaetaeProgression;
         public List<SimPlayerProfileConfig> SimPlayerProfiles = new List<SimPlayerProfileConfig>();
+        public List<HaetaeSpecializationConfig> HaetaeSpecializations = new List<HaetaeSpecializationConfig>();
         public List<ZombieConfig> Zombies = new List<ZombieConfig>();
         public List<PhaseConfig> Phases = new List<PhaseConfig>();
         public List<RouteConfig> Routes = new List<RouteConfig>();
-        public List<UpgradeConfig> Upgrades = new List<UpgradeConfig>();
-
         public ZombieConfig GetZombie(ZombieType type)
         {
             var result = Zombies.Find(item => item.Type == type);
@@ -397,6 +504,13 @@ namespace Telerobot.Game.Core
         {
             var result = SimPlayerProfiles.Find(item => item.Id == id);
             if (result == null) throw new InvalidOperationException("Missing simulation player profile: " + id);
+            return result;
+        }
+
+        public HaetaeSpecializationConfig GetHaetaeSpecialization(HaetaeSpecialization id)
+        {
+            var result = HaetaeSpecializations.Find(item => item.Id == id);
+            if (result == null) throw new InvalidOperationException("Missing Haetae specialization config: " + id);
             return result;
         }
     }

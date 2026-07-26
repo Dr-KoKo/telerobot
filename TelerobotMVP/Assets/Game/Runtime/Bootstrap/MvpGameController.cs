@@ -19,7 +19,7 @@ namespace Telerobot.Game.Runtime
 
         private SpawnSystem spawnSystem;
         private PhaseSystem phaseSystem;
-        private UpgradeSystem upgradeSystem;
+        private HaetaeProgressionSystem progressionSystem;
         private WarningSystem warningSystem;
         private XorShiftRng rng;
         private DomainEventBus events;
@@ -38,9 +38,10 @@ namespace Telerobot.Game.Runtime
         private bool paused;
         private readonly Dictionary<RouteId, List<Material>> routeMaterials = new Dictionary<RouteId, List<Material>>();
         private readonly Dictionary<RouteId, BarrierRuntime> barriers = new Dictionary<RouteId, BarrierRuntime>();
+        private readonly Dictionary<string, float> specializationReadyAt = new Dictionary<string, float>(StringComparer.Ordinal);
         private CombatHud hud;
         private RobotCommandMenu commandMenu;
-        private UpgradeSelectionView upgradeView;
+        private HaetaeSpecializationView specializationView;
         private SettingsOverlay settingsOverlay;
         private RobotSelectionModel robotSelection;
 
@@ -86,9 +87,9 @@ namespace Telerobot.Game.Runtime
         public bool IsFinished { get { return Session != null && Session.Result != GameResult.InProgress; } }
         public bool IsPaused { get { return paused; } }
         public bool SettingsOpen { get { return settingsOverlay != null && settingsOverlay.IsOpen; } }
-        public bool UpgradeOpen { get { return upgradeView != null && upgradeView.IsOpen; } }
-        public bool InputBlocked { get { return IsFinished || IsPaused || SettingsOpen || UpgradeOpen || (commandMenu != null && commandMenu.IsOpen); } }
-        public bool MenuConsumesPointer { get { return IsPaused || SettingsOpen || UpgradeOpen || (commandMenu != null && commandMenu.IsOpen); } }
+        public bool SpecializationOpen { get { return specializationView != null && specializationView.IsOpen; } }
+        public bool InputBlocked { get { return IsFinished || IsPaused || SettingsOpen || SpecializationOpen || (commandMenu != null && commandMenu.IsOpen); } }
+        public bool MenuConsumesPointer { get { return IsPaused || SettingsOpen || SpecializationOpen || (commandMenu != null && commandMenu.IsOpen); } }
         public int SpawnedCount { get { return spawnIndex; } }
         public int TotalSpawnCount { get { return spawnQueue == null ? 0 : spawnQueue.Count; } }
         public int MaxAliveConcurrent { get { return phaseState == null ? 0 : Config.GetPhase(phaseState.Number).MaxAliveConcurrent; } }
@@ -96,7 +97,6 @@ namespace Telerobot.Game.Runtime
         public float ResupplyRemainingSeconds { get { return resupplyRemaining; } }
         public IReadOnlyList<RouteId> OpenRoutes { get { return phaseState == null ? Array.Empty<RouteId>() : phaseState.OpenRoutes; } }
         public IReadOnlyList<DomainEvent> EventHistory { get { return events == null ? Array.Empty<DomainEvent>() : events.History; } }
-        public IReadOnlyList<UpgradeConfig> CurrentUpgradeOffer { get { return upgradeView == null ? Array.Empty<UpgradeConfig>() : upgradeView.Offer; } }
 
         public void SetCatalog(MvpContentCatalog value)
         {
@@ -194,11 +194,19 @@ namespace Telerobot.Game.Runtime
             SceneManager.LoadScene("MainMenu");
         }
 
-        private void RefreshCursorState()
+        public void RefreshCursorState()
         {
-            var showCursor = paused || SettingsOpen || IsFinished || UpgradeOpen || (commandMenu != null && commandMenu.IsOpen);
+            var showCursor = paused || SettingsOpen || IsFinished || SpecializationOpen ||
+                (commandMenu != null && commandMenu.IsOpen);
             Cursor.lockState = showCursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = showCursor;
+        }
+
+        public void ToggleSpecializationPanel()
+        {
+            if (specializationView == null || IsFinished || IsPaused || SettingsOpen) return;
+            if (!specializationView.IsOpen && commandMenu != null) commandMenu.Close();
+            specializationView.Toggle();
         }
 
         private void Awake()
@@ -220,16 +228,19 @@ namespace Telerobot.Game.Runtime
             CommandSystem = new RobotCommandSystem(Config.Commands);
             rng = new XorShiftRng(sessionSeed);
             spawnSystem = new SpawnSystem(Config);
-            phaseSystem = new PhaseSystem(Config.Base);
-            upgradeSystem = new UpgradeSystem(Config);
+            phaseSystem = new PhaseSystem(Config.Base, Config.Phases.Count);
+            progressionSystem = new HaetaeProgressionSystem();
             warningSystem = new WarningSystem(Config.Warnings, Config.Base);
             events = new DomainEventBus();
 
+            var runtimeSessionId = "runtime-" + sessionSeed + "-" +
+                DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" +
+                Guid.NewGuid().ToString("N").Substring(0, 8);
             var telemetryPath = Path.Combine(Application.persistentDataPath, Config.Telemetry.SinkFolder,
-                "session-" + sessionSeed + ".jsonl");
+                runtimeSessionId + ".jsonl");
             telemetrySink = new JsonLinesTelemetrySink(telemetryPath);
             var bridge = new TelemetryBridge(events, telemetrySink, Application.version, catalog.dataVersion,
-                "runtime-" + sessionSeed + "-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss"), sessionSeed);
+                runtimeSessionId, sessionSeed);
         }
 
         private void Start()
@@ -254,7 +265,7 @@ namespace Telerobot.Game.Runtime
 
             var transition = phaseSystem.Evaluate(Session, phaseState, BaseState, PlayerState);
             if (transition == PhaseTransition.Defeat) FinishSession(false);
-            else if (transition == PhaseTransition.AwaitingUpgrade) HandlePhaseClear();
+            else if (transition == PhaseTransition.NextPhase) HandlePhaseClear();
             else if (transition == PhaseTransition.Victory) FinishSession(true);
 
             if (acceleratedSpawning && UnityEngine.InputSystem.Keyboard.current != null &&
@@ -317,8 +328,8 @@ namespace Telerobot.Game.Runtime
             hud.Initialize(this, events);
             commandMenu = ui.AddComponent<RobotCommandMenu>();
             commandMenu.Initialize(this);
-            upgradeView = ui.AddComponent<UpgradeSelectionView>();
-            upgradeView.Initialize(this);
+            specializationView = ui.AddComponent<HaetaeSpecializationView>();
+            specializationView.Initialize(this);
         }
 
         private void BuildRoute(RouteDefinitionAsset route)
@@ -385,10 +396,12 @@ namespace Telerobot.Game.Runtime
             RemoveBarriers();
             if (Modifiers.EmergencyBarrier) SpawnBarriers(phase.OpenRoutes);
             Emit("phase_started", "spawnCount", spawnQueue.Count.ToString());
-            var openedRoute = phase.OpenRoutes[phase.OpenRoutes.Length - 1];
-            HighlightRoute(openedRoute);
-            Emit("route_opened", "routeId", openedRoute.ToString());
-            Radio(number == 1 ? "radio.phase1" : number == 2 ? "radio.phase2" : "radio.phase3");
+            if (phase.OpensNewRoute)
+            {
+                HighlightRoute(phase.NewlyOpenedRoute);
+                Emit("route_opened", "routeId", phase.NewlyOpenedRoute.ToString());
+            }
+            Radio("radio.phase" + number);
             if (number == 3) SpawnMedicalRobot();
         }
 
@@ -499,23 +512,129 @@ namespace Telerobot.Game.Runtime
             Emit("base_hp_sampled", "hp", BaseState.Health.Current.ToString("F1"));
             Emit("player_hp_at_phase_end", "hp", PlayerState.Health.Current.ToString("F1"));
             Radio("radio.phase_clear");
-            upgradeView.Show(upgradeSystem.Offer(rng, Session.SelectedUpgrades));
-        }
-
-        public void SelectUpgrade(UpgradeConfig selected)
-        {
-            var states = new List<RobotState>();
-            foreach (var robot in Robots) states.Add(robot.State);
-            if (!upgradeSystem.Apply(selected, Session, BaseState, states, PlayerState, Modifiers)) return;
-            Emit("upgrade_selected", "upgradeId", selected.Id, "rewardStep", phaseState.Number.ToString());
-            upgradeView.Hide();
             BeginPhase(phaseState.Number + 1);
         }
 
-        public void NotifyZombieKilled(ZombieActor zombie, string source)
+        public ContributionResult RecordZombieContribution(ZombieState zombie, DamageSource source, float appliedDamage)
+        {
+            var states = new List<RobotState>(Robots.Count);
+            foreach (var robot in Robots) states.Add(robot.State);
+            return progressionSystem.RecordContribution(zombie, source, appliedDamage, states);
+        }
+
+        public void NotifyZombieKilled(ZombieActor zombie, DamageSource source)
         {
             AliveZombies.Remove(zombie);
-            Emit("zombie_killed", "type", zombie.Type.ToString(), "by", source);
+            var states = new List<RobotState>(Robots.Count);
+            foreach (var robot in Robots) states.Add(robot.State);
+            var awards = progressionSystem.AwardForDeath(
+                zombie.State,
+                Config.GetZombie(zombie.Type).HaetaeExperienceReward,
+                states,
+                Config.HaetaeProgression);
+            foreach (var award in awards)
+            {
+                if (award.AppliedAmount <= 0) continue;
+                Emit("haetae_xp_gained", new Dictionary<string, string>
+                {
+                    { "robotId", award.RobotId },
+                    { "zombieId", award.ZombieId },
+                    { "zombieType", award.ZombieType.ToString() },
+                    { "rewardAmount", award.RewardAmount.ToString() },
+                    { "appliedAmount", award.AppliedAmount.ToString() },
+                    { "xpBefore", award.ExperienceBefore.ToString() },
+                    { "xpAfter", award.ExperienceAfter.ToString() },
+                    { "levelBefore", award.LevelBefore.ToString() },
+                    { "levelAfter", award.LevelAfter.ToString() }
+                });
+                if (!award.LevelReached) continue;
+                Emit("haetae_level_reached", new Dictionary<string, string>
+                {
+                    { "robotId", award.RobotId },
+                    { "fromLevel", award.LevelBefore.ToString() },
+                    { "toLevel", award.LevelAfter.ToString() },
+                    { "experience", award.ExperienceAfter.ToString() },
+                    { "specializationReady", states.Find(item => item.Id == award.RobotId)
+                        .Progression.SpecializationReady.ToString() }
+                });
+                if (award.MasteryPointsGained > 0)
+                {
+                    var progression = states.Find(item => item.Id == award.RobotId).Progression;
+                    Emit("haetae_mastery_point_gained", new Dictionary<string, string>
+                    {
+                        { "robotId", award.RobotId },
+                        { "pointsGained", award.MasteryPointsGained.ToString() },
+                        { "unspentPoints", progression.UnspentMasteryPoints.ToString() },
+                        { "level", award.LevelAfter.ToString() }
+                    });
+                }
+                if (!award.SpecializationUnlocked) continue;
+                specializationReadyAt[award.RobotId] = Session.ElapsedTime;
+                Emit("haetae_specialization_ready", "robotId", award.RobotId, "level", award.LevelAfter.ToString());
+            }
+
+            var contributors = new List<string>(zombie.State.Contribution.HaetaeIds);
+            contributors.Sort(StringComparer.Ordinal);
+            Emit("zombie_killed", new Dictionary<string, string>
+            {
+                { "zombieId", zombie.State.Id },
+                { "type", zombie.Type.ToString() },
+                { "by", source.SourceId },
+                { "sourceKind", source.Kind.ToString() },
+                { "contributingHaetaeCount", contributors.Count.ToString() },
+                { "contributingHaetaeIds", string.Join("|", contributors) }
+            });
+        }
+
+        public SpecializationSelectionResult SelectHaetaeSpecialization(
+            string robotId,
+            HaetaeSpecialization specialization)
+        {
+            var robot = Robots.Find(item => item != null &&
+                string.Equals(item.State.Id, robotId, StringComparison.Ordinal));
+            var result = progressionSystem.SelectSpecialization(robot == null ? null : robot.State, specialization);
+            if (result != SpecializationSelectionResult.Selected) return result;
+
+            var readyAt = specializationReadyAt.TryGetValue(robotId, out var value)
+                ? value
+                : Session.ElapsedTime;
+            Emit("haetae_specialization_selected", new Dictionary<string, string>
+            {
+                { "robotId", robotId },
+                { "specialization", specialization.ToString() },
+                { "level", robot.State.Progression.Level.ToString() },
+                { "selectionPhase", CurrentPhase.ToString() },
+                { "selectionTime", Session.ElapsedTime.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) },
+                { "readyDurationSeconds", Mathf.Max(0f, Session.ElapsedTime - readyAt)
+                    .ToString("F3", System.Globalization.CultureInfo.InvariantCulture) }
+            });
+            return result;
+        }
+
+        public MasterySelectionResult SelectHaetaeMastery(
+            string robotId,
+            HaetaeMasteryUpgrade upgrade)
+        {
+            var robot = Robots.Find(item => item != null &&
+                string.Equals(item.State.Id, robotId, StringComparison.Ordinal));
+            var result = progressionSystem.SelectMasteryUpgrade(robot == null ? null : robot.State, upgrade);
+            if (result != MasterySelectionResult.Selected) return result;
+
+            var progression = robot.State.Progression;
+            Emit("haetae_mastery_selected", new Dictionary<string, string>
+            {
+                { "robotId", robotId },
+                { "upgrade", upgrade.ToString() },
+                { "level", progression.Level.ToString() },
+                { "remainingPoints", progression.UnspentMasteryPoints.ToString() },
+                { "powerRank", progression.PowerRank.ToString() },
+                { "armorRank", progression.ArmorRank.ToString() },
+                { "efficiencyRank", progression.EfficiencyRank.ToString() },
+                { "attackSpeedRank", progression.AttackSpeedRank.ToString() },
+                { "selectionPhase", CurrentPhase.ToString() },
+                { "selectionTime", Session.ElapsedTime.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) }
+            });
+            return result;
         }
 
         public void NotifyPlayerHit(HitRegion region, float damage, bool killed)
@@ -699,6 +818,46 @@ namespace Telerobot.Game.Runtime
                 bestDistance = distance;
             }
             return best;
+        }
+
+        public List<ZombieActor> GetRobotAttackTargets(
+            HaetaeRobotActor robot,
+            ZombieActor primary,
+            RobotAttackResult attack)
+        {
+            var result = new List<ZombieActor>();
+            if (robot == null || primary == null || !AliveZombies.Contains(primary)) return result;
+            result.Add(primary);
+            if (attack.AreaRadius <= 0f || attack.MaximumTargets <= 1) return result;
+
+            var candidates = AliveZombies.FindAll(item =>
+                item != null && item != primary && !item.State.Health.IsDead &&
+                item.State.Route == primary.State.Route &&
+                Vector3.Distance(item.transform.position, primary.transform.position) <= attack.AreaRadius);
+            candidates.Sort((left, right) =>
+            {
+                var progress = right.State.Progress.CompareTo(left.State.Progress);
+                return progress != 0 ? progress : string.CompareOrdinal(left.State.Id, right.State.Id);
+            });
+            for (var index = 0; index < candidates.Count && result.Count < attack.MaximumTargets; index++)
+                result.Add(candidates[index]);
+            return result;
+        }
+
+        public GameObject SpawnTracer(Vector3 start, Vector3 end, Color color, string effectName)
+        {
+            var tracer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            tracer.name = effectName;
+            var direction = end - start;
+            tracer.transform.position = (start + end) * 0.5f;
+            tracer.transform.localScale = new Vector3(0.06f, 0.06f, Mathf.Max(0.08f, direction.magnitude));
+            if (direction.sqrMagnitude > 0.0001f)
+                tracer.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            ApplyColor(tracer, color);
+            var tracerCollider = tracer.GetComponent<Collider>();
+            if (tracerCollider != null) tracerCollider.enabled = false;
+            Destroy(tracer, 0.12f);
+            return tracer;
         }
 
         public void NotifyRipperAttack(HaetaeRobotActor robot)

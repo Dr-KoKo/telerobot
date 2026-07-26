@@ -13,7 +13,8 @@
 | 2 only Haetae 1 contributed | E, P | Haetae 1 receives full reward; Haetae 2 unchanged |
 | 3 both contributed | E, P, S | both receive the full reward in stable ID order |
 | 4 player-only kill | E, P, S | no Haetae XP event/state change |
-| 5 reward crosses/overshoots threshold | E, P, S | clamp to threshold; level 2; ready true; other robot unchanged |
+| 5 reward crosses/overshoots threshold | E, P, S | preserve overflow; level 2; ready true; other robot unchanged |
+| 6 post-level-2 reward crosses another threshold | E, P, S | cumulative XP and level 3+ advance; no repeated ready event |
 
 ### US2 — 레벨 2 전문화 선택
 
@@ -40,7 +41,7 @@
 
 | Scenario | Methods | Verification |
 |----------|---------|--------------|
-| 1 HUD shows different XP for correct robots | P, Q | two distinct ID-bound rows |
+| 1 HUD shows different HP/battery/current-level XP for correct robots and stable selected/unselected layout | P, Q | two ID-bound labeled bar triplets; identical three-line row structure |
 | 2 level notification does not pause | P | `Time.timeScale == 1`; simulation/runtime tick advances |
 | 3 readiness survives phase transition | E, P, S | ready remains true after `NextPhase` |
 | 4 simultaneous readiness permits separate targeting | P | panel switches target; one choice never applies to both |
@@ -54,12 +55,37 @@
 | 2 base recovery, route open, next phase remain | E, P, S | event/state sequence preserved |
 | 3 mid-phase level-up can be selected immediately | P, Q | readiness and panel available before phase end |
 
+### US6 — 전문화 빌드를 활용하는 후반 페이즈
+
+| Scenario | Methods | Verification |
+|----------|---------|--------------|
+| 1 Phase 1–3 pacing remains unchanged | E, P | original composition, cadence, group, cap, and route-opening assertions remain exact |
+| 2 Phase 3 clear starts Phase 4 | E, P, S | transition is `NextPhase`; all three routes remain open |
+| 3 Phase 4–7 continue without upgrades | E, P, S | numeric phase sequence, recovery, no upgrade event/view |
+| 4 Phase 8 clear wins | E, P, S | only final configured phase returns `Victory` |
+| 5 late-phase death still loses | E, P, S | base/player death takes priority over clear |
+| 6 Phase 3 medical announcement is not repeated | P | `radio.phase3` once; distinct `radio.phase4`–`radio.phase8` keys thereafter |
+
+### US7 — 레벨 3+ 반복 강화
+
+| Scenario | Methods | Verification |
+|----------|---------|--------------|
+| 1 level 3 grants one point | E, P, S | matching robot gains one unspent point; other robot unchanged |
+| 2 specialization is required | E, P | pre-specialization spend rejected without mutation |
+| 3 repeat one choice | E, P | same choice increases the same rank once per point |
+| 4 exact combat modifiers | E, P, S | Power +10% damage; Armor/Efficiency -8% per rank; Attack Speed -10% Dash/Bite/Ranged interval per rank; all reductions floor at 0.50 |
+| 5 shared B panel remains non-blocking | P | specialization/mastery mode switches; `Time.timeScale == 1` |
+| 6 deterministic auto-spend | E, S | stable round-robin ranks/events; spawn RNG unchanged |
+
 ## Edge-Case Map
 
 | Edge case | Methods | Verification |
 |-----------|---------|--------------|
 | both robots level on one shared kill | E, P, S | two ordered XP/level/ready sequences |
-| one reward exceeds threshold | E | XP clamps; no level 3 |
+| one reward exceeds threshold | E | overflow is preserved; derived level matches cumulative XP |
+| later level boundary crossed | E, P, S | level 3+ advances; specialization-ready remains single-shot |
+| multi-level reward above level 2 | E, S | one point for every crossed level; points accumulate |
+| specialized robot has multiple points | E, P, S | repeated legal spend until zero; no cross-robot mutation |
 | contributor destroyed before later kill | E, P, S | destroyed robot still receives reward |
 | ready robot becomes Disabled/Destroyed | E, P | ready persists; selection allowed; combat profile visible after recovery |
 | unspent choice at Phase 3/session end | E, P | result not blocked; state discarded on next session |
@@ -77,14 +103,22 @@
 |-----------|---------|------|
 | SC-001 independent mutation 0/100 | E, S | 100 iterations, zero cross-robot changes |
 | SC-002 first level 2 within Phase-2 +60s | S | at least 16/20 eligible Baseline runs |
-| SC-003 both level 2 before Phase 3 | S | at least 16/20 eligible Baseline runs |
+| SC-003 both level 2 before Phase 3 | S | at least 80% of Phase-3-eligible Baseline runs; eligible means Phase 2 cleared and Phase 3 entered |
 | SC-004 choose within 15s without instruction | Q | at least 90% of first-time testers |
 | SC-005 identify role from combat | Q | at least 80% |
 | SC-006 role changes assignment/decision | Q | at least 70% |
 | SC-007 each role ≥20% of 30 choices | Q + telemetry | local event aggregation |
-| SC-008 session remains 10–15 minutes | S, Q | existing session target retained |
+| SC-008 session remains 10–15 minutes | Q | time an uninterrupted manual Baseline session from playable Phase 1 start through Victory or Defeat; accelerated simulation duration is not accepted as evidence |
 | SC-009 phase transition works without upgrades | E, P, S | 100% scenario pass |
 | SC-010 reproducible progression | E, S | identical state and telemetry |
+| SC-011 dynamic Phase 3/7/8 transitions | E, P, S | 100% scenario pass |
+| SC-012 Phase 1–3 pressure unchanged | E, P | exact composition/group/cap assertions |
+| SC-013 continuing levels | E, P, S | level 3+ progression and one-time specialization unlock |
+| SC-014 medical radio accuracy | P | medical deployment key exactly once in Phase 3 |
+| SC-015 per-Haetae mastery isolation | E, P, S | point/rank mutation affects only selected robot |
+| SC-016 labeled current-level XP bars | P, Q | fill and inside fraction match current interval; boundary shows `0 / interval` |
+| SC-017 stable row layout and labeled HP bars | P, Q | selected/unselected rows have equal line count; HP fill/fraction match state |
+| SC-018 labeled battery bars | P, Q | battery fill/fraction match state; warning color follows existing thresholds |
 
 ## Deterministic Simulation Matrix
 
@@ -98,6 +132,7 @@
 
 - Fixed timestep: existing `1/60` baseline
 - Player profiles: Novice, Baseline, Skilled
+- Run input: `SimulationRunOptions.SpecializationLoadout`; use the selected profile's ordered default pair only when this override is absent
 - Ordered specialization loadouts:
   - Melee/Melee
   - Melee/Ranged
@@ -128,6 +163,7 @@ The following implemented behavior is retained unchanged:
 - muzzle/impact/hit/death feedback;
 - phase group sizes `3–4 / 3–5 / 4–6`;
 - concurrent caps `15 / 20 / 24`;
+- eight contiguous phases with Phase 4–8 using all three routes, group `4–6`, interval `3s`, and cap `24`;
 - continuous spawning pauses at cap and resumes after deaths;
 - three robot commands and individual/all selection;
 - battery drain/charge/Disabled/Recovery;

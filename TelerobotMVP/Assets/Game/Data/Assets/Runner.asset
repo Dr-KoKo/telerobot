@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Runner
   m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.ZombieDefinitionAsset
   type: 0
+  haetaeExperienceReward: 5
   maxHealth: 90
   moveSpeed: 6.5
   baseDamage: 8

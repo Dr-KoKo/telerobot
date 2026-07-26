@@ -9,14 +9,29 @@ Each Haetae row must identify:
 
 - robot ID/name;
 - level;
-- current XP and level-2 threshold;
-- battery and current robot mode;
+- current-level XP progress bar with the current-interval XP fraction centered inside it;
+- HP progress bar with current/maximum HP centered inside it;
+- battery progress bar with current/maximum battery centered inside it;
+- current robot mode;
 - current specialization (`일반형`, `근거리형`, `원거리형`, `균형형`);
-- specialization-ready state.
+- specialization-ready state;
+- Power/Armor/Efficiency/Attack Speed ranks and unspent mastery points.
 
-The two rows read their own `RobotState.Progression`; no aggregate/team XP is displayed as authoritative progression.
+The selection marker occupies a fixed column separate from row text. Selected, unselected,
+and all-selected rows use the same three text lines in the same order: identity/level/role,
+mode, and mastery ranks/points. Selection never changes wrapping or alignment.
 
-At maximum level, XP displays as threshold/threshold rather than continuing to grow.
+The battery bar uses the existing yellow/red warning thresholds. Its fill and centered
+fraction always read from the matching robot's current and maximum battery.
+
+The two rows read their own `RobotState` and `RobotState.Progression`; no aggregate/team HP
+or XP is displayed as authoritative state.
+
+After level 2, cumulative XP continues to grow while the HUD bar resets at each level
+boundary and visualizes only progress through the current level interval. Its centered
+label uses `experience within current interval / experience per level`, not cumulative
+XP and the next cumulative threshold. Specialization readiness remains visible at level
+3+ when the player has not selected a role.
 
 ## Ready Notification
 
@@ -31,7 +46,7 @@ When one Haetae first reaches level 2:
 
 If both robots become ready together, both rows remain marked.
 
-## Specialization Panel
+## Shared Build Panel
 
 The panel:
 
@@ -44,6 +59,16 @@ The panel:
 - permits reopening while readiness remains;
 - disables or hides role buttons for a robot that is not ready;
 - closes or moves to the next ready robot after a successful choice.
+- remains on the same robot and switches to mastery choices when that robot already has
+  an unspent point after specialization;
+- for a specialized robot with points, offers exactly `화력 강화`, `장갑 강화`, and
+  `동력 효율`, with current ranks and data-driven descriptions;
+- permits repeat selection of any mastery choice and consumes one point per click;
+- can switch among robots that are awaiting either specialization or mastery spending.
+- offers Attack Speed as the fourth repeatable mastery choice; it reduces Dash/Bite/Ranged
+  attack intervals by 10% per rank with a 0.50 multiplier floor.
+- ends the current GUI render immediately after a successful choice removes the final
+  eligible target, so remaining buttons never dereference a missing robot.
 
 The panel is non-modal with respect to game time:
 
@@ -79,15 +104,21 @@ Destroyed rubble and phase-start restore must reapply the selected specializatio
 | Domain event | UI response |
 |--------------|-------------|
 | `haetae_xp_gained` | update the matching robot row |
-| `haetae_level_reached` | update level/XP |
+| `haetae_level_reached` | update level and reset the current-level XP bar |
 | `haetae_specialization_ready` | start the matching row highlight/notification |
 | `haetae_specialization_selected` | replace General label/cues with selected role |
+| `haetae_mastery_point_gained` | update matching row's unspent point count |
+| `haetae_mastery_selected` | update matching row's rank and point count |
 
 ## Acceptance
 
-- Different XP values are visibly associated with the correct robot.
+- Different HP, battery, and current-level XP values are visibly associated with the
+  correct robot; all three bars show their matching numeric fractions inside the bar.
+- Selected and unselected robot rows retain identical line breaks and alignment.
 - A player can identify and choose for a ready robot within the SC-004 target.
 - Opening the panel leaves `Time.timeScale == 1` and does not stall a pending phase transition.
 - Same-role and mixed-role combinations display correctly.
 - Deferred selection persists across phase changes and robot Disabled/Destroyed states.
+- Mastery points and ranks remain isolated per robot; no selection applies to “all robots.”
+- The same mastery choice can be selected repeatedly without pausing the world.
 - New player-facing text is resolved from the string table.

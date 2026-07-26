@@ -150,12 +150,18 @@ namespace Telerobot.Game.Runtime
             game.MedicalActor.ReceiveDamage(config.RobotDamage);
         }
 
-        public void ReceiveDamage(float amount, string source)
+        public void ReceiveDamage(float amount, DamageSource source)
         {
             if (dead) return;
-            CombatRules.ApplyDamage(State.Health, amount);
+            var applied = CombatRules.ApplyDamage(State.Health, amount);
+            game.RecordZombieContribution(State, source, applied);
             if (!State.Health.IsDead) ShowHitFlash();
             RefreshAfterCoreDamage(source);
+        }
+
+        public void ReceiveDamage(float amount, string legacySource)
+        {
+            ReceiveDamage(amount, LegacyDamageSource(legacySource));
         }
 
         private void ShowHitFlash()
@@ -164,7 +170,7 @@ namespace Telerobot.Game.Runtime
             if (visualRenderer != null) visualRenderer.material.color = Color.white;
         }
 
-        public void RefreshAfterCoreDamage(string source)
+        public void RefreshAfterCoreDamage(DamageSource source)
         {
             if (dead || !State.Health.IsDead) return;
             dead = true;
@@ -177,6 +183,20 @@ namespace Telerobot.Game.Runtime
             game.SpawnPulse(transform.position + Vector3.up * VisualHeight * 0.35f, presentation.deathPulseSize,
                 new Color(1f, 0.12f, 0.04f, 0.65f), presentation.deathEffectSeconds * 0.65f, "Zombie Death");
             Destroy(gameObject, presentation.deathEffectSeconds);
+        }
+
+        public void RefreshAfterCoreDamage(string legacySource)
+        {
+            RefreshAfterCoreDamage(LegacyDamageSource(legacySource));
+        }
+
+        private static DamageSource LegacyDamageSource(string source)
+        {
+            if (source == "player" || source == "player_grenade")
+                return DamageSource.Player("player");
+            if (source == "debug" || source == "test" || source == "grenade")
+                return new DamageSource(DamageSourceKind.Debug, source);
+            return new DamageSource(DamageSourceKind.Other, source);
         }
 
         private void UpdateDeathFeedback()
