@@ -1,7 +1,7 @@
 {
   "name": "Game.Tests.EditMode",
   "rootNamespace": "Telerobot.Game.Tests",
-  "references": ["Game.Core", "Game.Simulation", "Game.TestFixtures", "Game.Editor"],
+  "references": ["Game.Core", "Game.Data", "Game.Simulation", "Game.TestFixtures", "Game.Editor"],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false

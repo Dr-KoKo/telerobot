@@ -1,0 +1,1058 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1963c81c506a193fbe2037433f1113d7, type: 3}
+  m_Name: DesignAssetCatalog
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.DesignAssetCatalogAsset
+  catalogVersion: design-assets-1.0.0
+  items:
+  - id: character.player.commander
+    displayName: character.player.commander
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.player.commander
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: character.player.assault-rifle
+    displayName: character.player.assault-rifle
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.player.assault-rifle
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: character.haetae.unit-1
+    displayName: character.haetae.unit-1
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.haetae.unit-1
+    assetReferences: []
+    generatedRecipe: ArtSource/Haetae/create_haetae_general.py
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: character.haetae.unit-2
+    displayName: character.haetae.unit-2
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.haetae.unit-2
+    assetReferences: []
+    generatedRecipe: ArtSource/Haetae/create_haetae_general.py
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: character.haetae.melee
+    displayName: character.haetae.melee
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.haetae.melee
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: Visual preview is staged; live mapping remains owned by feature 002.
+  - id: character.haetae.ranged
+    displayName: character.haetae.ranged
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.haetae.ranged
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: Visual preview is staged; live mapping remains owned by feature 002.
+  - id: character.haetae.balanced
+    displayName: character.haetae.balanced
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.haetae.balanced
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: Visual preview is staged; live mapping remains owned by feature 002.
+  - id: character.medical.robot
+    displayName: character.medical.robot
+    category: 0
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - character.medical.robot
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: enemy.runner
+    displayName: enemy.runner
+    category: 1
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - enemy.runner
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: enemy.bruiser
+    displayName: enemy.bruiser
+    category: 1
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - enemy.bruiser
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: enemy.ripper
+    displayName: enemy.ripper
+    category: 1
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - enemy.ripper
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: environment.base.central
+    displayName: environment.base.central
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - environment.base.central
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: environment.route.north
+    displayName: environment.route.north
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - environment.route.north
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: environment.route.east
+    displayName: environment.route.east
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - environment.route.east
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: environment.route.south
+    displayName: environment.route.south
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - environment.route.south
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: interactable.charging
+    displayName: interactable.charging
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - interactable.charging
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: interactable.supply.safe
+    displayName: interactable.supply.safe
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - interactable.supply.safe
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: interactable.supply.risky
+    displayName: interactable.supply.risky
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - interactable.supply.risky
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: interactable.barrier
+    displayName: interactable.barrier
+    category: 2
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - interactable.barrier
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/WorldArtBuilder.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.menu
+    displayName: ui.surface.menu
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.menu
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.settings
+    displayName: ui.surface.settings
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.settings
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.combat
+    displayName: ui.surface.combat
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.combat
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.command
+    displayName: ui.surface.command
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.command
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.specialization
+    displayName: ui.surface.specialization
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.specialization
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.surface.result
+    displayName: ui.surface.result
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.surface.result
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/HUD
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.health
+    displayName: ui.icon.health
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.health
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.ammo
+    displayName: ui.icon.ammo
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.ammo
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.grenade
+    displayName: ui.icon.grenade
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.grenade
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.base
+    displayName: ui.icon.base
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.base
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.battery
+    displayName: ui.icon.battery
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.battery
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.xp
+    displayName: ui.icon.xp
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.xp
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.melee
+    displayName: ui.icon.melee
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.melee
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.ranged
+    displayName: ui.icon.ranged
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.ranged
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.balanced
+    displayName: ui.icon.balanced
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.balanced
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.defend
+    displayName: ui.icon.defend
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.defend
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.patrol
+    displayName: ui.icon.patrol
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.patrol
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.return
+    displayName: ui.icon.return
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.return
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.route-north
+    displayName: ui.icon.route-north
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.route-north
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.route-east
+    displayName: ui.icon.route-east
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.route-east
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.route-south
+    displayName: ui.icon.route-south
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.route-south
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: ui.icon.warning
+    displayName: ui.icon.warning
+    category: 4
+    priority: 1
+    decision: 0
+    status: 3
+    usageRoles:
+    - ui.icon.warning
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: vfx.combat
+    displayName: vfx.combat
+    category: 5
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - vfx.combat
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/VisualEffectFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: vfx.robot-state
+    displayName: vfx.robot-state
+    category: 5
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - vfx.robot-state
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/VisualEffectFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: vfx.enemy-state
+    displayName: vfx.enemy-state
+    category: 5
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - vfx.enemy-state
+    assetReferences: []
+    generatedRecipe: Assets/Game/Runtime/Presentation/VisualEffectFactory.cs
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: animation.player
+    displayName: animation.player
+    category: 6
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - animation.player
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.animation.transform
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: animation.zombie
+    displayName: animation.zombie
+    category: 6
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - animation.zombie
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.animation.transform
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: animation.haetae
+    displayName: animation.haetae
+    category: 6
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - animation.haetae
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.animation.transform
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: animation.medical
+    displayName: animation.medical
+    category: 6
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - animation.medical
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.animation.transform
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: audio.weapon
+    displayName: audio.weapon
+    category: 7
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - audio.weapon
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.audio.procedural
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: audio.robot
+    displayName: audio.robot
+    category: 7
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - audio.robot
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.audio.procedural
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: audio.enemy
+    displayName: audio.enemy
+    category: 7
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - audio.enemy
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.audio.procedural
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: audio.ui
+    displayName: audio.ui
+    category: 7
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - audio.ui
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.audio.procedural
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: audio.ambience
+    displayName: audio.ambience
+    category: 7
+    priority: 0
+    decision: 3
+    status: 5
+    usageRoles:
+    - audio.ambience
+    assetReferences: []
+    generatedRecipe: 
+    sourceId: 
+    fallbackId: fallback.audio.procedural
+    validationTags:
+    - catalog
+    - manual-visual
+    notes: 
+  - id: font.korean.body
+    displayName: font.korean.body
+    category: 8
+    priority: 0
+    decision: 2
+    status: 3
+    usageRoles:
+    - font.korean.body
+    assetReferences:
+    - {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
+    generatedRecipe: 
+    sourceId: google-noto-sans-kr
+    fallbackId: fallback.font.system
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: font.korean.heading
+    displayName: font.korean.heading
+    category: 8
+    priority: 0
+    decision: 2
+    status: 3
+    usageRoles:
+    - font.korean.heading
+    assetReferences:
+    - {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
+    generatedRecipe: 
+    sourceId: google-noto-sans-kr
+    fallbackId: fallback.font.system
+    validationTags:
+    - automated
+    - manual-visual
+    notes: 
+  - id: fallback.animation.transform
+    displayName: fallback.animation.transform
+    category: 6
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - runtime-fallback
+    assetReferences: []
+    generatedRecipe: Transform movement remains playable without skeletal clips.
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - fallback
+    notes: Transform movement remains playable without skeletal clips.
+  - id: fallback.audio.procedural
+    displayName: fallback.audio.procedural
+    category: 7
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - runtime-fallback
+    assetReferences: []
+    generatedRecipe: Procedural runtime tones remain playable.
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - fallback
+    notes: Procedural runtime tones remain playable.
+  - id: fallback.font.system
+    displayName: fallback.font.system
+    category: 8
+    priority: 0
+    decision: 0
+    status: 3
+    usageRoles:
+    - runtime-fallback
+    assetReferences: []
+    generatedRecipe: Verified operating-system Korean font chain.
+    sourceId: 
+    fallbackId: 
+    validationTags:
+    - automated
+    - fallback
+    notes: Verified operating-system Korean font chain.
+  sources:
+  - id: kenney-ui-scifi
+    title: UI Pack - Sci-Fi
+    creator: Kenney
+    officialUrl: https://kenney.nl/assets/ui-pack-sci-fi
+    licenseId: CC0-1.0
+    licenseEvidence: https://kenney.nl/assets/ui-pack-sci-fi
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: kenney-city-roads
+    title: City Kit (Roads)
+    creator: Kenney
+    officialUrl: https://kenney.nl/assets/city-kit-roads
+    licenseId: CC0-1.0
+    licenseEvidence: https://kenney.nl/assets/city-kit-roads
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: kenney-scifi-sounds
+    title: Sci-fi Sounds
+    creator: Kenney
+    officialUrl: https://kenney.nl/assets/sci-fi-sounds
+    licenseId: CC0-1.0
+    licenseEvidence: https://kenney.nl/assets/sci-fi-sounds
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: kenney-digital-audio
+    title: Digital Audio
+    creator: Kenney
+    officialUrl: https://www.kenney.nl/assets/digital-audio
+    licenseId: CC0-1.0
+    licenseEvidence: https://www.kenney.nl/assets/digital-audio
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: quaternius-scifi-megakit
+    title: Modular Sci-Fi Megakit
+    creator: Quaternius
+    officialUrl: https://quaternius.com/packs/modularscifimegakit.html
+    licenseId: CC0-1.0
+    licenseEvidence: https://quaternius.com/packs/modularscifimegakit.html
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: quaternius-zombie-apocalypse
+    title: Zombie Apocalypse Kit
+    creator: Quaternius
+    officialUrl: https://quaternius.com/packs/zombieapocalypsekit.html
+    licenseId: CC0-1.0
+    licenseEvidence: https://quaternius.com/packs/zombieapocalypsekit.html
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: quaternius-animation-library
+    title: Universal Animation Library
+    creator: Quaternius
+    officialUrl: https://quaternius.com/packs/universalanimationlibrary.html
+    licenseId: CC0-1.0
+    licenseEvidence: https://quaternius.com/packs/universalanimationlibrary.html
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: adobe-mixamo
+    title: Mixamo
+    creator: Adobe
+    officialUrl: https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html
+    licenseId: ROYALTY-FREE-SERVICE
+    licenseEvidence: https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html
+    retrievedOn: 2026-07-26
+    originalFiles: []
+    modifications: []
+    attributionRequired: 0
+    noticeText: Candidate only; no runtime file imported.
+    redistributionNotes: Review exact downloaded files before adoption.
+  - id: google-noto-sans-kr
+    title: Noto Sans KR
+    creator: Google and Adobe
+    officialUrl: https://notofonts.github.io/noto-docs/website/use/
+    licenseId: OFL-1.1
+    licenseEvidence: https://notofonts.github.io/noto-docs/website/use/
+    retrievedOn: 2026-07-26
+    originalFiles:
+    - NotoSansKR-VF.ttf
+    modifications:
+    - Copied from the locally installed official Noto Sans KR family; no glyph modification.
+    attributionRequired: 1
+    noticeText: Noto Sans KR is licensed under the SIL Open Font License 1.1.
+    redistributionNotes: Review exact downloaded files before adoption.
+  fallbackTheme: {fileID: 11400000, guid: 65b97e9544d17b24fa72aac39237f7c1, type: 2}

@@ -102,14 +102,17 @@ namespace Telerobot.Game.Runtime
                 fontSize = 30,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white }
+                normal = { textColor = GuardianGuiTheme.ResolveColor(catalog, "ally.haetae", Color.white) }
             };
             labelStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 18,
-                normal = { textColor = Color.white }
+                normal = { textColor = GuardianGuiTheme.ResolveColor(catalog, "ui.text", Color.white) }
             };
             centeredStyle = new GUIStyle(labelStyle) { alignment = TextAnchor.MiddleCenter };
+            GuardianGuiTheme.ApplyFont(titleStyle, catalog, true);
+            GuardianGuiTheme.ApplyFont(labelStyle, catalog, false);
+            GuardianGuiTheme.ApplyFont(centeredStyle, catalog, false);
         }
 
         private void OnGUI()
@@ -125,9 +128,7 @@ namespace Telerobot.Game.Runtime
 
             var width = Mathf.Min(680f, Screen.width - 40f);
             var panel = new Rect((Screen.width - width) * 0.5f, Mathf.Max(20f, (Screen.height - 620f) * 0.5f), width, 620f);
-            GUI.color = new Color(0.035f, 0.07f, 0.11f, 0.98f);
-            GUI.Box(panel, GUIContent.none);
-            GUI.color = Color.white;
+            GuardianGuiTheme.DrawPanel(panel, catalog, 0.98f, 3f);
             GUI.Label(new Rect(panel.x + 20f, panel.y + 18f, panel.width - 40f, 48f), strings.Get("settings.title"), titleStyle);
 
             var left = panel.x + 48f;

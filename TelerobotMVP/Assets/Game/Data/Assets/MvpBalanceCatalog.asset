@@ -60,3 +60,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0087f0d7269efdb49b1ec208c92ad508, type: 2}
   strings: {fileID: 11400000, guid: 5b466b91ec0ebe141b818f7b5f1f4424, type: 2}
   runtimeMaterialTemplate: {fileID: 2100000, guid: 3079b03709fc0fb4baa257a43c64b645, type: 2}
+  visualTheme: {fileID: 11400000, guid: 65b97e9544d17b24fa72aac39237f7c1, type: 2}
+  designAssets: {fileID: 11400000, guid: 107b13837f9db0444b4b17e4aa786d26, type: 2}

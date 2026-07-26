@@ -1,4 +1,5 @@
 using Telerobot.Game.Core;
+using Telerobot.Game.Data;
 using UnityEngine;
 
 namespace Telerobot.Game.Runtime
@@ -21,6 +22,7 @@ namespace Telerobot.Game.Runtime
         private Vector3 activeScale;
         private ZombieActor followUpTarget;
         private HaetaeSpecialization presentedSpecialization = (HaetaeSpecialization)(-1);
+        private MaterialPropertyBlock presentationBlock;
 
         public RobotState State { get; private set; }
         public float SeparationRadius { get { return config == null ? 1f : config.SeparationRadius; } }
@@ -306,6 +308,9 @@ namespace Telerobot.Game.Runtime
             followUpTarget = null;
             durabilitySystem.RestoreAtPhaseStart(State, config.MaxHealth, State.MaximumBattery);
             transform.rotation = activeRotation;
+            transform.localScale = activeScale;
+            if (visualRenderer != null) visualRenderer.material.color = activeColor;
+            ClearPresentationTint();
             presentedSpecialization = (HaetaeSpecialization)(-1);
             RefreshSpecializationPresentation();
             foreach (var robotCollider in GetComponentsInChildren<Collider>()) robotCollider.enabled = true;
@@ -318,21 +323,48 @@ namespace Telerobot.Game.Runtime
             transform.rotation = Quaternion.Euler(90f, transform.eulerAngles.y, 0f);
             transform.localScale = new Vector3(activeScale.x, activeScale.y * 0.55f, activeScale.z);
             if (visualRenderer != null) visualRenderer.material.color = new Color(0.16f, 0.17f, 0.18f);
+            TintPresentation(new Color(0.16f, 0.17f, 0.18f));
+        }
+
+        private void TintPresentation(Color color)
+        {
+            if (presentationBlock == null) presentationBlock = new MaterialPropertyBlock();
+            presentationBlock.Clear();
+            presentationBlock.SetColor("_BaseColor", color);
+            presentationBlock.SetColor("_Color", color);
+            foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+                if (renderer != visualRenderer) renderer.SetPropertyBlock(presentationBlock);
+        }
+
+        private void ClearPresentationTint()
+        {
+            foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+                if (renderer != visualRenderer) renderer.SetPropertyBlock(null);
         }
 
         private void RefreshSpecializationPresentation()
         {
             if (State == null || State.Progression.Specialization == presentedSpecialization) return;
             presentedSpecialization = State.Progression.Specialization;
+            var presentationRole = State.Id == "haetae-2"
+                ? PresentationRole.HaetaeGeneralUnit2
+                : PresentationRole.HaetaeGeneralUnit1;
             if (presentedSpecialization == HaetaeSpecialization.Unselected)
             {
                 transform.localScale = activeScale;
                 if (visualRenderer != null) visualRenderer.material.color = activeColor;
+                game.PresentationModels?.Attach(gameObject, presentationRole, State.Id == "haetae-2" ? 2 : 1);
                 return;
             }
             var definition = System.Array.Find(game.Catalog.haetaeSpecializations,
                 item => item != null && item.id == presentedSpecialization);
             if (definition == null) return;
+            presentationRole = presentedSpecialization == HaetaeSpecialization.Melee
+                ? PresentationRole.HaetaeMeleePreview
+                : presentedSpecialization == HaetaeSpecialization.Ranged
+                    ? PresentationRole.HaetaeRangedPreview
+                    : PresentationRole.HaetaeBalancedPreview;
+            game.PresentationModels?.Attach(gameObject, presentationRole, State.Id == "haetae-2" ? 2 : 1);
             transform.localScale = Vector3.Scale(activeScale, definition.scaleMultiplier);
             if (visualRenderer != null) visualRenderer.material.color = definition.bodyColor;
         }

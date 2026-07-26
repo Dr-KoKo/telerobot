@@ -35,7 +35,18 @@ namespace Telerobot.Game.Runtime
         public CameraPerspective Perspective { get; private set; }
         public float VerticalVelocity { get { return verticalVelocity; } }
         public bool IsGrounded { get { return character != null && character.isGrounded; } }
-        public bool IsBodyVisible { get { return playerRenderer != null && playerRenderer.enabled; } }
+        public bool IsBodyVisible
+        {
+            get
+            {
+                if (Perspective != CameraPerspective.ThirdPerson) return false;
+                var presentationRoot = transform.Find(LowPolyModelFactory.VisualRootName);
+                if (presentationRoot == null) return playerRenderer != null && playerRenderer.enabled;
+                foreach (var renderer in presentationRoot.GetComponentsInChildren<Renderer>(true))
+                    if (renderer.enabled) return true;
+                return false;
+            }
+        }
         public float CurrentPlanarSpeed { get; private set; }
         public float RecoilMagnitude { get { return Mathf.Abs(recoilPitchOffset) + Mathf.Abs(recoilYawOffset); } }
         public bool HasCombatAudio { get { return fireSound != null && bodyHitSound != null && headshotSound != null; } }
@@ -363,10 +374,20 @@ namespace Telerobot.Game.Runtime
             if (viewCamera != null)
                 viewCamera.fieldOfView = value == CameraPerspective.FirstPerson
                     ? gameRules.FirstPersonFieldOfView : gameRules.ThirdPersonFieldOfView;
-            if (playerRenderer != null) playerRenderer.enabled = value == CameraPerspective.ThirdPerson;
+            RefreshBodyVisibility();
             SnapCameraForTests();
             if (emitTelemetry && game != null)
                 game.Emit("camera_perspective_changed", "perspective", value.ToString());
+        }
+
+        public void RefreshBodyVisibility()
+        {
+            var bodyVisible = Perspective == CameraPerspective.ThirdPerson;
+            var presentationRoot = transform.Find(LowPolyModelFactory.VisualRootName);
+            if (playerRenderer != null) playerRenderer.enabled = bodyVisible && presentationRoot == null;
+            if (presentationRoot == null) return;
+            foreach (var renderer in presentationRoot.GetComponentsInChildren<Renderer>(true))
+                renderer.enabled = bodyVisible;
         }
 
         public void RequestJumpForTests()
