@@ -56,6 +56,16 @@ namespace Telerobot.Game.Data
         [Range(1, 128)] public int maximumConcurrent = 24;
     }
 
+    [Serializable]
+    public sealed class AuthoredHaetaeModelDefinition
+    {
+        public PresentationRole role;
+        public string assetId;
+        public GameObject lod0;
+        public GameObject lod1;
+        public string silhouetteSignature;
+    }
+
     [CreateAssetMenu(menuName = "Telerobot/Visual Theme")]
     public sealed class VisualThemeDefinitionAsset : ScriptableObject
     {
@@ -89,6 +99,8 @@ namespace Telerobot.Game.Data
         [Header("Authored Character Models")]
         public GameObject haetaeGeneralModel;
         public GameObject haetaeGeneralLod1;
+        public AuthoredHaetaeModelDefinition[] haetaeUpgradeModels =
+            Array.Empty<AuthoredHaetaeModelDefinition>();
 
         public Color ColorFor(string key, Color fallback)
         {
@@ -123,12 +135,46 @@ namespace Telerobot.Game.Data
             return null;
         }
 
+        public AuthoredHaetaeModelDefinition AuthoredHaetaeFor(PresentationRole role)
+        {
+            if (haetaeUpgradeModels == null) return null;
+            for (var index = 0; index < haetaeUpgradeModels.Length; index++)
+            {
+                var item = haetaeUpgradeModels[index];
+                if (item != null && item.role == role) return item;
+            }
+            return null;
+        }
+
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(themeId)) throw new InvalidOperationException("Visual theme ID is required.");
             ValidateUniqueKeys(colors, item => item == null ? null : item.key, RequiredColorKeys, "color");
             ValidateUniqueKeys(materials, item => item == null ? null : item.key, RequiredMaterialKeys, "material");
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");
+            ValidateAuthoredHaetaeModels();
+        }
+
+        private void ValidateAuthoredHaetaeModels()
+        {
+            if (haetaeUpgradeModels == null)
+                throw new InvalidOperationException("Authored haetae model entries cannot be null.");
+            var roles = new HashSet<PresentationRole>();
+            var assetIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < haetaeUpgradeModels.Length; index++)
+            {
+                var item = haetaeUpgradeModels[index];
+                if (item == null ||
+                    (item.role != PresentationRole.HaetaeMeleePreview &&
+                     item.role != PresentationRole.HaetaeRangedPreview &&
+                     item.role != PresentationRole.HaetaeBalancedPreview) ||
+                    !roles.Add(item.role) ||
+                    string.IsNullOrWhiteSpace(item.assetId) ||
+                    !assetIds.Add(item.assetId) ||
+                    string.IsNullOrWhiteSpace(item.silhouetteSignature))
+                    throw new InvalidOperationException(
+                        "Authored haetae models require unique upgrade roles, asset IDs and signatures.");
+            }
         }
 
         private static void ValidateUniqueKeys<T>(T[] entries, Func<T, string> keyOf, IEnumerable<string> required, string label)

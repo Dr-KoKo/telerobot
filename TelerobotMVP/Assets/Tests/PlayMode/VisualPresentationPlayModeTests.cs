@@ -127,6 +127,118 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator AuthoredUpgradeRolesUseRoleSpecificLodModelsAndMarkers()
+        {
+            var roles = new[]
+            {
+                PresentationRole.HaetaeMeleePreview,
+                PresentationRole.HaetaeRangedPreview,
+                PresentationRole.HaetaeBalancedPreview
+            };
+            var expectedIds = new[]
+            {
+                "character.haetae.melee",
+                "character.haetae.ranged",
+                "character.haetae.balanced"
+            };
+            var signatures = new string[roles.Length];
+
+            for (var index = 0; index < roles.Length; index++)
+            {
+                var root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                root.name = "Authored Upgrade " + roles[index];
+                var collider = root.GetComponent<Collider>();
+                var centerBefore = collider.bounds.center;
+                var sizeBefore = collider.bounds.size;
+
+                Game.PresentationModels.Attach(root, roles[index], 2);
+                yield return null;
+
+                var authored = root.GetComponentInChildren<AuthoredModelMarker>();
+                var identity = root.GetComponentInChildren<VisualIdentityMarker>();
+                Assert.That(authored, Is.Not.Null, roles[index].ToString());
+                Assert.That(authored.assetId, Is.EqualTo(expectedIds[index]));
+                Assert.That(authored.sourceVertexCount, Is.GreaterThan(18000));
+                Assert.That(authored.lodCount, Is.EqualTo(2));
+                Assert.That(root.GetComponentsInChildren<LODGroup>(true).Length, Is.EqualTo(1));
+                Assert.That(identity.markerCount, Is.EqualTo(2));
+                Assert.That(root.GetComponentsInChildren<Transform>(true)
+                    .Where(item => item.name.Contains("UnitMarker_2"))
+                    .All(item => item.gameObject.activeSelf), Is.True);
+                Assert.That(collider.bounds.center, Is.EqualTo(centerBefore));
+                Assert.That(collider.bounds.size, Is.EqualTo(sizeBefore));
+                signatures[index] = identity.silhouetteSignature;
+                Object.Destroy(root);
+            }
+
+            Assert.That(signatures.Distinct().Count(), Is.EqualTo(roles.Length));
+        }
+
+        [UnityTest]
+        public IEnumerator MissingAuthoredUpgradeUsesOnlyItsProceduralFallback()
+        {
+            var roles = new[]
+            {
+                PresentationRole.HaetaeMeleePreview,
+                PresentationRole.HaetaeRangedPreview,
+                PresentationRole.HaetaeBalancedPreview
+            };
+            var fallbackSignatures = new[]
+            {
+                "haetae.ram.heavy",
+                "haetae.turret.long",
+                "haetae.mixed.asymmetric"
+            };
+
+            for (var missingIndex = 0; missingIndex < roles.Length; missingIndex++)
+            {
+                var fallbackTheme = Object.Instantiate(Game.Catalog.visualTheme);
+                fallbackTheme.haetaeUpgradeModels = Game.Catalog.visualTheme.haetaeUpgradeModels
+                    .Select(item => new AuthoredHaetaeModelDefinition
+                    {
+                        role = item.role,
+                        assetId = item.assetId,
+                        lod0 = item.role == roles[missingIndex] ? null : item.lod0,
+                        lod1 = item.lod1,
+                        silhouetteSignature = item.silhouetteSignature
+                    })
+                    .ToArray();
+                var library = new PresentationMaterialLibrary(
+                    fallbackTheme, Game.Catalog.runtimeMaterialTemplate);
+                var factory = new LowPolyModelFactory(library);
+                var root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                root.name = "Missing Upgrade " + roles[missingIndex];
+
+                factory.Attach(root, roles[missingIndex], 1);
+                factory.Attach(root, roles[missingIndex], 1);
+                yield return null;
+
+                var identity = root.GetComponentInChildren<VisualIdentityMarker>();
+                Assert.That(identity.silhouetteSignature,
+                    Is.EqualTo(fallbackSignatures[missingIndex]));
+                Assert.That(root.GetComponentInChildren<AuthoredModelMarker>(), Is.Null);
+                Assert.That(root.GetComponentsInChildren<Transform>(true)
+                    .Count(item => item.name == LowPolyModelFactory.VisualRootName),
+                    Is.EqualTo(1));
+                Assert.That(root.GetComponentsInChildren<LODGroup>(true).Length, Is.EqualTo(0));
+
+                var availableIndex = (missingIndex + 1) % roles.Length;
+                var availableRoot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                factory.Attach(availableRoot, roles[availableIndex], 1);
+                yield return null;
+                var availableAuthored = availableRoot.GetComponentInChildren<AuthoredModelMarker>();
+                Assert.That(availableAuthored, Is.Not.Null);
+                Assert.That(availableAuthored.assetId,
+                    Is.EqualTo(fallbackTheme.AuthoredHaetaeFor(roles[availableIndex]).assetId));
+
+                Object.Destroy(root);
+                Object.Destroy(availableRoot);
+                library.Dispose();
+                Object.Destroy(fallbackTheme);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator MissingAuthoredHaetaeUsesProceduralFallback()
         {
             var fallbackTheme = Object.Instantiate(Game.Catalog.visualTheme);

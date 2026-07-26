@@ -23,6 +23,18 @@ namespace Telerobot.Game.Editor
             "Assets/Game/Art/Models/Haetae/Haetae_General_LOD0.fbx";
         private const string HaetaeGeneralLod1Path =
             "Assets/Game/Art/Models/Haetae/Haetae_General_LOD1.fbx";
+        private const string HaetaeMeleeLod0Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Melee_LOD0.fbx";
+        private const string HaetaeMeleeLod1Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Melee_LOD1.fbx";
+        private const string HaetaeRangedLod0Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Ranged_LOD0.fbx";
+        private const string HaetaeRangedLod1Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Ranged_LOD1.fbx";
+        private const string HaetaeBalancedLod0Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Balanced_LOD0.fbx";
+        private const string HaetaeBalancedLod1Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_Balanced_LOD1.fbx";
 
         [InitializeOnLoadMethod]
         private static void ScheduleFirstImportBuild()
@@ -867,6 +879,27 @@ namespace Telerobot.Game.Editor
                     AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod0Path);
                 item.haetaeGeneralLod1 =
                     AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod1Path);
+                item.haetaeUpgradeModels = new[]
+                {
+                    AuthoredHaetaeModel(
+                        PresentationRole.HaetaeMeleePreview,
+                        "character.haetae.melee",
+                        "haetae.authored.melee.ram",
+                        HaetaeMeleeLod0Path,
+                        HaetaeMeleeLod1Path),
+                    AuthoredHaetaeModel(
+                        PresentationRole.HaetaeRangedPreview,
+                        "character.haetae.ranged",
+                        "haetae.authored.ranged.turret",
+                        HaetaeRangedLod0Path,
+                        HaetaeRangedLod1Path),
+                    AuthoredHaetaeModel(
+                        PresentationRole.HaetaeBalancedPreview,
+                        "character.haetae.balanced",
+                        "haetae.authored.balanced.asymmetric",
+                        HaetaeBalancedLod0Path,
+                        HaetaeBalancedLod1Path)
+                };
                 item.effects = new[]
                 {
                     Effect("combat.hit", "enemy.corruption", 0.12f, 0.22f, 32),
@@ -912,7 +945,7 @@ namespace Telerobot.Game.Editor
                         fallbackId = fallback,
                         validationTags = new[] { deferred ? "catalog" : "automated", "manual-visual" },
                         notes = id.Contains("haetae.melee") || id.Contains("haetae.ranged") || id.Contains("haetae.balanced")
-                            ? "Visual preview is staged; live mapping remains owned by feature 002."
+                            ? "Authored upgrade model is mapped live with a role-local procedural fallback."
                             : string.Empty
                     });
                 }
@@ -946,6 +979,23 @@ namespace Telerobot.Game.Editor
                 emissionColor = color,
                 emissionIntensity = emission,
                 material = VisualMaterialAsset(key.Replace('.', '-'), color, metallic, smoothness, emission)
+            };
+        }
+
+        private static AuthoredHaetaeModelDefinition AuthoredHaetaeModel(
+            PresentationRole role,
+            string assetId,
+            string silhouetteSignature,
+            string lod0Path,
+            string lod1Path)
+        {
+            return new AuthoredHaetaeModelDefinition
+            {
+                role = role,
+                assetId = assetId,
+                silhouetteSignature = silhouetteSignature,
+                lod0 = AssetDatabase.LoadAssetAtPath<GameObject>(lod0Path),
+                lod1 = AssetDatabase.LoadAssetAtPath<GameObject>(lod1Path)
             };
         }
 
