@@ -35,6 +35,18 @@ namespace Telerobot.Game.Editor
             "Assets/Game/Art/Models/Haetae/Haetae_Balanced_LOD0.fbx";
         private const string HaetaeBalancedLod1Path =
             "Assets/Game/Art/Models/Haetae/Haetae_Balanced_LOD1.fbx";
+        private const string ZombieRunnerLod0Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Runner_LOD0.fbx";
+        private const string ZombieRunnerLod1Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Runner_LOD1.fbx";
+        private const string ZombieBruiserLod0Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Bruiser_LOD0.fbx";
+        private const string ZombieBruiserLod1Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Bruiser_LOD1.fbx";
+        private const string ZombieRipperLod0Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Ripper_LOD0.fbx";
+        private const string ZombieRipperLod1Path =
+            "Assets/Game/Art/Models/Zombies/Zombie_Ripper_LOD1.fbx";
 
         [InitializeOnLoadMethod]
         private static void ScheduleFirstImportBuild()
@@ -62,6 +74,7 @@ namespace Telerobot.Game.Editor
             EnsureFolder("Assets/Game/Art/Menu");
             EnsureFolder("Assets/Game/Art/Models");
             EnsureFolder("Assets/Game/Art/Models/Haetae");
+            EnsureFolder("Assets/Game/Art/Models/Zombies");
             EnsureFolder("Assets/Game/Art/SourceRecords");
 
             var game = Asset<GameConfigAsset>("GameConfig", item =>
@@ -900,6 +913,27 @@ namespace Telerobot.Game.Editor
                         HaetaeBalancedLod0Path,
                         HaetaeBalancedLod1Path)
                 };
+                item.authoredZombieModels = new[]
+                {
+                    AuthoredZombieModel(
+                        PresentationRole.Runner,
+                        "enemy.runner",
+                        "zombie.authored.runner.pursuit",
+                        ZombieRunnerLod0Path,
+                        ZombieRunnerLod1Path),
+                    AuthoredZombieModel(
+                        PresentationRole.Bruiser,
+                        "enemy.bruiser",
+                        "zombie.authored.bruiser.siege",
+                        ZombieBruiserLod0Path,
+                        ZombieBruiserLod1Path),
+                    AuthoredZombieModel(
+                        PresentationRole.Ripper,
+                        "enemy.ripper",
+                        "zombie.authored.ripper.scythe",
+                        ZombieRipperLod0Path,
+                        ZombieRipperLod1Path)
+                };
                 item.effects = new[]
                 {
                     Effect("combat.hit", "enemy.corruption", 0.12f, 0.22f, 32),
@@ -946,6 +980,8 @@ namespace Telerobot.Game.Editor
                         validationTags = new[] { deferred ? "catalog" : "automated", "manual-visual" },
                         notes = id.Contains("haetae.melee") || id.Contains("haetae.ranged") || id.Contains("haetae.balanced")
                             ? "Authored upgrade model is mapped live with a role-local procedural fallback."
+                            : id == "enemy.runner" || id == "enemy.bruiser" || id == "enemy.ripper"
+                            ? "Authored zombie model is mapped live with a role-local procedural fallback."
                             : string.Empty
                     });
                 }
@@ -990,6 +1026,23 @@ namespace Telerobot.Game.Editor
             string lod1Path)
         {
             return new AuthoredHaetaeModelDefinition
+            {
+                role = role,
+                assetId = assetId,
+                silhouetteSignature = silhouetteSignature,
+                lod0 = AssetDatabase.LoadAssetAtPath<GameObject>(lod0Path),
+                lod1 = AssetDatabase.LoadAssetAtPath<GameObject>(lod1Path)
+            };
+        }
+
+        private static AuthoredZombieModelDefinition AuthoredZombieModel(
+            PresentationRole role,
+            string assetId,
+            string silhouetteSignature,
+            string lod0Path,
+            string lod1Path)
+        {
+            return new AuthoredZombieModelDefinition
             {
                 role = role,
                 assetId = assetId,
@@ -1056,6 +1109,8 @@ namespace Telerobot.Game.Editor
         {
             if (id == "character.haetae.unit-1" || id == "character.haetae.unit-2")
                 return "ArtSource/Haetae/create_haetae_general.py";
+            if (id == "enemy.runner" || id == "enemy.bruiser" || id == "enemy.ripper")
+                return "ArtSource/Zombies/create_zombie_models.py";
             if (id.StartsWith("ui.icon.", StringComparison.Ordinal))
                 return "Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs";
             if (id.StartsWith("ui.", StringComparison.Ordinal))

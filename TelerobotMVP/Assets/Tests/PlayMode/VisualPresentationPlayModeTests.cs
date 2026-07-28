@@ -295,6 +295,135 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator AuthoredZombieRolesUseDetailedLodModelsWithoutChangingColliders()
+        {
+            var types = new[] { ZombieType.Runner, ZombieType.Bruiser, ZombieType.Ripper };
+            var roles = new[] { PresentationRole.Runner, PresentationRole.Bruiser, PresentationRole.Ripper };
+            var expectedIds = new[] { "enemy.runner", "enemy.bruiser", "enemy.ripper" };
+            var signatures = new string[types.Length];
+
+            for (var index = 0; index < types.Length; index++)
+            {
+                var zombie = Game.SpawnZombieForTests(types[index], RouteId.NorthRoad);
+                var rootCollider = zombie.GetComponent<CapsuleCollider>();
+                var centerBefore = rootCollider.center;
+                var radiusBefore = rootCollider.radius;
+                var heightBefore = rootCollider.height;
+                yield return null;
+
+                var authored = zombie.GetComponentInChildren<AuthoredModelMarker>(true);
+                var identity = zombie.GetComponentInChildren<VisualIdentityMarker>(true);
+                Assert.That(authored, Is.Not.Null, roles[index].ToString());
+                Assert.That(authored.assetId, Is.EqualTo(expectedIds[index]));
+                Assert.That(authored.sourceVertexCount, Is.GreaterThan(16000));
+                Assert.That(authored.lodCount, Is.EqualTo(2));
+                Assert.That(zombie.GetComponentsInChildren<LODGroup>(true).Length, Is.EqualTo(1));
+                Assert.That(rootCollider.center, Is.EqualTo(centerBefore));
+                Assert.That(rootCollider.radius, Is.EqualTo(radiusBefore));
+                Assert.That(rootCollider.height, Is.EqualTo(heightBefore));
+                Assert.That(zombie.GetComponentsInChildren<Collider>(true)
+                    .Where(collider => collider != rootCollider)
+                    .All(collider => !collider.enabled), Is.True);
+                signatures[index] = identity.silhouetteSignature;
+            }
+
+            Assert.That(signatures.Distinct().Count(), Is.EqualTo(types.Length));
+        }
+
+        [UnityTest]
+        public IEnumerator MissingZombieLod0FallsBackPerRoleAndMissingLod1UsesLod0Only()
+        {
+            var roles = new[] { PresentationRole.Runner, PresentationRole.Bruiser, PresentationRole.Ripper };
+            var fallbackSignatures = new[]
+            {
+                "runner.lean.fins", "bruiser.wide.armor", "ripper.tall.blades"
+            };
+
+            for (var missingIndex = 0; missingIndex < roles.Length; missingIndex++)
+            {
+                var fallbackTheme = Object.Instantiate(Game.Catalog.visualTheme);
+                fallbackTheme.authoredZombieModels = Game.Catalog.visualTheme.authoredZombieModels
+                    .Select(item => new AuthoredZombieModelDefinition
+                    {
+                        role = item.role,
+                        assetId = item.assetId,
+                        lod0 = item.role == roles[missingIndex] ? null : item.lod0,
+                        lod1 = item.lod1,
+                        silhouetteSignature = item.silhouetteSignature
+                    })
+                    .ToArray();
+                var library = new PresentationMaterialLibrary(
+                    fallbackTheme, Game.Catalog.runtimeMaterialTemplate);
+                var factory = new LowPolyModelFactory(library);
+                var root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+
+                factory.Attach(root, roles[missingIndex]);
+                factory.Attach(root, roles[missingIndex]);
+                yield return null;
+                Assert.That(root.GetComponentInChildren<VisualIdentityMarker>()
+                    .silhouetteSignature, Is.EqualTo(fallbackSignatures[missingIndex]));
+                Assert.That(root.GetComponentInChildren<AuthoredModelMarker>(), Is.Null);
+                Assert.That(root.GetComponentsInChildren<Transform>(true)
+                    .Count(item => item.name == LowPolyModelFactory.VisualRootName), Is.EqualTo(1));
+
+                var availableIndex = (missingIndex + 1) % roles.Length;
+                var availableRoot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                factory.Attach(availableRoot, roles[availableIndex]);
+                yield return null;
+                Assert.That(availableRoot.GetComponentInChildren<AuthoredModelMarker>(), Is.Not.Null);
+
+                Object.Destroy(root);
+                Object.Destroy(availableRoot);
+                library.Dispose();
+                Object.Destroy(fallbackTheme);
+            }
+
+            var lod0OnlyTheme = Object.Instantiate(Game.Catalog.visualTheme);
+            lod0OnlyTheme.authoredZombieModels = Game.Catalog.visualTheme.authoredZombieModels
+                .Select(item => new AuthoredZombieModelDefinition
+                {
+                    role = item.role,
+                    assetId = item.assetId,
+                    lod0 = item.lod0,
+                    lod1 = item.role == PresentationRole.Runner ? null : item.lod1,
+                    silhouetteSignature = item.silhouetteSignature
+                })
+                .ToArray();
+            var lod0OnlyLibrary = new PresentationMaterialLibrary(
+                lod0OnlyTheme, Game.Catalog.runtimeMaterialTemplate);
+            var lod0OnlyFactory = new LowPolyModelFactory(lod0OnlyLibrary);
+            var lod0OnlyRoot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            lod0OnlyFactory.Attach(lod0OnlyRoot, PresentationRole.Runner);
+            yield return null;
+            Assert.That(lod0OnlyRoot.GetComponentInChildren<AuthoredModelMarker>().lodCount,
+                Is.EqualTo(1));
+            Assert.That(lod0OnlyRoot.GetComponentInChildren<LODGroup>(true), Is.Null);
+
+            Object.Destroy(lod0OnlyRoot);
+            lod0OnlyLibrary.Dispose();
+            Object.Destroy(lod0OnlyTheme);
+        }
+
+        [UnityTest]
+        public IEnumerator AuthoredZombieHitFeedbackReachesEveryRenderer()
+        {
+            var zombie = Game.SpawnZombieForTests(ZombieType.Runner, RouteId.NorthRoad);
+            yield return null;
+            var renderers = zombie.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => renderer.enabled).ToArray();
+            Assert.That(renderers.Length, Is.GreaterThan(0));
+
+            zombie.ReceiveDamage(1, DamageSource.Player("presentation-test"));
+            yield return null;
+            var block = new MaterialPropertyBlock();
+            foreach (var renderer in renderers)
+            {
+                renderer.GetPropertyBlock(block);
+                Assert.That(block.GetColor("_BaseColor"), Is.Not.EqualTo(default(Color)));
+            }
+        }
+
+        [UnityTest]
         public IEnumerator RuntimeIconsAreCachedAndThemeHasEditableTextAssets()
         {
             var first = Game.PresentationIcons.Get("ui.icon.health");

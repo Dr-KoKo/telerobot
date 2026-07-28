@@ -6,6 +6,8 @@ Thumbs.db
 .idea/
 .vscode/
 .env*
+__pycache__/
+*.py[cod]
 
 # Unity project outputs
 TelerobotMVP/Library/

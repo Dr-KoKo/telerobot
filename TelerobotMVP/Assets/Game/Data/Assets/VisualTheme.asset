@@ -251,3 +251,19 @@ MonoBehaviour:
     lod0: {fileID: 919132149155446097, guid: 93d368c72bde78444a1669433d6bc1f3, type: 3}
     lod1: {fileID: 919132149155446097, guid: 7e1dd9f83a3a8c34e9d78be480e72405, type: 3}
     silhouetteSignature: haetae.authored.balanced.asymmetric
+  authoredZombieModels:
+  - role: 8
+    assetId: enemy.runner
+    lod0: {fileID: 919132149155446097, guid: 3dd21b659a0e8b740b7717a57db9831d, type: 3}
+    lod1: {fileID: 919132149155446097, guid: f8cdf05a907f8be4d9dd3fb7a2c985ed, type: 3}
+    silhouetteSignature: zombie.authored.runner.pursuit
+  - role: 9
+    assetId: enemy.bruiser
+    lod0: {fileID: 919132149155446097, guid: b32533fd82215a44b8663538d5921502, type: 3}
+    lod1: {fileID: 919132149155446097, guid: 5e4b90f909afc4b4a8c09e95305c414a, type: 3}
+    silhouetteSignature: zombie.authored.bruiser.siege
+  - role: 10
+    assetId: enemy.ripper
+    lod0: {fileID: 919132149155446097, guid: bfadb108c1f2f654b9256a5a59a79dfe, type: 3}
+    lod1: {fileID: 919132149155446097, guid: 104044af0414e5a4b87435c7f88155e1, type: 3}
+    silhouetteSignature: zombie.authored.ripper.scythe

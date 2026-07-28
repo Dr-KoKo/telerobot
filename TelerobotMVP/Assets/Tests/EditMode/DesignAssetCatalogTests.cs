@@ -216,6 +216,44 @@ namespace Telerobot.Game.Tests
         }
 
         [Test]
+        public void AuthoredZombies_HaveProductionMeshesAndRoleMappings()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<VisualThemeDefinitionAsset>(
+                "Assets/Game/Data/Assets/VisualTheme.asset");
+            Assert.That(theme, Is.Not.Null, "Run Tools/Telerobot/Build MVP Project.");
+            Assert.That(theme.authoredZombieModels, Is.Not.Null);
+            Assert.That(theme.authoredZombieModels.Length, Is.EqualTo(3));
+            Assert.That(theme.authoredZombieModels.Select(item => item.role).Distinct().Count(),
+                Is.EqualTo(3));
+            Assert.That(theme.authoredZombieModels.Select(item => item.assetId).Distinct().Count(),
+                Is.EqualTo(3));
+            Assert.That(theme.authoredZombieModels
+                .Select(item => item.silhouetteSignature).Distinct().Count(), Is.EqualTo(3));
+
+            var expected = new[]
+            {
+                new { Role = PresentationRole.Runner, AssetId = "enemy.runner", Stem = "Zombie_Runner" },
+                new { Role = PresentationRole.Bruiser, AssetId = "enemy.bruiser", Stem = "Zombie_Bruiser" },
+                new { Role = PresentationRole.Ripper, AssetId = "enemy.ripper", Stem = "Zombie_Ripper" }
+            };
+
+            foreach (var item in expected)
+            {
+                var definition = theme.AuthoredZombieFor(item.Role);
+                Assert.That(definition, Is.Not.Null, item.Role.ToString());
+                Assert.That(definition.assetId, Is.EqualTo(item.AssetId));
+                Assert.That(definition.silhouetteSignature, Is.Not.Empty);
+                Assert.That(definition.lod0, Is.Not.Null);
+                Assert.That(definition.lod1, Is.Not.Null);
+                Assert.That(AssetDatabase.GetAssetPath(definition.lod0),
+                    Does.EndWith(item.Stem + "_LOD0.fbx"));
+                Assert.That(AssetDatabase.GetAssetPath(definition.lod1),
+                    Does.EndWith(item.Stem + "_LOD1.fbx"));
+                AssertAuthoredZombieContract(definition.lod0, definition.lod1);
+            }
+        }
+
+        [Test]
         public void VisualDefinitions_DoNotOwnGameplayBalance()
         {
             var forbidden = new[] { "damage", "health", "battery", "spawn", "attackrange", "movespeed", "experience" };
@@ -269,6 +307,51 @@ namespace Telerobot.Game.Tests
                          "tail_06", "UnitMarker_1", "UnitMarker_2"
                      })
                 Assert.That(hierarchy, Does.Contain(required));
+        }
+
+        private static void AssertAuthoredZombieContract(GameObject lod0, GameObject lod1)
+        {
+            var vertexCount = MeshVertexCount(lod0);
+            var lod1VertexCount = MeshVertexCount(lod1);
+            Assert.That(vertexCount, Is.GreaterThan(16000));
+            Assert.That(lod1VertexCount, Is.GreaterThan(500));
+            Assert.That(lod1VertexCount, Is.LessThan(vertexCount * 0.7f));
+
+            var body = lod0.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+                .FirstOrDefault(renderer => renderer.sharedMesh != null &&
+                                            renderer.sharedMesh.vertexCount > 16000);
+            Assert.That(body, Is.Not.Null);
+            Assert.That(body.sharedMesh.subMeshCount, Is.EqualTo(5));
+            Assert.That(Enumerable.Range(0, body.sharedMesh.subMeshCount)
+                .All(index => body.sharedMesh.GetIndexCount(index) > 0), Is.True);
+
+            var materialNames = body.sharedMaterials
+                .Where(material => material != null)
+                .Select(material => material.name)
+                .ToArray();
+            foreach (var required in new[]
+                     {
+                         "MAT_ZombieFlesh", "MAT_ZombieArmor", "MAT_ZombieTissue",
+                         "MAT_ZombieCorruption", "MAT_ZombieBone"
+                     })
+                Assert.That(materialNames.Any(name => name.StartsWith(required, StringComparison.Ordinal)),
+                    Is.True, required);
+
+            var hierarchy = lod0.GetComponentsInChildren<Transform>(true)
+                .Select(item => item.name)
+                .ToArray();
+            foreach (var required in new[]
+                     {
+                         "hips", "spine", "chest", "neck", "head",
+                         "upper_arm_l", "lower_arm_l", "hand_l",
+                         "upper_arm_r", "lower_arm_r", "hand_r",
+                         "thigh_l", "shin_l", "foot_l",
+                         "thigh_r", "shin_r", "foot_r"
+                     })
+                Assert.That(hierarchy, Does.Contain(required));
+
+            Assert.That(lod0.GetComponentsInChildren<Collider>(true)
+                .All(collider => !collider.enabled), Is.True);
         }
     }
 }

@@ -66,6 +66,16 @@ namespace Telerobot.Game.Data
         public string silhouetteSignature;
     }
 
+    [Serializable]
+    public sealed class AuthoredZombieModelDefinition
+    {
+        public PresentationRole role;
+        public string assetId;
+        public GameObject lod0;
+        public GameObject lod1;
+        public string silhouetteSignature;
+    }
+
     [CreateAssetMenu(menuName = "Telerobot/Visual Theme")]
     public sealed class VisualThemeDefinitionAsset : ScriptableObject
     {
@@ -101,6 +111,8 @@ namespace Telerobot.Game.Data
         public GameObject haetaeGeneralLod1;
         public AuthoredHaetaeModelDefinition[] haetaeUpgradeModels =
             Array.Empty<AuthoredHaetaeModelDefinition>();
+        public AuthoredZombieModelDefinition[] authoredZombieModels =
+            Array.Empty<AuthoredZombieModelDefinition>();
 
         public Color ColorFor(string key, Color fallback)
         {
@@ -146,6 +158,17 @@ namespace Telerobot.Game.Data
             return null;
         }
 
+        public AuthoredZombieModelDefinition AuthoredZombieFor(PresentationRole role)
+        {
+            if (authoredZombieModels == null) return null;
+            for (var index = 0; index < authoredZombieModels.Length; index++)
+            {
+                var item = authoredZombieModels[index];
+                if (item != null && item.role == role) return item;
+            }
+            return null;
+        }
+
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(themeId)) throw new InvalidOperationException("Visual theme ID is required.");
@@ -153,6 +176,31 @@ namespace Telerobot.Game.Data
             ValidateUniqueKeys(materials, item => item == null ? null : item.key, RequiredMaterialKeys, "material");
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");
             ValidateAuthoredHaetaeModels();
+            ValidateAuthoredZombieModels();
+        }
+
+        private void ValidateAuthoredZombieModels()
+        {
+            if (authoredZombieModels == null)
+                throw new InvalidOperationException("Authored zombie model entries cannot be null.");
+            var roles = new HashSet<PresentationRole>();
+            var assetIds = new HashSet<string>(StringComparer.Ordinal);
+            var signatures = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < authoredZombieModels.Length; index++)
+            {
+                var item = authoredZombieModels[index];
+                if (item == null ||
+                    (item.role != PresentationRole.Runner &&
+                     item.role != PresentationRole.Bruiser &&
+                     item.role != PresentationRole.Ripper) ||
+                    !roles.Add(item.role) ||
+                    string.IsNullOrWhiteSpace(item.assetId) ||
+                    !assetIds.Add(item.assetId) ||
+                    string.IsNullOrWhiteSpace(item.silhouetteSignature) ||
+                    !signatures.Add(item.silhouetteSignature))
+                    throw new InvalidOperationException(
+                        "Authored zombie models require unique enemy roles, asset IDs and signatures.");
+            }
         }
 
         private void ValidateAuthoredHaetaeModels()
