@@ -144,6 +144,7 @@ namespace Telerobot.Game.Runtime
                 if (attack.Damage > 0f)
                 {
                     LastAttackKind = attack.Kind;
+                    GetComponent<CharacterMotionDriver>()?.TriggerAttack(AttackMotionForCurrentRole(attack.Kind));
                     var affected = game.GetRobotAttackTargets(this, target, attack);
                     foreach (var affectedTarget in affected)
                         affectedTarget.ReceiveDamage(attack.Damage, DamageSource.Haetae(State.Id));
@@ -294,6 +295,7 @@ namespace Telerobot.Game.Runtime
                   game.Config.HaetaeProgression.IncomingDamageMultiplier(State.Progression);
             var destroyed = durabilitySystem.ApplyDamage(State, damage * multiplier);
             var applied = before - State.Health.Current;
+            GetComponent<CharacterMotionDriver>()?.TriggerHit();
             game.Emit("robot_damaged", "robotId", State.Id, "amount", applied.ToString("F1"),
                 "hp", State.Health.Current.ToString("F1"));
             if (ripper && !destroyed) batterySystem.ApplyRipperHit(State);
@@ -374,6 +376,16 @@ namespace Telerobot.Game.Runtime
             var definition = System.Array.Find(game.Catalog.haetaeSpecializations,
                 item => item != null && item.id == State.Progression.Specialization);
             return definition == null ? activeColor : definition.attackPulseColor;
+        }
+
+        private CharacterAttackMotion AttackMotionForCurrentRole(RobotAttackKind kind)
+        {
+            if (kind == RobotAttackKind.Ranged) return CharacterAttackMotion.Ranged;
+            if (State.Progression.Specialization == HaetaeSpecialization.Melee)
+                return CharacterAttackMotion.Melee;
+            if (State.Progression.Specialization == HaetaeSpecialization.Balanced)
+                return CharacterAttackMotion.Balanced;
+            return CharacterAttackMotion.Standard;
         }
 
         private Color SpecializationTracerColor()

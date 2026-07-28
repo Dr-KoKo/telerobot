@@ -279,7 +279,7 @@ def build_rig(role, pose):
     armature["silhouette_signature"] = ROLES[role]["signature"]
     armature["source_recipe"] = "ArtSource/Zombies/create_zombie_models.py"
     armature["forward_axis"] = "-Y"
-    armature["detail_revision"] = 1
+    armature["detail_revision"] = 2
     armature["gameplay_owner"] = "ZombieActor capsule root"
     armature.show_in_front = True
     armature.select_set(False)
@@ -632,6 +632,76 @@ def consolidate(role, armature):
     return body
 
 
+def point_segment_distance(point, start, end):
+    start = Vector(start)
+    end = Vector(end)
+    segment = end - start
+    if segment.length_squared <= 0.000001:
+        return (point - start).length
+    factor = max(0.0, min(1.0, (point - start).dot(segment) /
+                          segment.length_squared))
+    return (point - (start + segment * factor)).length
+
+
+def skin_organic_flesh(body, pose):
+    """Blend the continuous flesh shell across the two nearest rig segments."""
+    material_indices = {
+        index for index, material in enumerate(body.data.materials)
+        if material is not None and material.name.startswith("MAT_ZombieFlesh")
+    }
+    flesh_vertices = {
+        vertex_index
+        for polygon in body.data.polygons
+        if polygon.material_index in material_indices
+        for vertex_index in polygon.vertices
+    }
+    segments = [
+        ("hips", pose["hips"], pose["spine"]),
+        ("spine", pose["spine"], pose["chest"]),
+        ("chest", pose["chest"], pose["neck"]),
+        ("neck", pose["neck"], pose["head"]),
+        ("head", pose["head"], Vector(pose["head"]) + Vector((0.0, -0.12, 0.2))),
+    ]
+    for suffix in ("l", "r"):
+        arm = pose["arm_" + suffix]
+        leg = pose["leg_" + suffix]
+        segments.extend([
+            ("upper_arm_" + suffix, arm[0], arm[1]),
+            ("lower_arm_" + suffix, arm[1], arm[2]),
+            ("hand_" + suffix, arm[2], arm[3]),
+            ("thigh_" + suffix, leg[0], leg[1]),
+            ("shin_" + suffix, leg[1], leg[2]),
+            ("foot_" + suffix, leg[2], leg[3]),
+        ])
+
+    groups = {
+        name: body.vertex_groups.get(name) or body.vertex_groups.new(name=name)
+        for name, _, _ in segments
+    }
+    vertex_indices = sorted(flesh_vertices)
+    for group in body.vertex_groups:
+        group.remove(vertex_indices)
+
+    blended = 0
+    for vertex_index in vertex_indices:
+        point = body.data.vertices[vertex_index].co
+        nearest = sorted(
+            ((point_segment_distance(point, start, end), name)
+             for name, start, end in segments),
+            key=lambda item: item[0])[:2]
+        strengths = [1.0 / max(distance, 0.025) ** 3
+                     for distance, _ in nearest]
+        total = sum(strengths)
+        for strength, (_, name) in zip(strengths, nearest):
+            groups[name].add([vertex_index], strength / total, "REPLACE")
+        if len(nearest) == 2:
+            blended += 1
+
+    body["organic_skinning"] = "nearest-two-bone-segments"
+    body["organic_weighted_vertices"] = len(vertex_indices)
+    return len(vertex_indices), blended
+
+
 def aim_at(obj, target):
     direction = Vector(target) - obj.location
     obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
@@ -709,6 +779,7 @@ def build_role(role):
         build_ripper(pose, materials)
     armature = build_rig(role, pose)
     body = consolidate(role, armature)
+    weighted_vertices, blended_vertices = skin_organic_flesh(body, pose)
 
     source_vertices = len(body.data.vertices)
     used_materials = {
@@ -720,6 +791,9 @@ def build_role(role):
         raise RuntimeError("%s source has only %d vertices" % (role, source_vertices))
     if len(used_materials) != 5:
         raise RuntimeError("%s uses %d materials" % (role, len(used_materials)))
+    if weighted_vertices < 5000 or blended_vertices != weighted_vertices:
+        raise RuntimeError("%s organic skinning failed (%d/%d)" % (
+            role, blended_vertices, weighted_vertices))
 
     lod0_path = MODEL_DIR / ("Zombie_%s_LOD0.fbx" % role)
     lod1_path = MODEL_DIR / ("Zombie_%s_LOD1.fbx" % role)
@@ -729,8 +803,8 @@ def build_role(role):
     geo.export_fbx(lod1_path, armature, decimate_ratio=ROLES[role]["lod_ratio"])
     render_scene(preview_path, role=role)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_path), compress=True)
-    print("ZOMBIE_SOURCE role=%s vertices=%d materials=%d" % (
-        role, source_vertices, len(used_materials)))
+    print("ZOMBIE_SOURCE role=%s vertices=%d materials=%d organic_weights=%d" % (
+        role, source_vertices, len(used_materials), weighted_vertices))
     return {
         "role": role,
         "source_vertices": source_vertices,

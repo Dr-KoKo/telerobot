@@ -267,3 +267,116 @@ MonoBehaviour:
     lod0: {fileID: 919132149155446097, guid: bfadb108c1f2f654b9256a5a59a79dfe, type: 3}
     lod1: {fileID: 919132149155446097, guid: 104044af0414e5a4b87435c7f88155e1, type: 3}
     silhouetteSignature: zombie.authored.ripper.scythe
+  characterMotionProfiles:
+  - role: 2
+    profileId: haetae.general.unit1
+    cycleHz: 0.78
+    idleBob: 0.018
+    locomotionBob: 0.045
+    swayDegrees: 2.4
+    forwardLeanDegrees: -2
+    strideDegrees: 17
+    attackDegrees: 30
+    attackRecoil: 0.1
+    hitDegrees: 11
+    deathDegrees: 62
+    attackDuration: 0.34
+    hitDuration: 0.15
+  - role: 3
+    profileId: haetae.general.unit2
+    cycleHz: 0.82
+    idleBob: 0.02
+    locomotionBob: 0.048
+    swayDegrees: 2.8
+    forwardLeanDegrees: -2
+    strideDegrees: 18
+    attackDegrees: 32
+    attackRecoil: 0.11
+    hitDegrees: 12
+    deathDegrees: 64
+    attackDuration: 0.34
+    hitDuration: 0.15
+  - role: 4
+    profileId: haetae.melee
+    cycleHz: 0.9
+    idleBob: 0.016
+    locomotionBob: 0.06
+    swayDegrees: 3.2
+    forwardLeanDegrees: 4
+    strideDegrees: 22
+    attackDegrees: 58
+    attackRecoil: 0.22
+    hitDegrees: 14
+    deathDegrees: 72
+    attackDuration: 0.3
+    hitDuration: 0.14
+  - role: 5
+    profileId: haetae.ranged
+    cycleHz: 0.72
+    idleBob: 0.012
+    locomotionBob: 0.038
+    swayDegrees: 1.8
+    forwardLeanDegrees: -4
+    strideDegrees: 14
+    attackDegrees: 38
+    attackRecoil: 0.2
+    hitDegrees: 10
+    deathDegrees: 58
+    attackDuration: 0.38
+    hitDuration: 0.16
+  - role: 6
+    profileId: haetae.balanced
+    cycleHz: 0.84
+    idleBob: 0.016
+    locomotionBob: 0.05
+    swayDegrees: 2.6
+    forwardLeanDegrees: 1
+    strideDegrees: 19
+    attackDegrees: 45
+    attackRecoil: 0.16
+    hitDegrees: 12
+    deathDegrees: 66
+    attackDuration: 0.34
+    hitDuration: 0.15
+  - role: 8
+    profileId: zombie.runner
+    cycleHz: 2.35
+    idleBob: 0.022
+    locomotionBob: 0.1
+    swayDegrees: 7
+    forwardLeanDegrees: 18
+    strideDegrees: 46
+    attackDegrees: 56
+    attackRecoil: 0.2
+    hitDegrees: 18
+    deathDegrees: 86
+    attackDuration: 0.26
+    hitDuration: 0.12
+  - role: 9
+    profileId: zombie.bruiser
+    cycleHz: 1.08
+    idleBob: 0.035
+    locomotionBob: 0.085
+    swayDegrees: 5
+    forwardLeanDegrees: 5
+    strideDegrees: 25
+    attackDegrees: 48
+    attackRecoil: 0.16
+    hitDegrees: 15
+    deathDegrees: 78
+    attackDuration: 0.42
+    hitDuration: 0.18
+  - role: 10
+    profileId: zombie.ripper
+    cycleHz: 1.62
+    idleBob: 0.025
+    locomotionBob: 0.09
+    swayDegrees: 8
+    forwardLeanDegrees: 12
+    strideDegrees: 37
+    attackDegrees: 72
+    attackRecoil: 0.25
+    hitDegrees: 21
+    deathDegrees: 96
+    attackDuration: 0.32
+    hitDuration: 0.13

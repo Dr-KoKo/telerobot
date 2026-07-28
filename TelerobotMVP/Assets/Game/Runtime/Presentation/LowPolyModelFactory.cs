@@ -53,6 +53,7 @@ namespace Telerobot.Game.Runtime
                 marker.partCount = visual.GetComponentsInChildren<Renderer>(true).Length;
                 var rootRenderer = gameplayRoot.GetComponent<Renderer>();
                 if (rootRenderer != null) rootRenderer.enabled = false;
+                BindCharacterMotion(gameplayRoot, visual, role);
                 return visual;
             }
             catch (Exception exception)
@@ -208,6 +209,21 @@ namespace Telerobot.Game.Runtime
                 CreatePart(root, "Balanced Fang", PrimitiveType.Cube, new Vector3(0.24f, -0.12f, 1.01f),
                     new Vector3(0.12f, 0.26f, 0.1f), new Vector3(18f, 0f, 0f), "ally.haetae");
             }
+        }
+
+        private void BindCharacterMotion(GameObject gameplayRoot, GameObject visual, PresentationRole role)
+        {
+            var profile = materials.Theme == null ? null : materials.Theme.MotionProfileFor(role);
+            var existing = gameplayRoot.GetComponent<CharacterMotionDriver>();
+            if (profile == null)
+            {
+                if (existing != null) existing.Unbind();
+                return;
+            }
+            var driver = existing == null
+                ? gameplayRoot.AddComponent<CharacterMotionDriver>()
+                : existing;
+            driver.Bind(visual.transform, role, profile);
         }
 
         private bool TryBuildAuthoredHaetae(

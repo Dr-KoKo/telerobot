@@ -76,6 +76,25 @@ namespace Telerobot.Game.Data
         public string silhouetteSignature;
     }
 
+    [Serializable]
+    public sealed class CharacterMotionProfileDefinition
+    {
+        public PresentationRole role;
+        public string profileId;
+        [Min(0.05f)] public float cycleHz = 1f;
+        [Range(0f, 0.2f)] public float idleBob = 0.015f;
+        [Range(0f, 0.3f)] public float locomotionBob = 0.06f;
+        [Range(0f, 20f)] public float swayDegrees = 3f;
+        [Range(-30f, 30f)] public float forwardLeanDegrees;
+        [Range(0f, 70f)] public float strideDegrees = 18f;
+        [Range(0f, 90f)] public float attackDegrees = 35f;
+        [Range(0f, 0.5f)] public float attackRecoil = 0.12f;
+        [Range(0f, 45f)] public float hitDegrees = 14f;
+        [Range(0f, 120f)] public float deathDegrees = 75f;
+        [Min(0.05f)] public float attackDuration = 0.34f;
+        [Min(0.05f)] public float hitDuration = 0.16f;
+    }
+
     [CreateAssetMenu(menuName = "Telerobot/Visual Theme")]
     public sealed class VisualThemeDefinitionAsset : ScriptableObject
     {
@@ -113,6 +132,9 @@ namespace Telerobot.Game.Data
             Array.Empty<AuthoredHaetaeModelDefinition>();
         public AuthoredZombieModelDefinition[] authoredZombieModels =
             Array.Empty<AuthoredZombieModelDefinition>();
+        [Header("Character Motion")]
+        public CharacterMotionProfileDefinition[] characterMotionProfiles =
+            Array.Empty<CharacterMotionProfileDefinition>();
 
         public Color ColorFor(string key, Color fallback)
         {
@@ -169,6 +191,17 @@ namespace Telerobot.Game.Data
             return null;
         }
 
+        public CharacterMotionProfileDefinition MotionProfileFor(PresentationRole role)
+        {
+            if (characterMotionProfiles == null) return null;
+            for (var index = 0; index < characterMotionProfiles.Length; index++)
+            {
+                var item = characterMotionProfiles[index];
+                if (item != null && item.role == role) return item;
+            }
+            return null;
+        }
+
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(themeId)) throw new InvalidOperationException("Visual theme ID is required.");
@@ -177,6 +210,37 @@ namespace Telerobot.Game.Data
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");
             ValidateAuthoredHaetaeModels();
             ValidateAuthoredZombieModels();
+            ValidateCharacterMotionProfiles();
+        }
+
+        private void ValidateCharacterMotionProfiles()
+        {
+            if (characterMotionProfiles == null)
+                throw new InvalidOperationException("Character motion profiles cannot be null.");
+            var roles = new HashSet<PresentationRole>();
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < characterMotionProfiles.Length; index++)
+            {
+                var item = characterMotionProfiles[index];
+                if (item == null || !SupportsCharacterMotion(item.role) ||
+                    !roles.Add(item.role) || string.IsNullOrWhiteSpace(item.profileId) ||
+                    !ids.Add(item.profileId) || item.cycleHz <= 0f ||
+                    item.attackDuration <= 0f || item.hitDuration <= 0f)
+                    throw new InvalidOperationException(
+                        "Character motion profiles require unique supported roles, IDs and positive timing.");
+            }
+        }
+
+        public static bool SupportsCharacterMotion(PresentationRole role)
+        {
+            return role == PresentationRole.HaetaeGeneralUnit1 ||
+                   role == PresentationRole.HaetaeGeneralUnit2 ||
+                   role == PresentationRole.HaetaeMeleePreview ||
+                   role == PresentationRole.HaetaeRangedPreview ||
+                   role == PresentationRole.HaetaeBalancedPreview ||
+                   role == PresentationRole.Runner ||
+                   role == PresentationRole.Bruiser ||
+                   role == PresentationRole.Ripper;
         }
 
         private void ValidateAuthoredZombieModels()

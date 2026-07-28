@@ -22,6 +22,7 @@ namespace Telerobot.Game.Runtime
         private Vector3 deathStartScale;
         private Vector3 deathStartPosition;
         private MaterialPropertyBlock presentationBlock;
+        private CharacterMotionDriver motionDriver;
 
         public ZombieState State { get; private set; }
         public ZombieType Type { get { return State.Type; } }
@@ -34,6 +35,14 @@ namespace Telerobot.Game.Runtime
         public bool HitFlashActive { get { return !dead && Time.time < hitFlashUntil; } }
         public bool DeathFeedbackActive { get { return dead; } }
         public Color CurrentVisualColor { get { return visualRenderer == null ? Color.clear : visualRenderer.material.color; } }
+        private CharacterMotionDriver MotionDriver
+        {
+            get
+            {
+                if (motionDriver == null) motionDriver = GetComponent<CharacterMotionDriver>();
+                return motionDriver;
+            }
+        }
 
         public void CompleteNavigationForTests()
         {
@@ -51,6 +60,7 @@ namespace Telerobot.Game.Runtime
             waypointIndex = 1;
             visualRenderer = GetComponent<Renderer>();
             originalColor = presentation.displayColor;
+            motionDriver = GetComponent<CharacterMotionDriver>();
         }
 
         private void Update()
@@ -133,6 +143,9 @@ namespace Telerobot.Game.Runtime
         {
             if (Time.time < nextAttack) return;
             nextAttack = Time.time + config.AttackInterval;
+            MotionDriver?.TriggerAttack(Type == ZombieType.Ripper
+                ? CharacterAttackMotion.Ripper
+                : CharacterAttackMotion.Standard);
             if (target.Barrier != null)
             {
                 target.Barrier.ReceiveDamage(config.BaseDamage);
@@ -173,6 +186,7 @@ namespace Telerobot.Game.Runtime
 
         private void ShowHitFlash()
         {
+            MotionDriver?.TriggerHit();
             hitFlashUntil = Time.time + presentation.hitFlashSeconds;
             if (visualRenderer != null) visualRenderer.material.color = Color.white;
             TintPresentation(Color.white);
@@ -185,6 +199,7 @@ namespace Telerobot.Game.Runtime
             deathElapsed = 0f;
             deathStartScale = transform.localScale;
             deathStartPosition = transform.position;
+            MotionDriver?.TriggerDeath(presentation.deathEffectSeconds);
             if (visualRenderer != null) visualRenderer.material.color = new Color(0.75f, 0.04f, 0.03f);
             TintPresentation(new Color(0.75f, 0.04f, 0.03f));
             foreach (var zombieCollider in GetComponentsInChildren<Collider>()) zombieCollider.enabled = false;

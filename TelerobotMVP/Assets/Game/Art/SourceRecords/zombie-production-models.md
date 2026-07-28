@@ -35,7 +35,10 @@ The treatment is intentionally non-realistic and avoids graphic gore.
 The FBXs are presentation-only children of the existing zombie capsule.
 Imported child colliders are disabled and removed. The gameplay root retains
 ownership of scale, collision, movement, targeting, headshots and damage.
-Every role has a role-local procedural fallback.
+Every role has a role-local procedural fallback. Detail revision 2 distributes
+the continuous organic shell across the nearest two humanoid rig segments so
+locomotion, attack, hit and death poses deform the flesh rather than moving it
+as one rigid spine-bound mass.
 
 ## Generated measurements
 
@@ -46,7 +49,8 @@ Every role has a role-local procedural fallback.
 | Ripper | 21,320 | 21,320 | 8,186 | 38.4% | 5 | 18 exported |
 
 Measurements are populated from the Blender FBX round-trip report, not from
-source-scene estimates.
+source-scene estimates. Organic two-segment skinning covers `6,934` Runner,
+`9,232` Bruiser and `8,660` Ripper vertices.
 
 ## Regeneration
 
@@ -57,4 +61,9 @@ source-scene estimates.
 
 The generator fails if any LOD0 is at or below 16,000 vertices, any LOD1 is at
 or below 500 vertices or at/above 70% of LOD0, any of the five material
-families has no polygons, or any required humanoid bone is absent.
+families has no polygons, any required humanoid bone is absent, or fewer than
+5,000 flesh vertices receive complete two-segment weights.
+
+Validated on 2026-07-28 with Blender `4.5.11 LTS` and Unity `6000.3.20f1`.
+Unity passed EditMode `106/106`, PlayMode `73/73`, Windows build success and
+the standalone ready-marker smoke with exit code `0`.
