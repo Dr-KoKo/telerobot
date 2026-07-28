@@ -340,8 +340,12 @@ namespace Telerobot.Game.Runtime
 
             var ground = CreateBox("Ground", new Vector3(0f, -0.55f, 12f), new Vector3(65f, 1f, 70f), new Color(0.09f, 0.11f, 0.14f));
             if (worldArt != null) worldArt.ApplyGround(ground.GetComponent<Renderer>());
-            var baseObject = CreateBox("Central Base", ToVector(Config.World.BasePosition), new Vector3(8f, 3f, 8f), new Color(0.12f, 0.42f, 0.58f));
-            ConfigureCentralBaseCollision(baseObject);
+            var baseObject = new GameObject("Central Base");
+            baseObject.transform.position = ToVector(Config.World.BasePosition);
+            var basePlatform = baseObject.AddComponent<CentralBasePlatform>();
+            basePlatform.Build(Config.World);
+            foreach (var terraceRenderer in basePlatform.TerraceRenderers)
+                ApplyColor(terraceRenderer.gameObject, new Color(0.12f, 0.42f, 0.58f));
             BaseTransform = baseObject.transform;
             if (worldArt != null) worldArt.DecorateCentralBase(baseObject);
 
@@ -577,39 +581,16 @@ namespace Telerobot.Game.Runtime
                 ? route.waypoints[route.waypoints.Length - 1] - center
                 : actor == null ? Vector3.forward : actor.transform.position - center;
             approach.y = 0f;
-            if (approach.sqrMagnitude < 0.001f) approach = Vector3.forward;
-            approach.Normalize();
-
-            var blocker = BaseTransform == null ? null : BaseTransform.GetComponent<BoxCollider>();
-            var extents = blocker == null ? new Vector3(4f, 1.5f, 4f) : blocker.bounds.extents;
             var ordinal = ZombieOrdinal(actor == null || actor.State == null ? null : actor.State.Id);
-            var lateral = (ordinal % 7 - 3) * 0.95f;
-            var row = (ordinal / 7) % 3;
-            const float edgePadding = 0.15f;
-            const float rowSpacing = 0.75f;
-            var result = center;
-
-            if (Mathf.Abs(approach.x) >= Mathf.Abs(approach.z))
-            {
-                var sign = Mathf.Sign(approach.x);
-                if (Mathf.Approximately(sign, 0f)) sign = 1f;
-                var projected = center.z + approach.z / Mathf.Max(0.001f, Mathf.Abs(approach.x)) * extents.x;
-                result.x = center.x + sign * (extents.x + edgePadding + row * rowSpacing);
-                result.z = Mathf.Clamp(projected + lateral,
-                    center.z - extents.z + 0.35f, center.z + extents.z - 0.35f);
-            }
-            else
-            {
-                var sign = Mathf.Sign(approach.z);
-                if (Mathf.Approximately(sign, 0f)) sign = 1f;
-                var projected = center.x + approach.x / Mathf.Max(0.001f, Mathf.Abs(approach.z)) * extents.z;
-                result.z = center.z + sign * (extents.z + edgePadding + row * rowSpacing);
-                result.x = Mathf.Clamp(projected + lateral,
-                    center.x - extents.x + 0.35f, center.x + extents.x - 0.35f);
-            }
-
-            result.y = actor == null ? center.y : actor.transform.position.y;
-            return result;
+            var slot = BasePerimeterRules.AttackSlot(
+                new Float3(center.x, actor == null ? center.y : actor.transform.position.y, center.z),
+                new Float3(approach.x, 0f, approach.z),
+                Config.World.BaseOuterRadius,
+                ordinal,
+                Config.World.BaseAttackEdgePadding,
+                Config.World.BaseAttackRowSpacing,
+                Config.World.BaseAttackLateralSpacing);
+            return ToVector(slot);
         }
 
         private static int ZombieOrdinal(string id)
@@ -1150,17 +1131,6 @@ namespace Telerobot.Game.Runtime
             result.transform.localScale = scale;
             ApplyColor(result, color);
             return result;
-        }
-
-        private static void ConfigureCentralBaseCollision(GameObject baseObject)
-        {
-            if (baseObject == null) return;
-            var blocker = baseObject.GetComponent<BoxCollider>();
-            if (blocker == null) blocker = baseObject.AddComponent<BoxCollider>();
-            blocker.center = Vector3.zero;
-            blocker.size = Vector3.one;
-            blocker.isTrigger = false;
-            blocker.enabled = true;
         }
 
         private GameObject CreateCylinder(string name, Vector3 position, Vector3 scale, Color color)

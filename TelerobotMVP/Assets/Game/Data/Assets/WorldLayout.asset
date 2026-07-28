@@ -26,3 +26,12 @@ MonoBehaviour:
   supplyExitTolerance: 0.75
   baseChargingRadius: 6
   chargingArrivalRadius: 1.2
+  baseOuterRadius: 4
+  baseTerraceCount: 3
+  baseTerraceRise: 0.25
+  baseTerraceDepth: 0.75
+  baseTerraceSlopeRun: 0.5
+  baseBeaconDiameter: 1
+  baseAttackEdgePadding: 0.15
+  baseAttackRowSpacing: 0.75
+  baseAttackLateralSpacing: 0.95

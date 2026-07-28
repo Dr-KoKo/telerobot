@@ -303,6 +303,15 @@ namespace Telerobot.Game.Core
         public float SupplyExitTolerance;
         public float BaseChargingRadius;
         public float ChargingArrivalRadius;
+        public float BaseOuterRadius;
+        public int BaseTerraceCount;
+        public float BaseTerraceRise;
+        public float BaseTerraceDepth;
+        public float BaseTerraceSlopeRun;
+        public float BaseBeaconDiameter;
+        public float BaseAttackEdgePadding;
+        public float BaseAttackRowSpacing;
+        public float BaseAttackLateralSpacing;
     }
 
     [Serializable]

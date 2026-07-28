@@ -28,27 +28,65 @@ namespace Telerobot.Game.Tests
             Assert.That(landmarks.Any(item => item.role == PresentationRole.ChargingStation), Is.True);
             Assert.That(landmarks.Any(item => item.role == PresentationRole.SafeSupply), Is.True);
             Assert.That(landmarks.Any(item => item.role == PresentationRole.RiskySupply), Is.True);
-            Assert.That(Game.BaseTransform.GetComponent<Collider>(), Is.Not.Null);
+            Assert.That(Game.BaseTransform.GetComponent<CentralBasePlatform>(), Is.Not.Null);
         }
 
         [UnityTest]
-        public IEnumerator CentralBaseBlocksPlayerMovement()
+        public IEnumerator CentralBaseUsesLowVisibleTerracesWithMatchingColliders()
         {
             yield return null;
-            var blocker = Game.BaseTransform.GetComponent<BoxCollider>();
-            Assert.That(blocker, Is.Not.Null);
-            Assert.That(blocker.enabled, Is.True);
-            Assert.That(blocker.isTrigger, Is.False);
+            var platform = Game.BaseTransform.GetComponent<CentralBasePlatform>();
+            var activeColliders = Game.BaseTransform.GetComponentsInChildren<Collider>(true)
+                .Where(item => item.enabled).ToArray();
+            var marker = Game.BaseTransform.GetComponentInChildren<WorldLandmarkMarker>(true);
+            var visualRoots = Game.BaseTransform.GetComponentsInChildren<Transform>(true)
+                .Count(item => item.name == LowPolyModelFactory.VisualRootName);
+            var beaconRenderers = Game.BaseTransform.GetComponentsInChildren<Renderer>(true)
+                .Where(item => item.name.StartsWith("Guardian Beacon") ||
+                    item.name == "Beacon Brace").ToArray();
 
-            var player = Game.PlayerActor;
-            var start = Game.BaseTransform.position + new Vector3(0f, 1f, -5.2f);
-            player.transform.position = start;
-            Physics.SyncTransforms();
-            player.CharacterForTests.Move(Vector3.forward * 3f);
-            Physics.SyncTransforms();
+            Assert.That(Game.BaseTransform.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(platform, Is.Not.Null);
+            Assert.That(platform.TerraceCount, Is.EqualTo(Game.Config.World.BaseTerraceCount));
+            Assert.That(platform.TopHeight, Is.LessThanOrEqualTo(0.75f));
+            Assert.That(platform.BeaconDiameter, Is.LessThanOrEqualTo(1f));
+            Assert.That(platform.SurfaceColliders.Count, Is.EqualTo(1));
+            Assert.That(activeColliders.Length, Is.EqualTo(1));
+            Assert.That(activeColliders.All(item => item is MeshCollider && !item.isTrigger), Is.True);
+            Assert.That(platform.SurfaceColliders.Select(item => item.bounds.max.y).Max() -
+                Game.BaseTransform.position.y, Is.EqualTo(platform.TopHeight).Within(0.02f));
+            Assert.That(marker.shapeSignature, Is.EqualTo("base.terraced.guardian"));
+            Assert.That(visualRoots, Is.EqualTo(1));
+            Assert.That(beaconRenderers.Length, Is.GreaterThan(0));
+            Assert.That(beaconRenderers.All(item =>
+                Mathf.Max(item.bounds.size.x, item.bounds.size.z) <= 1.01f), Is.True);
+        }
 
-            Assert.That(player.transform.position.z,
-                Is.LessThanOrEqualTo(blocker.bounds.min.z - player.CharacterForTests.radius + 0.08f));
+        [UnityTest]
+        public IEnumerator PlayerTraversesBaseFromEveryCardinalDirectionWithoutJump()
+        {
+            Game.SetAcceleratedSpawningForTests(false);
+            var directions = new[]
+            {
+                Vector3.forward, Vector3.right, Vector3.back, Vector3.left
+            };
+            for (var repeat = 0; repeat < 3; repeat++)
+                foreach (var direction in directions)
+                    yield return TraverseBase(direction, false);
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerTraversesBaseDiagonallyWithoutBeingTrappedOrEjected()
+        {
+            Game.SetAcceleratedSpawningForTests(false);
+            var directions = new[]
+            {
+                new Vector3(1f, 0f, 1f).normalized,
+                new Vector3(-1f, 0f, 1f).normalized
+            };
+            for (var repeat = 0; repeat < 4; repeat++)
+                foreach (var direction in directions)
+                    yield return TraverseBase(direction, true);
         }
 
         [UnityTest]
@@ -71,15 +109,81 @@ namespace Telerobot.Game.Tests
             while (Time.time < deadline && Game.BaseState.Health.Current >= healthBefore)
                 yield return null;
 
-            var blocker = Game.BaseTransform.GetComponent<BoxCollider>();
+            var platform = Game.BaseTransform.GetComponent<CentralBasePlatform>();
             Assert.That(Game.BaseState.Health.Current, Is.LessThan(healthBefore),
                 "Perimeter attackers must still damage the base.");
-            Assert.That(attackers.All(item => item != null && !blocker.bounds.Contains(item.transform.position)),
+            Assert.That(attackers.All(item => item != null &&
+                PlanarDistance(item.transform.position, Game.BaseTransform.position) >=
+                platform.OuterRadius - 0.05f),
                 Is.True, "Zombies must remain outside the base collision volume.");
             Assert.That(attackers.Select(item =>
                     new Vector2(item.transform.position.x, item.transform.position.z).ToString("F1"))
                 .Distinct().Count(), Is.GreaterThanOrEqualTo(4),
                 "Attackers must occupy multiple visible perimeter slots.");
+            var hud = Object.FindFirstObjectByType<CombatHud>();
+            Assert.That(hud, Is.Not.Null);
+            Assert.That(Game.Robots.All(item =>
+                !string.IsNullOrWhiteSpace(hud.GetRobotHealthBarText(item.State.Id)) &&
+                !string.IsNullOrWhiteSpace(hud.GetRobotBatteryBarText(item.State.Id))), Is.True,
+                "Existing robot status bars must remain populated.");
+            Assert.That(Game.Config.World.BaseChargingRadius, Is.EqualTo(6f));
+        }
+
+        private IEnumerator TraverseBase(Vector3 direction, bool diagonal)
+        {
+            var platform = Game.BaseTransform.GetComponent<CentralBasePlatform>();
+            var player = Game.PlayerActor;
+            var unrelatedColliders = Object.FindObjectsByType<Collider>(FindObjectsSortMode.None)
+                .Where(item => item.enabled &&
+                    item.transform != player.transform &&
+                    !item.transform.IsChildOf(player.transform) &&
+                    item.transform != Game.BaseTransform &&
+                    !item.transform.IsChildOf(Game.BaseTransform) &&
+                    item.gameObject.name != "Ground")
+                .ToArray();
+            foreach (var collider in unrelatedColliders) collider.enabled = false;
+            var startDistance = platform.OuterRadius + 1.2f;
+            var start = Game.BaseTransform.position - direction * startDistance + Vector3.up;
+            player.transform.position = start;
+            Physics.SyncTransforms();
+            player.CharacterForTests.Move(Vector3.down * 0.12f);
+            Physics.SyncTransforms();
+
+            var highestY = player.transform.position.y;
+            const int steps = 132;
+            var travel = startDistance * 2f + 1.6f;
+            for (var step = 0; step < steps; step++)
+            {
+                player.CharacterForTests.Move(direction * (travel / steps) + Vector3.down * 0.035f);
+                Physics.SyncTransforms();
+                highestY = Mathf.Max(highestY, player.transform.position.y);
+                yield return null;
+            }
+            for (var settle = 0; settle < 30; settle++)
+            {
+                player.CharacterForTests.Move(direction * 0.05f + Vector3.down * 0.08f);
+                Physics.SyncTransforms();
+                yield return null;
+            }
+
+            var signedExit = Vector3.Dot(player.transform.position - Game.BaseTransform.position, direction);
+            foreach (var collider in unrelatedColliders)
+                if (collider != null) collider.enabled = true;
+            Physics.SyncTransforms();
+
+            Assert.That(signedExit, Is.GreaterThan(platform.OuterRadius + 0.05f),
+                (diagonal ? "Diagonal" : "Cardinal") + " traversal must exit the opposite side.");
+            Assert.That(highestY, Is.GreaterThanOrEqualTo(
+                Game.BaseTransform.position.y + platform.TopHeight + 0.75f),
+                "Traversal must reach the top terrace.");
+            Assert.That(Mathf.Abs(player.transform.position.y - start.y), Is.LessThan(0.35f),
+                "Traversal must return to surrounding ground without ejection or fall-through.");
+        }
+
+        private static float PlanarDistance(Vector3 first, Vector3 second)
+        {
+            var delta = first - second;
+            return new Vector2(delta.x, delta.z).magnitude;
         }
 
         [UnityTest]

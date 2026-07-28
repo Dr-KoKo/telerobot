@@ -16,5 +16,14 @@ namespace Telerobot.Game.Data
         public float supplyExitTolerance;
         public float baseChargingRadius;
         public float chargingArrivalRadius;
+        public float baseOuterRadius;
+        public int baseTerraceCount;
+        public float baseTerraceRise;
+        public float baseTerraceDepth;
+        public float baseTerraceSlopeRun;
+        public float baseBeaconDiameter;
+        public float baseAttackEdgePadding;
+        public float baseAttackRowSpacing;
+        public float baseAttackLateralSpacing;
     }
 }
