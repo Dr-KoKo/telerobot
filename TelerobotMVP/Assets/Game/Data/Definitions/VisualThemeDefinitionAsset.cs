@@ -125,6 +125,9 @@ namespace Telerobot.Game.Data
         public Texture2D menuBackdrop;
         public Font bodyFont;
         public Font headingFont;
+        [Header("Character Scale")]
+        [Range(0.01f, 2f)]
+        public float haetaeVisualScale = 1f;
         [Header("Authored Character Models")]
         public GameObject haetaeGeneralModel;
         public GameObject haetaeGeneralLod1;
@@ -205,6 +208,10 @@ namespace Telerobot.Game.Data
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(themeId)) throw new InvalidOperationException("Visual theme ID is required.");
+            if (float.IsNaN(haetaeVisualScale) || float.IsInfinity(haetaeVisualScale) ||
+                haetaeVisualScale <= 0f || haetaeVisualScale > 2f)
+                throw new InvalidOperationException(
+                    "Haetae visual scale must be finite, greater than zero, and at most two.");
             ValidateUniqueKeys(colors, item => item == null ? null : item.key, RequiredColorKeys, "color");
             ValidateUniqueKeys(materials, item => item == null ? null : item.key, RequiredMaterialKeys, "material");
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");
