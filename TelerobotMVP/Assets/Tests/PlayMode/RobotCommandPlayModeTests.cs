@@ -158,6 +158,103 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator SpawnCompleteDefenderCleansUpCrossRouteSurvivorAndPhaseAdvances()
+        {
+            Game.SpawnAllNowForTests();
+            var survivor = Game.AliveZombies[0];
+            foreach (var other in Game.AliveZombies.ToArray())
+                if (other != survivor) other.ReceiveDamage(99999f, "test");
+            survivor.enabled = false;
+            survivor.State.Route = RouteId.EastAlley;
+            survivor.State.Health.Maximum = 500f;
+            survivor.State.Health.Current = 500f;
+
+            var robot = Game.Robots[0];
+            Game.Robots[1].enabled = false;
+            var combatCenter = Game.BaseTransform.position;
+            combatCenter.y = 0.8f;
+            robot.transform.position = combatCenter;
+            survivor.transform.position = combatCenter + Vector3.forward * 1.5f;
+            Assert.That(robot.Issue(RobotCommand.DefendPosition, RouteId.NorthRoad), Is.True);
+            Assert.That(Game.SpawnedCount, Is.EqualTo(Game.TotalSpawnCount));
+            var phaseBefore = Game.CurrentPhase;
+            var healthBefore = survivor.State.Health.Current;
+
+            for (var frame = 0; frame < 12 && survivor.State.Health.Current >= healthBefore; frame++)
+                yield return null;
+
+            Assert.That(robot.State.CurrentTargetId, Is.EqualTo(survivor.State.Id));
+            Assert.That(survivor.State.Health.Current, Is.LessThan(healthBefore));
+
+            survivor.ReceiveDamage(99999f, "test");
+            yield return null;
+            yield return null;
+
+            Assert.That(Game.CurrentPhase, Is.EqualTo(phaseBefore + 1));
+        }
+
+        [UnityTest]
+        public IEnumerator DefendKeepsRouteRestrictionWhileScheduledSpawnsRemain()
+        {
+            var crossRoute = Game.SpawnZombieForTests(ZombieType.Runner, RouteId.EastAlley);
+            crossRoute.enabled = false;
+            var robot = Game.Robots[0];
+            var combatCenter = Game.BaseTransform.position;
+            combatCenter.y = 0.8f;
+            robot.transform.position = combatCenter;
+            crossRoute.transform.position = combatCenter + Vector3.forward;
+            Assert.That(robot.Issue(RobotCommand.DefendPosition, RouteId.NorthRoad), Is.True);
+
+            Assert.That(Game.SpawnedCount, Is.LessThan(Game.TotalSpawnCount));
+            Assert.That(Game.FindRobotTarget(robot, Game.Config.Robot.DetectionRadius), Is.Null);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator SpawnCompletePatrolRemainsRouteBound()
+        {
+            Game.SpawnAllNowForTests();
+            var crossRoute = Game.AliveZombies[0];
+            foreach (var other in Game.AliveZombies.ToArray())
+                if (other != crossRoute) other.ReceiveDamage(99999f, "test");
+            crossRoute.enabled = false;
+            crossRoute.State.Route = RouteId.EastAlley;
+
+            var robot = Game.Robots[0];
+            var combatCenter = Game.BaseTransform.position;
+            combatCenter.y = 0.8f;
+            robot.transform.position = combatCenter;
+            crossRoute.transform.position = combatCenter + Vector3.forward;
+            Assert.That(robot.Issue(RobotCommand.PatrolRoute, RouteId.NorthRoad), Is.True);
+
+            Assert.That(Game.SpawnedCount, Is.EqualTo(Game.TotalSpawnCount));
+            Assert.That(Game.FindRobotTarget(robot, Game.Config.Robot.DetectionRadius), Is.Null);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator SpawnCompleteDefendRejectsCrossRouteSurvivorOutsideLeash()
+        {
+            Game.SpawnAllNowForTests();
+            var crossRoute = Game.AliveZombies[0];
+            foreach (var other in Game.AliveZombies.ToArray())
+                if (other != crossRoute) other.ReceiveDamage(99999f, "test");
+            crossRoute.enabled = false;
+            crossRoute.State.Route = RouteId.EastAlley;
+
+            var robot = Game.Robots[0];
+            var combatCenter = Game.BaseTransform.position;
+            combatCenter.y = 0.8f;
+            robot.transform.position = combatCenter;
+            crossRoute.transform.position = combatCenter +
+                Vector3.forward * (Game.Config.Robot.DefendLeashRadius + 0.5f);
+            Assert.That(robot.Issue(RobotCommand.DefendPosition, RouteId.NorthRoad), Is.True);
+
+            Assert.That(Game.FindRobotTarget(robot, Game.Config.Robot.DetectionRadius), Is.Null);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator DefendOutsideLeashReturnsHomeAndIgnoresNearbyThreat()
         {
             Game.SpawnAllNowForTests();
