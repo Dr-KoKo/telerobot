@@ -237,6 +237,15 @@ namespace Telerobot.Game.Editor
                 item.supplyExitTolerance = 0.75f;
                 item.baseChargingRadius = 6f;
                 item.chargingArrivalRadius = 1.2f;
+                item.baseOuterRadius = 4f;
+                item.baseTerraceCount = 3;
+                item.baseTerraceRise = 0.25f;
+                item.baseTerraceDepth = 0.75f;
+                item.baseTerraceSlopeRun = 0.5f;
+                item.baseBeaconDiameter = 1f;
+                item.baseAttackEdgePadding = 0.15f;
+                item.baseAttackRowSpacing = 0.75f;
+                item.baseAttackLateralSpacing = 0.95f;
             });
             var commands = Asset<CommandConfigAsset>("CommandConfig", item => item.commands = new[]
             {

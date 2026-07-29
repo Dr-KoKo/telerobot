@@ -129,7 +129,16 @@ namespace Telerobot.Game.Data
                     SupplyInteractionRadius = source.world.supplyInteractionRadius,
                     SupplyExitTolerance = source.world.supplyExitTolerance,
                     BaseChargingRadius = source.world.baseChargingRadius,
-                    ChargingArrivalRadius = source.world.chargingArrivalRadius
+                    ChargingArrivalRadius = source.world.chargingArrivalRadius,
+                    BaseOuterRadius = source.world.baseOuterRadius,
+                    BaseTerraceCount = source.world.baseTerraceCount,
+                    BaseTerraceRise = source.world.baseTerraceRise,
+                    BaseTerraceDepth = source.world.baseTerraceDepth,
+                    BaseTerraceSlopeRun = source.world.baseTerraceSlopeRun,
+                    BaseBeaconDiameter = source.world.baseBeaconDiameter,
+                    BaseAttackEdgePadding = source.world.baseAttackEdgePadding,
+                    BaseAttackRowSpacing = source.world.baseAttackRowSpacing,
+                    BaseAttackLateralSpacing = source.world.baseAttackLateralSpacing
                 },
                 Commands = new CommandConfig { Commands = (RobotCommand[])source.commands.commands.Clone() },
                 Telemetry = new TelemetryConfig
@@ -335,6 +344,23 @@ namespace Telerobot.Game.Data
             if (source.world.supplyInteractionRadius <= 0f || source.world.supplyExitTolerance < 0f ||
                 source.world.baseChargingRadius <= 0f || source.world.chargingArrivalRadius <= 0f)
                 throw new InvalidOperationException("Supply and base charging radii are invalid.");
+            var topRadius = source.world.baseOuterRadius -
+                (source.world.baseTerraceCount - 1) * source.world.baseTerraceDepth -
+                source.world.baseTerraceSlopeRun;
+            if (!IsFinite(source.world.baseOuterRadius) || source.world.baseOuterRadius <= 0f ||
+                source.world.baseTerraceCount < 1 || source.world.baseTerraceCount > 8 ||
+                !IsFinite(source.world.baseTerraceRise) || source.world.baseTerraceRise <= 0f ||
+                source.world.baseTerraceCount * source.world.baseTerraceRise > 0.75f ||
+                !IsFinite(source.world.baseTerraceDepth) || source.world.baseTerraceDepth <= 0f ||
+                !IsFinite(source.world.baseTerraceSlopeRun) || source.world.baseTerraceSlopeRun <= 0f ||
+                source.world.baseTerraceSlopeRun > source.world.baseTerraceDepth ||
+                !IsFinite(source.world.baseBeaconDiameter) || source.world.baseBeaconDiameter <= 0f ||
+                source.world.baseBeaconDiameter > 1f ||
+                topRadius <= source.world.baseBeaconDiameter * 0.5f ||
+                !IsFinite(source.world.baseAttackEdgePadding) || source.world.baseAttackEdgePadding < 0f ||
+                !IsFinite(source.world.baseAttackRowSpacing) || source.world.baseAttackRowSpacing <= 0f ||
+                !IsFinite(source.world.baseAttackLateralSpacing) || source.world.baseAttackLateralSpacing <= 0f)
+                throw new InvalidOperationException("Base platform geometry is invalid.");
             if (source.hud.lowAmmoThreshold < 0 || source.hud.lowAmmoThreshold >= source.weapon.magazineSize ||
                 source.hud.damageIndicatorSeconds <= 0f || source.hud.hitMarkerSeconds <= 0f ||
                 source.hud.headshotLabelSeconds <= 0f)
@@ -548,6 +574,11 @@ namespace Telerobot.Game.Data
         {
             if (range == null || range.Min < 0 || range.Max < range.Min)
                 throw new InvalidOperationException("Invalid " + label + " range.");
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
         private static void ValidateRouteWeights(RouteId[] openRoutes, RouteWeightConfig[] weights, string label)

@@ -23,22 +23,51 @@ namespace Telerobot.Game.Runtime
 
         public GameObject DecorateCentralBase(GameObject gameplayRoot)
         {
-            var root = DecorationRoot(gameplayRoot, PresentationRole.CentralBase, "base.octagonal.guardian");
-            models.CreatePart(root.transform, "Guardian Core", PrimitiveType.Cylinder, new Vector3(0f, 0.2f, 0f),
-                new Vector3(0.64f, 0.9f, 0.64f), Vector3.zero, "world.structure");
-            models.CreatePart(root.transform, "Core Energy", PrimitiveType.Cylinder, new Vector3(0f, 0.35f, 0f),
-                new Vector3(0.28f, 1.05f, 0.28f), Vector3.zero, "ally.energy");
-            models.CreatePart(root.transform, "Guardian Crown", PrimitiveType.Cylinder, new Vector3(0f, 1.05f, 0f),
-                new Vector3(0.8f, 0.15f, 0.8f), Vector3.zero, "ally.haetae");
+            var platform = gameplayRoot.GetComponent<CentralBasePlatform>();
+            var root = DecorationRoot(gameplayRoot, PresentationRole.CentralBase, "base.terraced.guardian");
+            if (platform == null) return root;
+
+            foreach (var terraceRenderer in platform.TerraceRenderers)
+                materials.Apply(terraceRenderer, "world.structure");
+
+            for (var tierIndex = 0; tierIndex < platform.TerraceCount; tierIndex++)
+            {
+                var radius = platform.TopRadiusForTerrace(tierIndex);
+                var height = platform.HeightForTerrace(tierIndex);
+                for (var segment = 0; segment < 12; segment++)
+                {
+                    var angle = segment * 30f + tierIndex * 15f;
+                    var radians = angle * Mathf.Deg2Rad;
+                    models.CreatePart(root.transform, "Terrace Guard Trim", PrimitiveType.Cube,
+                        new Vector3(Mathf.Sin(radians) * (radius + 0.015f), height - 0.08f,
+                            Mathf.Cos(radians) * (radius + 0.015f)),
+                        new Vector3(0.09f, 0.13f, 0.045f),
+                        new Vector3(0f, angle, 0f),
+                        tierIndex == platform.TerraceCount - 1 ? "ally.haetae" : "world.trim");
+                }
+            }
+
+            var beaconHeight = 0.72f;
+            var beaconDiameter = platform.BeaconDiameter * 0.62f;
+            models.CreatePart(root.transform, "Guardian Beacon", PrimitiveType.Cylinder,
+                new Vector3(0f, platform.TopHeight + beaconHeight * 0.5f, 0f),
+                new Vector3(beaconDiameter, beaconHeight * 0.5f, beaconDiameter),
+                Vector3.zero, "ally.energy");
             for (var index = 0; index < 4; index++)
             {
                 var angle = index * 90f + 45f;
                 var radians = angle * Mathf.Deg2Rad;
-                models.CreatePart(root.transform, "Guardian Brace", PrimitiveType.Cube,
-                    new Vector3(Mathf.Sin(radians) * 0.5f, 0.02f, Mathf.Cos(radians) * 0.5f),
-                    new Vector3(0.14f, 0.72f, 0.14f), new Vector3(0f, -angle, 16f), "world.trim");
+                models.CreatePart(root.transform, "Beacon Brace", PrimitiveType.Cube,
+                    new Vector3(Mathf.Sin(radians) * platform.BeaconDiameter * 0.34f,
+                        platform.TopHeight + beaconHeight * 0.45f,
+                        Mathf.Cos(radians) * platform.BeaconDiameter * 0.34f),
+                    new Vector3(0.1f, beaconHeight * 0.82f, 0.1f),
+                    new Vector3(0f, -angle, 8f), "world.trim");
             }
-            HideRootRenderer(gameplayRoot);
+            models.CreatePart(root.transform, "Guardian Beacon Crown", PrimitiveType.Cylinder,
+                new Vector3(0f, platform.TopHeight + beaconHeight, 0f),
+                new Vector3(platform.BeaconDiameter, 0.05f, platform.BeaconDiameter),
+                Vector3.zero, "ally.haetae");
             return root;
         }
 
