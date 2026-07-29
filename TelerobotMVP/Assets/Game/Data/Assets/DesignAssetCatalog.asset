@@ -151,13 +151,13 @@ MonoBehaviour:
     usageRoles:
     - enemy.runner
     assetReferences: []
-    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    generatedRecipe: ArtSource/Zombies/create_zombie_models.py
     sourceId: 
     fallbackId: 
     validationTags:
     - automated
     - manual-visual
-    notes: 
+    notes: Authored zombie model is mapped live with a role-local procedural fallback.
   - id: enemy.bruiser
     displayName: enemy.bruiser
     category: 1
@@ -167,13 +167,13 @@ MonoBehaviour:
     usageRoles:
     - enemy.bruiser
     assetReferences: []
-    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    generatedRecipe: ArtSource/Zombies/create_zombie_models.py
     sourceId: 
     fallbackId: 
     validationTags:
     - automated
     - manual-visual
-    notes: 
+    notes: Authored zombie model is mapped live with a role-local procedural fallback.
   - id: enemy.ripper
     displayName: enemy.ripper
     category: 1
@@ -183,13 +183,13 @@ MonoBehaviour:
     usageRoles:
     - enemy.ripper
     assetReferences: []
-    generatedRecipe: Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs
+    generatedRecipe: ArtSource/Zombies/create_zombie_models.py
     sourceId: 
     fallbackId: 
     validationTags:
     - automated
     - manual-visual
-    notes: 
+    notes: Authored zombie model is mapped live with a role-local procedural fallback.
   - id: environment.base.central
     displayName: environment.base.central
     category: 2

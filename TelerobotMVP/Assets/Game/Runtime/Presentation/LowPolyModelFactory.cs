@@ -368,6 +368,16 @@ namespace Telerobot.Game.Runtime
 
         private static string AuthoredMaterialRole(string materialName)
         {
+            if (materialName.IndexOf("ZombieFlesh", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "enemy.body";
+            if (materialName.IndexOf("ZombieArmor", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "enemy.armor";
+            if (materialName.IndexOf("ZombieTissue", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "ally.joint";
+            if (materialName.IndexOf("ZombieCorruption", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "enemy.corruption";
+            if (materialName.IndexOf("ZombieBone", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "enemy.ripper";
             if (materialName.IndexOf("IvoryArmor", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "ally.ceramic";
             if (materialName.IndexOf("GoldTrim", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -413,6 +423,8 @@ namespace Telerobot.Game.Runtime
 
         private void BuildEnemy(Transform root, PresentationRole role, VisualIdentityMarker marker)
         {
+            if (TryBuildAuthoredZombie(root, role, marker)) return;
+
             var runner = role == PresentationRole.Runner;
             var bruiser = role == PresentationRole.Bruiser;
             marker.silhouetteSignature = runner ? "runner.lean.fins" : bruiser ? "bruiser.wide.armor" : "ripper.tall.blades";
@@ -461,6 +473,81 @@ namespace Telerobot.Game.Runtime
                     new Vector3(0.13f, 1.05f, 0.28f), new Vector3(12f, 0f, 16f), "enemy.ripper");
                 CreatePart(root, "Ripper Crest", PrimitiveType.Cube, new Vector3(0f, 1.3f, -0.02f),
                     new Vector3(0.12f, 0.42f, 0.32f), new Vector3(-8f, 0f, 0f), "enemy.ripper");
+            }
+        }
+
+        private bool TryBuildAuthoredZombie(
+            Transform root, PresentationRole role, VisualIdentityMarker marker)
+        {
+            var definition = materials.Theme == null
+                ? null
+                : materials.Theme.AuthoredZombieFor(role);
+            if (definition == null || definition.lod0 == null) return false;
+
+            GameObject lod0 = null;
+            GameObject lod1 = null;
+            LODGroup lodGroup = null;
+            try
+            {
+                lod0 = UnityEngine.Object.Instantiate(definition.lod0, root, false);
+                lod0.name = "Zombie " + role + " Authored LOD0";
+                ResetLocalTransform(lod0.transform);
+                DisablePresentationColliders(lod0);
+                ApplyAuthoredMaterials(lod0);
+
+                var lodCount = 1;
+                if (definition.lod1 != null)
+                {
+                    lod1 = UnityEngine.Object.Instantiate(definition.lod1, root, false);
+                    lod1.name = "Zombie " + role + " Authored LOD1";
+                    ResetLocalTransform(lod1.transform);
+                    DisablePresentationColliders(lod1);
+                    ApplyAuthoredMaterials(lod1);
+
+                    lodGroup = root.gameObject.AddComponent<LODGroup>();
+                    lodGroup.fadeMode = LODFadeMode.CrossFade;
+                    lodGroup.animateCrossFading = false;
+                    lodGroup.SetLODs(new[]
+                    {
+                        new LOD(0.32f, lod0.GetComponentsInChildren<Renderer>(true)),
+                        new LOD(0.08f, lod1.GetComponentsInChildren<Renderer>(true))
+                    });
+                    lodGroup.RecalculateBounds();
+                    lodCount = 2;
+                }
+
+                marker.silhouetteSignature = definition.silhouetteSignature;
+                marker.markerCount = role == PresentationRole.Runner
+                    ? 1
+                    : role == PresentationRole.Bruiser ? 2 : 3;
+                var authored = root.gameObject.AddComponent<AuthoredModelMarker>();
+                authored.assetId = definition.assetId;
+                authored.sourceVertexCount = CountVertices(lod0);
+                authored.lodCount = lodCount;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                DestroyPresentationObject(lod0);
+                DestroyPresentationObject(lod1);
+                if (lodGroup != null)
+                {
+                    if (Application.isPlaying) UnityEngine.Object.Destroy(lodGroup);
+                    else UnityEngine.Object.DestroyImmediate(lodGroup);
+                }
+                Debug.LogWarning("Authored zombie model fallback: " + exception.Message);
+                return false;
+            }
+        }
+
+        private static void DisablePresentationColliders(GameObject model)
+        {
+            var colliders = model.GetComponentsInChildren<Collider>(true);
+            for (var index = 0; index < colliders.Length; index++)
+            {
+                colliders[index].enabled = false;
+                if (Application.isPlaying) UnityEngine.Object.Destroy(colliders[index]);
+                else UnityEngine.Object.DestroyImmediate(colliders[index]);
             }
         }
     }
