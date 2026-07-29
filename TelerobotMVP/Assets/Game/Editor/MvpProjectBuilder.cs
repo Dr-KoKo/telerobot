@@ -934,6 +934,25 @@ namespace Telerobot.Game.Editor
                         ZombieRipperLod0Path,
                         ZombieRipperLod1Path)
                 };
+                item.characterMotionProfiles = new[]
+                {
+                    MotionProfile(PresentationRole.HaetaeGeneralUnit1, "haetae.general.unit1",
+                        0.78f, 0.018f, 0.045f, 2.4f, -2f, 17f, 30f, 0.1f, 11f, 62f, 0.34f, 0.15f),
+                    MotionProfile(PresentationRole.HaetaeGeneralUnit2, "haetae.general.unit2",
+                        0.82f, 0.02f, 0.048f, 2.8f, -2f, 18f, 32f, 0.11f, 12f, 64f, 0.34f, 0.15f),
+                    MotionProfile(PresentationRole.HaetaeMeleePreview, "haetae.melee",
+                        0.9f, 0.016f, 0.06f, 3.2f, 4f, 22f, 58f, 0.22f, 14f, 72f, 0.3f, 0.14f),
+                    MotionProfile(PresentationRole.HaetaeRangedPreview, "haetae.ranged",
+                        0.72f, 0.012f, 0.038f, 1.8f, -4f, 14f, 38f, 0.2f, 10f, 58f, 0.38f, 0.16f),
+                    MotionProfile(PresentationRole.HaetaeBalancedPreview, "haetae.balanced",
+                        0.84f, 0.016f, 0.05f, 2.6f, 1f, 19f, 45f, 0.16f, 12f, 66f, 0.34f, 0.15f),
+                    MotionProfile(PresentationRole.Runner, "zombie.runner",
+                        2.35f, 0.022f, 0.1f, 7f, 18f, 46f, 56f, 0.2f, 18f, 86f, 0.26f, 0.12f),
+                    MotionProfile(PresentationRole.Bruiser, "zombie.bruiser",
+                        1.08f, 0.035f, 0.085f, 5f, 5f, 25f, 48f, 0.16f, 15f, 78f, 0.42f, 0.18f),
+                    MotionProfile(PresentationRole.Ripper, "zombie.ripper",
+                        1.62f, 0.025f, 0.09f, 8f, 12f, 37f, 72f, 0.25f, 21f, 96f, 0.32f, 0.13f)
+                };
                 item.effects = new[]
                 {
                     Effect("combat.hit", "enemy.corruption", 0.12f, 0.22f, 32),
@@ -957,10 +976,12 @@ namespace Telerobot.Game.Editor
                 {
                     var isFont = id.StartsWith("font.", StringComparison.Ordinal);
                     var adoptedFont = isFont && theme.bodyFont != null;
-                    var deferred = id.StartsWith("animation.", StringComparison.Ordinal) ||
+                    var implementedAnimation = id == "animation.zombie" || id == "animation.haetae";
+                    var deferred = (id.StartsWith("animation.", StringComparison.Ordinal) && !implementedAnimation) ||
                                    id.StartsWith("audio.", StringComparison.Ordinal) ||
                                    (isFont && !adoptedFont);
-                    var fallback = id.StartsWith("animation.", StringComparison.Ordinal) ? "fallback.animation.transform" :
+                    var fallback = id.StartsWith("animation.", StringComparison.Ordinal) && !implementedAnimation
+                        ? "fallback.animation.transform" :
                         id.StartsWith("audio.", StringComparison.Ordinal) ? "fallback.audio.procedural" :
                         id.StartsWith("font.", StringComparison.Ordinal) ? "fallback.font.system" : null;
                     entries.Add(new DesignAssetItemDefinition
@@ -1052,6 +1073,31 @@ namespace Telerobot.Game.Editor
             };
         }
 
+        private static CharacterMotionProfileDefinition MotionProfile(
+            PresentationRole role, string id, float cycleHz, float idleBob, float locomotionBob,
+            float swayDegrees, float forwardLeanDegrees, float strideDegrees, float attackDegrees,
+            float attackRecoil, float hitDegrees, float deathDegrees, float attackDuration,
+            float hitDuration)
+        {
+            return new CharacterMotionProfileDefinition
+            {
+                role = role,
+                profileId = id,
+                cycleHz = cycleHz,
+                idleBob = idleBob,
+                locomotionBob = locomotionBob,
+                swayDegrees = swayDegrees,
+                forwardLeanDegrees = forwardLeanDegrees,
+                strideDegrees = strideDegrees,
+                attackDegrees = attackDegrees,
+                attackRecoil = attackRecoil,
+                hitDegrees = hitDegrees,
+                deathDegrees = deathDegrees,
+                attackDuration = attackDuration,
+                hitDuration = hitDuration
+            };
+        }
+
         private static EffectStyleDefinition Effect(string key, string colorKey, float duration, float size, int maximum)
         {
             return new EffectStyleDefinition
@@ -1117,6 +1163,8 @@ namespace Telerobot.Game.Editor
                 return "Assets/Game/Runtime/HUD";
             if (id.StartsWith("vfx.", StringComparison.Ordinal))
                 return "Assets/Game/Runtime/Presentation/VisualEffectFactory.cs";
+            if (id == "animation.zombie" || id == "animation.haetae")
+                return "Assets/Game/Runtime/Presentation/CharacterMotionDriver.cs";
             if (id.StartsWith("environment.", StringComparison.Ordinal) || id.StartsWith("interactable.", StringComparison.Ordinal))
                 return "Assets/Game/Runtime/Presentation/WorldArtBuilder.cs";
             return "Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs";

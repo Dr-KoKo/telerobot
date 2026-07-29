@@ -738,32 +738,32 @@ MonoBehaviour:
     displayName: animation.zombie
     category: 6
     priority: 0
-    decision: 3
-    status: 5
+    decision: 0
+    status: 3
     usageRoles:
     - animation.zombie
     assetReferences: []
-    generatedRecipe: 
+    generatedRecipe: Assets/Game/Runtime/Presentation/CharacterMotionDriver.cs
     sourceId: 
-    fallbackId: fallback.animation.transform
+    fallbackId:
     validationTags:
-    - catalog
+    - automated
     - manual-visual
     notes: 
   - id: animation.haetae
     displayName: animation.haetae
     category: 6
     priority: 0
-    decision: 3
-    status: 5
+    decision: 0
+    status: 3
     usageRoles:
     - animation.haetae
     assetReferences: []
-    generatedRecipe: 
+    generatedRecipe: Assets/Game/Runtime/Presentation/CharacterMotionDriver.cs
     sourceId: 
-    fallbackId: fallback.animation.transform
+    fallbackId:
     validationTags:
-    - catalog
+    - automated
     - manual-visual
     notes: 
   - id: animation.medical
