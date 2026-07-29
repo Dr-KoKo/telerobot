@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Telerobot.Game.Core;
 using Telerobot.Game.Data;
 using Telerobot.Game.Runtime;
@@ -16,14 +17,23 @@ namespace Telerobot.Game.Editor
         private const string DataRoot = "Assets/Game/Data/Assets";
         private const string MainMenuScenePath = "Assets/Game/Scenes/MainMenu.unity";
         private const string MvpScenePath = "Assets/Game/Scenes/MVP.unity";
+        private const string VisualThemePath = DataRoot + "/VisualTheme.asset";
+        private const string DesignAssetCatalogPath = DataRoot + "/DesignAssetCatalog.asset";
+        private const string HaetaeGeneralLod0Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_General_LOD0.fbx";
+        private const string HaetaeGeneralLod1Path =
+            "Assets/Game/Art/Models/Haetae/Haetae_General_LOD1.fbx";
 
         [InitializeOnLoadMethod]
         private static void ScheduleFirstImportBuild()
         {
-            if (File.Exists(MainMenuScenePath) && File.Exists(MvpScenePath)) return;
+            if (File.Exists(MainMenuScenePath) && File.Exists(MvpScenePath) &&
+                File.Exists(VisualThemePath) && File.Exists(DesignAssetCatalogPath)) return;
             EditorApplication.delayCall += () =>
             {
-                if ((!File.Exists(MainMenuScenePath) || !File.Exists(MvpScenePath)) && !EditorApplication.isCompiling) BuildAll();
+                if ((!File.Exists(MainMenuScenePath) || !File.Exists(MvpScenePath) ||
+                     !File.Exists(VisualThemePath) || !File.Exists(DesignAssetCatalogPath)) &&
+                    !EditorApplication.isCompiling) BuildAll();
             };
         }
 
@@ -32,6 +42,15 @@ namespace Telerobot.Game.Editor
         {
             EnsureFolder("Assets/Game/Data/Assets");
             EnsureFolder("Assets/Game/Scenes");
+            EnsureFolder("Assets/Game/Art");
+            EnsureFolder("Assets/Game/Art/Concepts");
+            EnsureFolder("Assets/Game/Art/Concepts/Haetae");
+            EnsureFolder("Assets/Game/Art/Fonts");
+            EnsureFolder("Assets/Game/Art/Materials");
+            EnsureFolder("Assets/Game/Art/Menu");
+            EnsureFolder("Assets/Game/Art/Models");
+            EnsureFolder("Assets/Game/Art/Models/Haetae");
+            EnsureFolder("Assets/Game/Art/SourceRecords");
 
             var game = Asset<GameConfigAsset>("GameConfig", item =>
             {
@@ -298,6 +317,8 @@ namespace Telerobot.Game.Editor
 
             var strings = BuildStringTable();
             var runtimeMaterial = MaterialAsset("RuntimeGreyboxMaterial");
+            var visualTheme = BuildVisualTheme();
+            var designAssets = BuildDesignAssetCatalog(visualTheme);
 
             var catalog = Asset<MvpContentCatalog>("MvpBalanceCatalog", item =>
             {
@@ -327,9 +348,13 @@ namespace Telerobot.Game.Editor
                 item.routes = new[] { north, east, south };
                 item.strings = strings;
                 item.runtimeMaterialTemplate = runtimeMaterial;
+                item.visualTheme = visualTheme;
+                item.designAssets = designAssets;
             });
 
             MvpDataMapper.Validate(catalog);
+            visualTheme.Validate();
+            designAssets.Validate();
             BuildScenes(catalog);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -337,6 +362,57 @@ namespace Telerobot.Game.Editor
             PlayerSettings.productName = "TelerobotMVP";
             PlayerSettings.bundleVersion = "0.2.3";
             Debug.Log("Telerobot MVP assets and scenes built successfully: " + MainMenuScenePath + ", " + MvpScenePath);
+        }
+
+        [MenuItem("Tools/Telerobot/Open Guardian Visual Gallery")]
+        public static void OpenVisualGallery()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<VisualThemeDefinitionAsset>(VisualThemePath);
+            var template = AssetDatabase.LoadAssetAtPath<Material>(DataRoot + "/RuntimeGreyboxMaterial.mat");
+            if (theme == null || template == null)
+            {
+                BuildAll();
+                theme = AssetDatabase.LoadAssetAtPath<VisualThemeDefinitionAsset>(VisualThemePath);
+                template = AssetDatabase.LoadAssetAtPath<Material>(DataRoot + "/RuntimeGreyboxMaterial.mat");
+            }
+
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var lightObject = new GameObject("Gallery Directional Light");
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 1.35f;
+            lightObject.transform.rotation = Quaternion.Euler(42f, -28f, 0f);
+
+            var cameraObject = new GameObject("Gallery Camera");
+            var camera = cameraObject.AddComponent<Camera>();
+            cameraObject.transform.position = new Vector3(0f, 4.8f, -15f);
+            cameraObject.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = theme.ColorFor("world.ground", new Color(0.02f, 0.03f, 0.05f));
+
+            var library = new PresentationMaterialLibrary(theme, template);
+            var factory = new LowPolyModelFactory(library);
+            var roles = new[]
+            {
+                PresentationRole.HaetaeGeneralUnit1,
+                PresentationRole.HaetaeGeneralUnit2,
+                PresentationRole.HaetaeMeleePreview,
+                PresentationRole.HaetaeRangedPreview,
+                PresentationRole.HaetaeBalancedPreview,
+                PresentationRole.MedicalRobot,
+                PresentationRole.Runner,
+                PresentationRole.Bruiser,
+                PresentationRole.Ripper
+            };
+            for (var index = 0; index < roles.Length; index++)
+            {
+                var root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                root.name = roles[index].ToString();
+                root.transform.position = new Vector3((index % 5 - 2) * 3f, index < 5 ? 1.2f : -1.8f, 0f);
+                factory.Attach(root, roles[index]);
+            }
+            Selection.activeGameObject = cameraObject;
+            SceneView.lastActiveSceneView?.FrameSelected();
         }
 
         private static ZombieDefinitionAsset Zombie(string name, ZombieType type, int experienceReward, float hp, float speed, float baseDamage,
@@ -723,6 +799,287 @@ namespace Telerobot.Game.Editor
             result.enableInstancing = true;
             EditorUtility.SetDirty(result);
             return result;
+        }
+
+        private static VisualThemeDefinitionAsset BuildVisualTheme()
+        {
+            var colors = new[]
+            {
+                ColorEntry("world.ground", new Color32(17, 24, 33, 255)),
+                ColorEntry("world.structure", new Color32(37, 48, 59, 255)),
+                ColorEntry("world.trim", new Color32(89, 103, 117, 255)),
+                ColorEntry("ally.frame", new Color32(18, 28, 48, 255)),
+                ColorEntry("ally.ceramic", new Color32(211, 202, 176, 255)),
+                ColorEntry("ally.joint", new Color32(12, 15, 22, 255)),
+                ColorEntry("ally.energy", new Color32(33, 212, 242, 255)),
+                ColorEntry("ally.haetae", new Color32(231, 167, 43, 255)),
+                ColorEntry("ally.unit2", new Color32(255, 110, 45, 255)),
+                ColorEntry("ally.medical", new Color32(56, 226, 160, 255)),
+                ColorEntry("enemy.body", new Color32(79, 88, 93, 255)),
+                ColorEntry("enemy.corruption", new Color32(227, 54, 54, 255)),
+                ColorEntry("enemy.ripper", new Color32(239, 63, 158, 255)),
+                ColorEntry("route.north", new Color32(56, 147, 242, 255)),
+                ColorEntry("route.east", new Color32(242, 167, 43, 255)),
+                ColorEntry("route.south", new Color32(166, 80, 214, 255)),
+                ColorEntry("state.safe", new Color32(63, 214, 116, 255)),
+                ColorEntry("state.caution", new Color32(242, 167, 43, 255)),
+                ColorEntry("state.danger", new Color32(242, 60, 60, 255)),
+                ColorEntry("ui.panel", new Color32(8, 18, 28, 235)),
+                ColorEntry("ui.line", new Color32(72, 218, 240, 255)),
+                ColorEntry("ui.text", new Color32(225, 239, 245, 255)),
+                ColorEntry("ui.muted", new Color32(137, 159, 171, 255))
+            };
+
+            var byKey = colors.ToDictionary(item => item.key, item => item.value, StringComparer.Ordinal);
+            var materials = new[]
+            {
+                MaterialRole("world.ground", byKey["world.ground"], 0.05f, 0.25f),
+                MaterialRole("world.structure", byKey["world.structure"], 0.35f, 0.32f),
+                MaterialRole("world.trim", byKey["world.trim"], 0.55f, 0.42f),
+                MaterialRole("ally.armor", new Color32(48, 61, 72, 255), 0.7f, 0.5f),
+                MaterialRole("ally.frame", byKey["ally.frame"], 0.82f, 0.58f),
+                MaterialRole("ally.ceramic", byKey["ally.ceramic"], 0.52f, 0.4f),
+                MaterialRole("ally.joint", byKey["ally.joint"], 0.72f, 0.34f),
+                MaterialRole("ally.energy", byKey["ally.energy"], 0.2f, 0.55f, 2.4f),
+                MaterialRole("ally.haetae", byKey["ally.haetae"], 0.75f, 0.48f, 0.35f),
+                MaterialRole("ally.unit2", byKey["ally.unit2"], 0.35f, 0.48f, 1.1f),
+                MaterialRole("ally.medical", byKey["ally.medical"], 0.2f, 0.45f, 1.8f),
+                MaterialRole("enemy.body", byKey["enemy.body"], 0.15f, 0.28f),
+                MaterialRole("enemy.armor", new Color32(54, 43, 44, 255), 0.55f, 0.32f),
+                MaterialRole("enemy.corruption", byKey["enemy.corruption"], 0.15f, 0.35f, 1.45f),
+                MaterialRole("enemy.ripper", byKey["enemy.ripper"], 0.18f, 0.42f, 2.1f),
+                MaterialRole("state.safe", byKey["state.safe"], 0.15f, 0.4f, 1.25f),
+                MaterialRole("state.caution", byKey["state.caution"], 0.15f, 0.4f, 1.25f),
+                MaterialRole("state.danger", byKey["state.danger"], 0.15f, 0.4f, 1.6f),
+                MaterialRole("ui.panel", byKey["ui.panel"], 0f, 0.25f)
+            };
+
+            return Asset<VisualThemeDefinitionAsset>("VisualTheme", item =>
+            {
+                item.themeId = "guardian-night-v1";
+                item.colors = colors;
+                item.materials = materials;
+                item.menuBackdrop = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    "Assets/Game/Art/Menu/guardian-night-menu.png");
+                item.bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Game/Art/Fonts/NotoSansKR-VF.ttf");
+                item.headingFont = item.bodyFont;
+                item.haetaeGeneralModel =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod0Path);
+                item.haetaeGeneralLod1 =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod1Path);
+                item.effects = new[]
+                {
+                    Effect("combat.hit", "enemy.corruption", 0.12f, 0.22f, 32),
+                    Effect("combat.headshot", "state.caution", 0.18f, 0.28f, 16),
+                    Effect("combat.explosion", "state.caution", 0.35f, 5f, 8),
+                    Effect("robot.attack", "ally.energy", 0.12f, 0.42f, 24),
+                    Effect("robot.heal", "ally.medical", 0.3f, 1f, 8),
+                    Effect("robot.level", "ally.haetae", 0.8f, 1.6f, 4),
+                    Effect("enemy.death", "enemy.corruption", 0.42f, 0.9f, 32)
+                };
+            });
+        }
+
+        private static DesignAssetCatalogAsset BuildDesignAssetCatalog(VisualThemeDefinitionAsset theme)
+        {
+            return Asset<DesignAssetCatalogAsset>("DesignAssetCatalog", item =>
+            {
+                item.catalogVersion = "design-assets-1.0.0";
+                var entries = new List<DesignAssetItemDefinition>();
+                foreach (var id in DesignAssetCatalogAsset.RequiredAssetIds)
+                {
+                    var isFont = id.StartsWith("font.", StringComparison.Ordinal);
+                    var adoptedFont = isFont && theme.bodyFont != null;
+                    var deferred = id.StartsWith("animation.", StringComparison.Ordinal) ||
+                                   id.StartsWith("audio.", StringComparison.Ordinal) ||
+                                   (isFont && !adoptedFont);
+                    var fallback = id.StartsWith("animation.", StringComparison.Ordinal) ? "fallback.animation.transform" :
+                        id.StartsWith("audio.", StringComparison.Ordinal) ? "fallback.audio.procedural" :
+                        id.StartsWith("font.", StringComparison.Ordinal) ? "fallback.font.system" : null;
+                    entries.Add(new DesignAssetItemDefinition
+                    {
+                        id = id,
+                        displayName = id,
+                        category = CategoryFor(id),
+                        priority = id.StartsWith("ui.", StringComparison.Ordinal) ? DesignAssetPriority.P2 : DesignAssetPriority.P1,
+                        decision = adoptedFont ? DesignAssetDecision.Adopt :
+                            deferred ? DesignAssetDecision.Defer : DesignAssetDecision.Make,
+                        status = deferred ? DesignAssetStatus.Deferred : DesignAssetStatus.Integrated,
+                        usageRoles = new[] { id },
+                        assetReferences = adoptedFont ? new UnityEngine.Object[] { theme.bodyFont } : Array.Empty<UnityEngine.Object>(),
+                        generatedRecipe = deferred || adoptedFont ? null : RecipeFor(id),
+                        sourceId = adoptedFont ? "google-noto-sans-kr" : null,
+                        fallbackId = fallback,
+                        validationTags = new[] { deferred ? "catalog" : "automated", "manual-visual" },
+                        notes = id.Contains("haetae.melee") || id.Contains("haetae.ranged") || id.Contains("haetae.balanced")
+                            ? "Visual preview is staged; live mapping remains owned by feature 002."
+                            : string.Empty
+                    });
+                }
+                entries.Add(Fallback("fallback.animation.transform", DesignAssetCategory.Animation,
+                    "Transform movement remains playable without skeletal clips."));
+                entries.Add(Fallback("fallback.audio.procedural", DesignAssetCategory.Audio,
+                    "Procedural runtime tones remain playable."));
+                entries.Add(Fallback("fallback.font.system", DesignAssetCategory.Font,
+                    "Verified operating-system Korean font chain."));
+
+                item.items = entries.ToArray();
+                item.sources = CandidateSources();
+                item.fallbackTheme = theme;
+            });
+        }
+
+        private static SemanticColorDefinition ColorEntry(string key, Color value)
+        {
+            return new SemanticColorDefinition { key = key, value = value };
+        }
+
+        private static MaterialRoleDefinition MaterialRole(string key, Color color, float metallic, float smoothness,
+            float emission = 0f)
+        {
+            return new MaterialRoleDefinition
+            {
+                key = key,
+                baseColor = color,
+                metallic = metallic,
+                smoothness = smoothness,
+                emissionColor = color,
+                emissionIntensity = emission,
+                material = VisualMaterialAsset(key.Replace('.', '-'), color, metallic, smoothness, emission)
+            };
+        }
+
+        private static EffectStyleDefinition Effect(string key, string colorKey, float duration, float size, int maximum)
+        {
+            return new EffectStyleDefinition
+            {
+                key = key,
+                colorKey = colorKey,
+                duration = duration,
+                size = size,
+                maximumConcurrent = maximum
+            };
+        }
+
+        private static Material VisualMaterialAsset(string name, Color color, float metallic, float smoothness, float emission)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) throw new InvalidOperationException("Universal Render Pipeline/Lit shader is unavailable.");
+            var path = "Assets/Game/Art/Materials/" + name + ".mat";
+            var result = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (result == null)
+            {
+                result = new Material(shader) { name = name };
+                AssetDatabase.CreateAsset(result, path);
+            }
+            result.shader = shader;
+            result.color = color;
+            if (result.HasProperty("_BaseColor")) result.SetColor("_BaseColor", color);
+            if (result.HasProperty("_Metallic")) result.SetFloat("_Metallic", metallic);
+            if (result.HasProperty("_Smoothness")) result.SetFloat("_Smoothness", smoothness);
+            if (emission > 0f && result.HasProperty("_EmissionColor"))
+            {
+                result.EnableKeyword("_EMISSION");
+                result.SetColor("_EmissionColor", color * emission);
+            }
+            else result.DisableKeyword("_EMISSION");
+            result.enableInstancing = true;
+            EditorUtility.SetDirty(result);
+            return result;
+        }
+
+        private static DesignAssetCategory CategoryFor(string id)
+        {
+            if (id.StartsWith("character.", StringComparison.Ordinal)) return DesignAssetCategory.Character;
+            if (id.StartsWith("enemy.", StringComparison.Ordinal)) return DesignAssetCategory.Enemy;
+            if (id.StartsWith("environment.", StringComparison.Ordinal) || id.StartsWith("interactable.", StringComparison.Ordinal))
+                return DesignAssetCategory.Environment;
+            if (id.StartsWith("ui.", StringComparison.Ordinal)) return DesignAssetCategory.UI;
+            if (id.StartsWith("vfx.", StringComparison.Ordinal)) return DesignAssetCategory.VFX;
+            if (id.StartsWith("animation.", StringComparison.Ordinal)) return DesignAssetCategory.Animation;
+            if (id.StartsWith("audio.", StringComparison.Ordinal)) return DesignAssetCategory.Audio;
+            if (id.StartsWith("font.", StringComparison.Ordinal)) return DesignAssetCategory.Font;
+            return DesignAssetCategory.Environment;
+        }
+
+        private static string RecipeFor(string id)
+        {
+            if (id == "character.haetae.unit-1" || id == "character.haetae.unit-2")
+                return "ArtSource/Haetae/create_haetae_general.py";
+            if (id.StartsWith("ui.icon.", StringComparison.Ordinal))
+                return "Assets/Game/Runtime/Presentation/RuntimeIconLibrary.cs";
+            if (id.StartsWith("ui.", StringComparison.Ordinal))
+                return "Assets/Game/Runtime/HUD";
+            if (id.StartsWith("vfx.", StringComparison.Ordinal))
+                return "Assets/Game/Runtime/Presentation/VisualEffectFactory.cs";
+            if (id.StartsWith("environment.", StringComparison.Ordinal) || id.StartsWith("interactable.", StringComparison.Ordinal))
+                return "Assets/Game/Runtime/Presentation/WorldArtBuilder.cs";
+            return "Assets/Game/Runtime/Presentation/LowPolyModelFactory.cs";
+        }
+
+        private static DesignAssetItemDefinition Fallback(string id, DesignAssetCategory category, string notes)
+        {
+            return new DesignAssetItemDefinition
+            {
+                id = id,
+                displayName = id,
+                category = category,
+                priority = DesignAssetPriority.P1,
+                decision = DesignAssetDecision.Make,
+                status = DesignAssetStatus.Integrated,
+                usageRoles = new[] { "runtime-fallback" },
+                generatedRecipe = notes,
+                validationTags = new[] { "automated", "fallback" },
+                notes = notes
+            };
+        }
+
+        private static DesignAssetSourceRecord[] CandidateSources()
+        {
+            var sources = new[]
+            {
+                Source("kenney-ui-scifi", "UI Pack - Sci-Fi", "Kenney",
+                    "https://kenney.nl/assets/ui-pack-sci-fi", "CC0-1.0"),
+                Source("kenney-city-roads", "City Kit (Roads)", "Kenney",
+                    "https://kenney.nl/assets/city-kit-roads", "CC0-1.0"),
+                Source("kenney-scifi-sounds", "Sci-fi Sounds", "Kenney",
+                    "https://kenney.nl/assets/sci-fi-sounds", "CC0-1.0"),
+                Source("kenney-digital-audio", "Digital Audio", "Kenney",
+                    "https://www.kenney.nl/assets/digital-audio", "CC0-1.0"),
+                Source("quaternius-scifi-megakit", "Modular Sci-Fi Megakit", "Quaternius",
+                    "https://quaternius.com/packs/modularscifimegakit.html", "CC0-1.0"),
+                Source("quaternius-zombie-apocalypse", "Zombie Apocalypse Kit", "Quaternius",
+                    "https://quaternius.com/packs/zombieapocalypsekit.html", "CC0-1.0"),
+                Source("quaternius-animation-library", "Universal Animation Library", "Quaternius",
+                    "https://quaternius.com/packs/universalanimationlibrary.html", "CC0-1.0"),
+                Source("adobe-mixamo", "Mixamo", "Adobe",
+                    "https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html", "ROYALTY-FREE-SERVICE"),
+                Source("google-noto-sans-kr", "Noto Sans KR", "Google and Adobe",
+                    "https://notofonts.github.io/noto-docs/website/use/", "OFL-1.1")
+            };
+            sources[sources.Length - 1].originalFiles = new[] { "NotoSansKR-VF.ttf" };
+            sources[sources.Length - 1].modifications = new[] { "Copied from the locally installed official Noto Sans KR family; no glyph modification." };
+            sources[sources.Length - 1].noticeText = "Noto Sans KR is licensed under the SIL Open Font License 1.1.";
+            return sources;
+        }
+
+        private static DesignAssetSourceRecord Source(string id, string title, string creator, string url, string license)
+        {
+            return new DesignAssetSourceRecord
+            {
+                id = id,
+                title = title,
+                creator = creator,
+                officialUrl = url,
+                licenseId = license,
+                licenseEvidence = url,
+                retrievedOn = "2026-07-26",
+                originalFiles = Array.Empty<string>(),
+                modifications = Array.Empty<string>(),
+                attributionRequired = license == "OFL-1.1",
+                noticeText = "Candidate only; no runtime file imported.",
+                redistributionNotes = "Review exact downloaded files before adoption."
+            };
         }
 
         private static void EnsureFolder(string path)

@@ -21,6 +21,7 @@ namespace Telerobot.Game.Runtime
         private Color originalColor;
         private Vector3 deathStartScale;
         private Vector3 deathStartPosition;
+        private MaterialPropertyBlock presentationBlock;
 
         public ZombieState State { get; private set; }
         public ZombieType Type { get { return State.Type; } }
@@ -33,6 +34,11 @@ namespace Telerobot.Game.Runtime
         public bool HitFlashActive { get { return !dead && Time.time < hitFlashUntil; } }
         public bool DeathFeedbackActive { get { return dead; } }
         public Color CurrentVisualColor { get { return visualRenderer == null ? Color.clear : visualRenderer.material.color; } }
+
+        public void CompleteNavigationForTests()
+        {
+            waypointIndex = waypoints == null ? 0 : waypoints.Length;
+        }
 
         public void Initialize(MvpGameController owner, string id, ZombieConfig definition, RouteId route,
             Vector3[] routeWaypoints, ZombieDefinitionAsset presentationDefinition)
@@ -57,6 +63,7 @@ namespace Telerobot.Game.Runtime
             if (visualRenderer != null && hitFlashUntil > 0f && Time.time >= hitFlashUntil)
             {
                 visualRenderer.material.color = originalColor;
+                ClearPresentationTint();
                 hitFlashUntil = 0f;
             }
             if (game == null || game.IsFinished) return;
@@ -111,7 +118,7 @@ namespace Telerobot.Game.Runtime
                 candidates.Add(new TargetCandidate(robot.State.Id, TargetKind.Robot, Vector3.Distance(transform.position, robot.transform.position), !robot.State.Health.IsDead));
 
             var selected = TargetingSystem.Select(config, candidates);
-            if (selected == null) return new RuntimeTarget(TargetKind.Base, game.BaseTransform, null, null);
+            if (selected == null) return RuntimeTarget.Base(game.GetBaseAttackPosition(this));
             if (selected.Kind == TargetKind.Player) return new RuntimeTarget(selected.Kind, game.PlayerActor.transform, null, null);
             if (selected.Kind == TargetKind.Robot)
             {
@@ -119,7 +126,7 @@ namespace Telerobot.Game.Runtime
                 return new RuntimeTarget(selected.Kind, robot.transform, robot, null);
             }
 
-            return new RuntimeTarget(TargetKind.Base, game.BaseTransform, null, null);
+            return RuntimeTarget.Base(game.GetBaseAttackPosition(this));
         }
 
         private void Attack(RuntimeTarget target)
@@ -168,6 +175,7 @@ namespace Telerobot.Game.Runtime
         {
             hitFlashUntil = Time.time + presentation.hitFlashSeconds;
             if (visualRenderer != null) visualRenderer.material.color = Color.white;
+            TintPresentation(Color.white);
         }
 
         public void RefreshAfterCoreDamage(DamageSource source)
@@ -178,6 +186,7 @@ namespace Telerobot.Game.Runtime
             deathStartScale = transform.localScale;
             deathStartPosition = transform.position;
             if (visualRenderer != null) visualRenderer.material.color = new Color(0.75f, 0.04f, 0.03f);
+            TintPresentation(new Color(0.75f, 0.04f, 0.03f));
             foreach (var zombieCollider in GetComponentsInChildren<Collider>()) zombieCollider.enabled = false;
             game.NotifyZombieKilled(this, source);
             game.SpawnPulse(transform.position + Vector3.up * VisualHeight * 0.35f, presentation.deathPulseSize,
@@ -209,6 +218,23 @@ namespace Telerobot.Game.Runtime
             transform.Rotate(Vector3.up, 240f * Time.deltaTime, Space.World);
             if (visualRenderer != null)
                 visualRenderer.material.color = Color.Lerp(new Color(0.75f, 0.04f, 0.03f), Color.black, progress);
+            TintPresentation(Color.Lerp(new Color(0.75f, 0.04f, 0.03f), Color.black, progress));
+        }
+
+        private void TintPresentation(Color color)
+        {
+            if (presentationBlock == null) presentationBlock = new MaterialPropertyBlock();
+            presentationBlock.Clear();
+            presentationBlock.SetColor("_BaseColor", color);
+            presentationBlock.SetColor("_Color", color);
+            foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+                if (renderer != visualRenderer) renderer.SetPropertyBlock(presentationBlock);
+        }
+
+        private void ClearPresentationTint()
+        {
+            foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+                if (renderer != visualRenderer) renderer.SetPropertyBlock(null);
         }
 
         private struct RuntimeTarget
@@ -218,9 +244,10 @@ namespace Telerobot.Game.Runtime
             public HaetaeRobotActor Robot;
             public BarrierRuntime Barrier;
             public bool IsNavigationPoint;
-            private Vector3 navigationPosition;
-            public bool HasTarget { get { return IsNavigationPoint || TargetTransform != null; } }
-            public Vector3 Position { get { return IsNavigationPoint ? navigationPosition : TargetTransform.position; } }
+            private bool hasFixedPosition;
+            private Vector3 fixedPosition;
+            public bool HasTarget { get { return hasFixedPosition || TargetTransform != null; } }
+            public Vector3 Position { get { return hasFixedPosition ? fixedPosition : TargetTransform.position; } }
 
             public RuntimeTarget(TargetKind kind, Transform targetTransform, HaetaeRobotActor robot, BarrierRuntime barrier)
             {
@@ -229,7 +256,8 @@ namespace Telerobot.Game.Runtime
                 Robot = robot;
                 Barrier = barrier;
                 IsNavigationPoint = false;
-                navigationPosition = Vector3.zero;
+                hasFixedPosition = false;
+                fixedPosition = Vector3.zero;
             }
 
             public static RuntimeTarget Navigation(Vector3 position)
@@ -241,7 +269,22 @@ namespace Telerobot.Game.Runtime
                     Robot = null,
                     Barrier = null,
                     IsNavigationPoint = true,
-                    navigationPosition = position
+                    hasFixedPosition = true,
+                    fixedPosition = position
+                };
+            }
+
+            public static RuntimeTarget Base(Vector3 position)
+            {
+                return new RuntimeTarget
+                {
+                    Kind = TargetKind.Base,
+                    TargetTransform = null,
+                    Robot = null,
+                    Barrier = null,
+                    IsNavigationPoint = false,
+                    hasFixedPosition = true,
+                    fixedPosition = position
                 };
             }
         }

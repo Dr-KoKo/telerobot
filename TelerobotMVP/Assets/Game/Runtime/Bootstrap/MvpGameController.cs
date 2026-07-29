@@ -44,6 +44,11 @@ namespace Telerobot.Game.Runtime
         private HaetaeSpecializationView specializationView;
         private SettingsOverlay settingsOverlay;
         private RobotSelectionModel robotSelection;
+        private PresentationMaterialLibrary presentationMaterials;
+        private LowPolyModelFactory lowPolyModels;
+        private WorldArtBuilder worldArt;
+        private VisualEffectFactory visualEffects;
+        private RuntimeIconLibrary runtimeIcons;
 
         public MvpContentCatalog Catalog { get { return catalog; } }
         public GameplayConfig Config { get; private set; }
@@ -97,6 +102,10 @@ namespace Telerobot.Game.Runtime
         public float ResupplyRemainingSeconds { get { return resupplyRemaining; } }
         public IReadOnlyList<RouteId> OpenRoutes { get { return phaseState == null ? Array.Empty<RouteId>() : phaseState.OpenRoutes; } }
         public IReadOnlyList<DomainEvent> EventHistory { get { return events == null ? Array.Empty<DomainEvent>() : events.History; } }
+        public PresentationMaterialLibrary PresentationMaterials { get { return presentationMaterials; } }
+        public LowPolyModelFactory PresentationModels { get { return lowPolyModels; } }
+        public RuntimeIconLibrary PresentationIcons { get { return runtimeIcons; } }
+        public int ActivePresentationEffectCount { get { return visualEffects == null ? 0 : visualEffects.ActiveCount; } }
 
         public void SetCatalog(MvpContentCatalog value)
         {
@@ -139,6 +148,12 @@ namespace Telerobot.Game.Runtime
         public void SpawnAllNowForTests()
         {
             while (spawnQueue != null && spawnIndex < spawnQueue.Count) SpawnZombie(spawnQueue[spawnIndex++]);
+        }
+
+        public ZombieActor SpawnZombieForTests(ZombieType type, RouteId route)
+        {
+            SpawnZombie(new SpawnEntry(type, route));
+            return AliveZombies[AliveZombies.Count - 1];
         }
 
         public void ClearCurrentWaveForTests()
@@ -232,6 +247,7 @@ namespace Telerobot.Game.Runtime
             progressionSystem = new HaetaeProgressionSystem();
             warningSystem = new WarningSystem(Config.Warnings, Config.Base);
             events = new DomainEventBus();
+            InitializePresentation();
 
             var runtimeSessionId = "runtime-" + sessionSeed + "-" +
                 DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" +
@@ -279,9 +295,38 @@ namespace Telerobot.Game.Runtime
         private void OnDestroy()
         {
             Time.timeScale = 1f;
-            if (telemetrySink == null) return;
-            telemetrySink.Flush();
-            telemetrySink.Dispose();
+            runtimeIcons?.Dispose();
+            presentationMaterials?.Dispose();
+            if (telemetrySink != null)
+            {
+                telemetrySink.Flush();
+                telemetrySink.Dispose();
+            }
+        }
+
+        private void InitializePresentation()
+        {
+            try
+            {
+                if (catalog.visualTheme != null) catalog.visualTheme.Validate();
+                if (catalog.designAssets != null) catalog.designAssets.Validate();
+                presentationMaterials = new PresentationMaterialLibrary(catalog.visualTheme, catalog.runtimeMaterialTemplate);
+                lowPolyModels = new LowPolyModelFactory(presentationMaterials);
+                worldArt = new WorldArtBuilder(lowPolyModels, presentationMaterials);
+                visualEffects = new VisualEffectFactory(presentationMaterials);
+                runtimeIcons = new RuntimeIconLibrary(catalog.visualTheme);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("Guardian-night presentation could not initialize; greybox fallback remains active. " + exception.Message);
+                runtimeIcons?.Dispose();
+                presentationMaterials?.Dispose();
+                runtimeIcons = null;
+                visualEffects = null;
+                worldArt = null;
+                lowPolyModels = null;
+                presentationMaterials = null;
+            }
         }
 
         private void BuildRuntimeWorld()
@@ -293,17 +338,30 @@ namespace Telerobot.Game.Runtime
             light.intensity = 1.25f;
             lightObject.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
 
-            CreateBox("Ground", new Vector3(0f, -0.55f, 12f), new Vector3(65f, 1f, 70f), new Color(0.09f, 0.11f, 0.14f));
+            var ground = CreateBox("Ground", new Vector3(0f, -0.55f, 12f), new Vector3(65f, 1f, 70f), new Color(0.09f, 0.11f, 0.14f));
+            if (worldArt != null) worldArt.ApplyGround(ground.GetComponent<Renderer>());
             var baseObject = CreateBox("Central Base", ToVector(Config.World.BasePosition), new Vector3(8f, 3f, 8f), new Color(0.12f, 0.42f, 0.58f));
+            ConfigureCentralBaseCollision(baseObject);
             BaseTransform = baseObject.transform;
+            if (worldArt != null) worldArt.DecorateCentralBase(baseObject);
 
-            foreach (var route in catalog.routes) BuildRoute(route);
+            foreach (var route in catalog.routes)
+            {
+                BuildRoute(route);
+                if (worldArt != null) worldArt.BuildRouteLandmark(route, transform);
+            }
             BuildSouthTunnelCover();
 
             ChargingPosition = ToVector(Config.World.ChargingStation);
-            CreateCylinder("Charging Station", ChargingPosition, new Vector3(2f, 0.25f, 2f), new Color(0.05f, 0.85f, 0.95f));
-            CreateCylinder("Safe Ammo Supply", ToVector(Config.World.SafeSupply), new Vector3(1.4f, 0.35f, 1.4f), new Color(0.2f, 0.8f, 0.25f));
-            CreateCylinder("Risky Ammo Supply", ToVector(Config.World.RiskySupply), new Vector3(1.4f, 0.35f, 1.4f), new Color(1f, 0.55f, 0.08f));
+            var chargingStation = CreateCylinder("Charging Station", ChargingPosition, new Vector3(2f, 0.25f, 2f), new Color(0.05f, 0.85f, 0.95f));
+            var safeSupply = CreateCylinder("Safe Ammo Supply", ToVector(Config.World.SafeSupply), new Vector3(1.4f, 0.35f, 1.4f), new Color(0.2f, 0.8f, 0.25f));
+            var riskySupply = CreateCylinder("Risky Ammo Supply", ToVector(Config.World.RiskySupply), new Vector3(1.4f, 0.35f, 1.4f), new Color(1f, 0.55f, 0.08f));
+            if (worldArt != null)
+            {
+                worldArt.DecorateChargingStation(chargingStation);
+                worldArt.DecorateSupply(safeSupply, false);
+                worldArt.DecorateSupply(riskySupply, true);
+            }
 
             var playerObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             playerObject.name = "Field Commander";
@@ -315,6 +373,8 @@ namespace Telerobot.Game.Runtime
             var playerInput = playerObject.AddComponent<InputSystemPlayerInput>();
             playerInput.Initialize(inputActions);
             PlayerActor.Initialize(this, PlayerState, Config.Weapon, playerInput);
+            lowPolyModels?.Attach(playerObject, PresentationRole.PlayerCommander);
+            PlayerActor.RefreshBodyVisibility();
 
             SpawnRobot("haetae-1", ToVector(Config.World.RobotStarts[0]), RouteId.NorthRoad, new Color(0.95f, 0.7f, 0.1f));
             SpawnRobot("haetae-2", ToVector(Config.World.RobotStarts[1]), RouteId.NorthRoad, new Color(1f, 0.35f, 0.08f));
@@ -427,6 +487,9 @@ namespace Telerobot.Game.Runtime
             ApplyColor(actorObject, asset.displayColor);
             var actor = actorObject.AddComponent<ZombieActor>();
             actor.Initialize(this, "zombie-" + zombieSerial, config, entry.Route, approachPath, asset);
+            var visualRole = entry.Type == ZombieType.Runner ? PresentationRole.Runner :
+                entry.Type == ZombieType.Bruiser ? PresentationRole.Bruiser : PresentationRole.Ripper;
+            lowPolyModels?.Attach(actorObject, visualRole);
             AliveZombies.Add(actor);
             Emit("zombie_spawned", "type", entry.Type.ToString(), "routeId", entry.Route.ToString());
             if (entry.Type == ZombieType.Ripper) Emit("ripper_spawned", "routeId", entry.Route.ToString());
@@ -504,6 +567,59 @@ namespace Telerobot.Game.Runtime
                 result += delta.normalized * (1f - distance / desired);
             }
             return result;
+        }
+
+        public Vector3 GetBaseAttackPosition(ZombieActor actor)
+        {
+            var center = BaseTransform == null ? ToVector(Config.World.BasePosition) : BaseTransform.position;
+            var route = actor == null || actor.State == null ? null : catalog.Route(actor.State.Route);
+            var approach = route != null && route.waypoints != null && route.waypoints.Length > 0
+                ? route.waypoints[route.waypoints.Length - 1] - center
+                : actor == null ? Vector3.forward : actor.transform.position - center;
+            approach.y = 0f;
+            if (approach.sqrMagnitude < 0.001f) approach = Vector3.forward;
+            approach.Normalize();
+
+            var blocker = BaseTransform == null ? null : BaseTransform.GetComponent<BoxCollider>();
+            var extents = blocker == null ? new Vector3(4f, 1.5f, 4f) : blocker.bounds.extents;
+            var ordinal = ZombieOrdinal(actor == null || actor.State == null ? null : actor.State.Id);
+            var lateral = (ordinal % 7 - 3) * 0.95f;
+            var row = (ordinal / 7) % 3;
+            const float edgePadding = 0.15f;
+            const float rowSpacing = 0.75f;
+            var result = center;
+
+            if (Mathf.Abs(approach.x) >= Mathf.Abs(approach.z))
+            {
+                var sign = Mathf.Sign(approach.x);
+                if (Mathf.Approximately(sign, 0f)) sign = 1f;
+                var projected = center.z + approach.z / Mathf.Max(0.001f, Mathf.Abs(approach.x)) * extents.x;
+                result.x = center.x + sign * (extents.x + edgePadding + row * rowSpacing);
+                result.z = Mathf.Clamp(projected + lateral,
+                    center.z - extents.z + 0.35f, center.z + extents.z - 0.35f);
+            }
+            else
+            {
+                var sign = Mathf.Sign(approach.z);
+                if (Mathf.Approximately(sign, 0f)) sign = 1f;
+                var projected = center.x + approach.x / Mathf.Max(0.001f, Mathf.Abs(approach.z)) * extents.z;
+                result.z = center.z + sign * (extents.z + edgePadding + row * rowSpacing);
+                result.x = Mathf.Clamp(projected + lateral,
+                    center.x - extents.x + 0.35f, center.x + extents.x - 0.35f);
+            }
+
+            result.y = actor == null ? center.y : actor.transform.position.y;
+            return result;
+        }
+
+        private static int ZombieOrdinal(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return 0;
+            var separator = id.LastIndexOf('-');
+            if (separator >= 0 && separator + 1 < id.Length &&
+                int.TryParse(id.Substring(separator + 1), out var serial))
+                return Math.Max(0, serial - 1);
+            return 0;
         }
 
         private void HandlePhaseClear()
@@ -863,6 +979,11 @@ namespace Telerobot.Game.Runtime
         public void NotifyRipperAttack(HaetaeRobotActor robot)
         {
             Emit("ripper_attacked_robot", "robotId", robot.State.Id, "batteryDrained", Config.Battery.RipperHitDrain.ToString("F1"));
+            if (visualEffects != null)
+                visualEffects.Pulse(robot.transform.position + Vector3.up * 0.45f, 0.85f,
+                    catalog.visualTheme == null ? new Color(1f, 0.08f, 0.55f) :
+                    catalog.visualTheme.ColorFor("enemy.ripper", new Color(1f, 0.08f, 0.55f)),
+                    0.18f, "Ripper Anti-Robot Telegraph");
         }
 
         public bool TryGetNearbySupply(Vector3 playerPosition, out SupplyKind kind)
@@ -926,6 +1047,7 @@ namespace Telerobot.Game.Runtime
                     barrierObject.transform.rotation = Quaternion.LookRotation(inwardDirection.normalized, Vector3.up);
                 var barrier = barrierObject.AddComponent<BarrierRuntime>();
                 barrier.Initialize(this, route, Config.Barrier.MaxHealth);
+                worldArt?.DecorateBarrier(barrierObject);
                 barriers[route] = barrier;
             }
         }
@@ -945,6 +1067,7 @@ namespace Telerobot.Game.Runtime
             ApplyColor(medicalObject, new Color(0.2f, 1f, 0.65f));
             MedicalActor = medicalObject.AddComponent<MedicalRobotActor>();
             MedicalActor.Initialize(this, Config.Medical);
+            lowPolyModels?.Attach(medicalObject, PresentationRole.MedicalRobot);
             var zone = CreateCylinder("Medical Zone", medicalObject.transform.position + Vector3.down * 0.65f,
                 new Vector3(Config.Medical.Radius * 2f, 0.05f, Config.Medical.Radius * 2f), new Color(0.1f, 0.75f, 0.45f, 0.2f));
             var collider = zone.GetComponent<Collider>();
@@ -992,13 +1115,9 @@ namespace Telerobot.Game.Runtime
         public GameObject SpawnPulse(Vector3 position, float diameter, Color color, float lifetime = 0.25f,
             string effectName = "Effect Pulse", float lightIntensity = 0f)
         {
-            var pulse = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            pulse.name = effectName;
-            pulse.transform.position = position;
-            pulse.transform.localScale = Vector3.one * diameter;
-            ApplyColor(pulse, color);
-            var collider = pulse.GetComponent<Collider>();
-            if (collider != null) collider.enabled = false;
+            var pulse = visualEffects == null
+                ? CreateFallbackPulse(position, diameter, color, lifetime, effectName)
+                : visualEffects.Pulse(position, diameter, color, lifetime, effectName);
             if (lightIntensity > 0f)
             {
                 var pulseLight = pulse.AddComponent<Light>();
@@ -1007,6 +1126,18 @@ namespace Telerobot.Game.Runtime
                 pulseLight.intensity = lightIntensity;
                 pulseLight.range = Mathf.Max(1.5f, diameter * 7f);
             }
+            return pulse;
+        }
+
+        private GameObject CreateFallbackPulse(Vector3 position, float diameter, Color color, float lifetime, string effectName)
+        {
+            var pulse = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            pulse.name = effectName;
+            pulse.transform.position = position;
+            pulse.transform.localScale = Vector3.one * diameter;
+            ApplyColor(pulse, color);
+            var collider = pulse.GetComponent<Collider>();
+            if (collider != null) collider.enabled = false;
             Destroy(pulse, Mathf.Max(0.01f, lifetime));
             return pulse;
         }
@@ -1019,6 +1150,17 @@ namespace Telerobot.Game.Runtime
             result.transform.localScale = scale;
             ApplyColor(result, color);
             return result;
+        }
+
+        private static void ConfigureCentralBaseCollision(GameObject baseObject)
+        {
+            if (baseObject == null) return;
+            var blocker = baseObject.GetComponent<BoxCollider>();
+            if (blocker == null) blocker = baseObject.AddComponent<BoxCollider>();
+            blocker.center = Vector3.zero;
+            blocker.size = Vector3.one;
+            blocker.isTrigger = false;
+            blocker.enabled = true;
         }
 
         private GameObject CreateCylinder(string name, Vector3 position, Vector3 scale, Color color)

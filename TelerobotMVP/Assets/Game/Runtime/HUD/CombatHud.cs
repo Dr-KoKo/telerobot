@@ -303,7 +303,7 @@ namespace Telerobot.Game.Runtime
                 fontSize = 18,
                 alignment = TextAnchor.MiddleLeft,
                 clipping = TextClippingMode,
-                normal = { textColor = Color.white }
+                normal = { textColor = GuardianGuiTheme.ResolveColor(game.Catalog, "ui.text", Color.white) }
             };
             header = new GUIStyle(label)
             {
@@ -330,6 +330,13 @@ namespace Telerobot.Game.Runtime
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter
             };
+            GuardianGuiTheme.ApplyFont(label, game.Catalog, false);
+            GuardianGuiTheme.ApplyFont(header, game.Catalog, true);
+            GuardianGuiTheme.ApplyFont(centered, game.Catalog, true);
+            GuardianGuiTheme.ApplyFont(robotDetail, game.Catalog, false);
+            GuardianGuiTheme.ApplyFont(robotMastery, game.Catalog, false);
+            GuardianGuiTheme.ApplyFont(barText, game.Catalog, false);
+            GuardianGuiTheme.ApplyFont(selectionMarker, game.Catalog, true);
             bodyLineHeight = Mathf.Ceil(Mathf.Max(MinimumBodyLineHeight,
                 label.CalcHeight(new GUIContent(strings.Get("hud.player") + " Ag 100 / 100"), 340f) + 8f));
             headerLineHeight = Mathf.Ceil(Mathf.Max(MinimumHeaderLineHeight,
@@ -472,9 +479,7 @@ namespace Telerobot.Game.Runtime
             if (game.SettingsOpen) return;
 
             var panel = new Rect(18f, 18f, 380f, StatusPanelHeight);
-            GUI.color = new Color(0.02f, 0.04f, 0.07f, 0.86f);
-            GUI.Box(panel, GUIContent.none);
-            GUI.color = Color.white;
+            GuardianGuiTheme.DrawPanel(panel, game.Catalog, 0.86f);
 
             var baseHealth = game.BaseState.Health;
             var playerHealth = game.PlayerState.Health;
@@ -553,9 +558,7 @@ namespace Telerobot.Game.Runtime
 
             var routePanelHeight = 14f + headerLineHeight + game.OpenRoutes.Count * bodyLineHeight + 10f;
             var routePanel = new Rect(Screen.width - 270f, 18f, 252f, routePanelHeight);
-            GUI.color = new Color(0.02f, 0.04f, 0.07f, 0.82f);
-            GUI.Box(routePanel, GUIContent.none);
-            GUI.color = Color.white;
+            GuardianGuiTheme.DrawPanel(routePanel, game.Catalog, 0.82f);
             var routeY = routePanel.y + 5f;
             GUI.Label(new Rect(routePanel.x + 18f, routeY, 220f, headerLineHeight), strings.Get("hud.routes"), header);
             routeY += headerLineHeight;
@@ -592,17 +595,18 @@ namespace Telerobot.Game.Runtime
 
             if (Time.unscaledTime < ripperUntil)
             {
-                GUI.color = new Color(0.8f, 0.05f, 0.12f, 0.92f);
-                GUI.Box(new Rect(Screen.width * 0.5f - 110f, 80f, 220f, 46f), GUIContent.none);
-                GUI.color = Color.white;
+                var ripperPanel = new Rect(Screen.width * 0.5f - 110f, 80f, 220f, 46f);
+                GuardianGuiTheme.DrawPanel(ripperPanel, game.Catalog, 0.94f, 3f);
+                var previous = GUI.color;
+                GUI.color = GuardianGuiTheme.ResolveColor(game.Catalog, "enemy.ripper", new Color(0.9f, 0.08f, 0.4f));
                 GUI.Label(new Rect(Screen.width * 0.5f - 105f, 86f, 210f, 34f), strings.Get("hud.ripper"), centered);
+                GUI.color = previous;
             }
 
             if (Time.unscaledTime < radioUntil && !string.IsNullOrEmpty(radioCaption))
             {
-                GUI.color = new Color(0.02f, 0.08f, 0.12f, 0.93f);
-                GUI.Box(new Rect(Screen.width * 0.5f - 330f, Screen.height - 110f, 660f, 58f), GUIContent.none);
-                GUI.color = Color.white;
+                GuardianGuiTheme.DrawPanel(new Rect(Screen.width * 0.5f - 330f, Screen.height - 110f, 660f, 58f),
+                    game.Catalog, 0.93f);
                 GUI.Label(new Rect(Screen.width * 0.5f - 315f, Screen.height - 100f, 630f, 40f), radioCaption, centered);
             }
 

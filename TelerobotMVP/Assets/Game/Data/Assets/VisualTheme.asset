@@ -1,0 +1,237 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f06e4f8800b4a245dfd0c12c05ea760c, type: 3}
+  m_Name: VisualTheme
+  m_EditorClassIdentifier: Game.Data::Telerobot.Game.Data.VisualThemeDefinitionAsset
+  themeId: guardian-night-v1
+  colors:
+  - key: world.ground
+    value: {r: 0.06666667, g: 0.09411765, b: 0.12941177, a: 1}
+  - key: world.structure
+    value: {r: 0.14509805, g: 0.1882353, b: 0.23137255, a: 1}
+  - key: world.trim
+    value: {r: 0.34901962, g: 0.40392157, b: 0.45882353, a: 1}
+  - key: ally.frame
+    value: {r: 0.07058824, g: 0.10980392, b: 0.1882353, a: 1}
+  - key: ally.ceramic
+    value: {r: 0.827451, g: 0.7921569, b: 0.6901961, a: 1}
+  - key: ally.joint
+    value: {r: 0.047058824, g: 0.05882353, b: 0.08627451, a: 1}
+  - key: ally.energy
+    value: {r: 0.12941177, g: 0.83137256, b: 0.9490196, a: 1}
+  - key: ally.haetae
+    value: {r: 0.90588236, g: 0.654902, b: 0.16862746, a: 1}
+  - key: ally.unit2
+    value: {r: 1, g: 0.43137255, b: 0.1764706, a: 1}
+  - key: ally.medical
+    value: {r: 0.21960784, g: 0.8862745, b: 0.627451, a: 1}
+  - key: enemy.body
+    value: {r: 0.30980393, g: 0.34509805, b: 0.3647059, a: 1}
+  - key: enemy.corruption
+    value: {r: 0.8901961, g: 0.21176471, b: 0.21176471, a: 1}
+  - key: enemy.ripper
+    value: {r: 0.9372549, g: 0.24705882, b: 0.61960787, a: 1}
+  - key: route.north
+    value: {r: 0.21960784, g: 0.5764706, b: 0.9490196, a: 1}
+  - key: route.east
+    value: {r: 0.9490196, g: 0.654902, b: 0.16862746, a: 1}
+  - key: route.south
+    value: {r: 0.6509804, g: 0.3137255, b: 0.8392157, a: 1}
+  - key: state.safe
+    value: {r: 0.24705882, g: 0.8392157, b: 0.45490196, a: 1}
+  - key: state.caution
+    value: {r: 0.9490196, g: 0.654902, b: 0.16862746, a: 1}
+  - key: state.danger
+    value: {r: 0.9490196, g: 0.23529412, b: 0.23529412, a: 1}
+  - key: ui.panel
+    value: {r: 0.03137255, g: 0.07058824, b: 0.10980392, a: 0.92156863}
+  - key: ui.line
+    value: {r: 0.28235295, g: 0.85490197, b: 0.9411765, a: 1}
+  - key: ui.text
+    value: {r: 0.88235295, g: 0.9372549, b: 0.9607843, a: 1}
+  - key: ui.muted
+    value: {r: 0.5372549, g: 0.62352943, b: 0.67058825, a: 1}
+  materials:
+  - key: world.ground
+    baseColor: {r: 0.06666667, g: 0.09411765, b: 0.12941177, a: 1}
+    emissionColor: {r: 0.06666667, g: 0.09411765, b: 0.12941177, a: 1}
+    emissionIntensity: 0
+    metallic: 0.05
+    smoothness: 0.25
+    material: {fileID: 2100000, guid: 4c05cac74f12f3545891fd07c223e35f, type: 2}
+  - key: world.structure
+    baseColor: {r: 0.14509805, g: 0.1882353, b: 0.23137255, a: 1}
+    emissionColor: {r: 0.14509805, g: 0.1882353, b: 0.23137255, a: 1}
+    emissionIntensity: 0
+    metallic: 0.35
+    smoothness: 0.32
+    material: {fileID: 2100000, guid: e4360fe4f4011c943a7949b6a46645da, type: 2}
+  - key: world.trim
+    baseColor: {r: 0.34901962, g: 0.40392157, b: 0.45882353, a: 1}
+    emissionColor: {r: 0.34901962, g: 0.40392157, b: 0.45882353, a: 1}
+    emissionIntensity: 0
+    metallic: 0.55
+    smoothness: 0.42
+    material: {fileID: 2100000, guid: 2356a029f5fcf544c8e117a6d8992c1e, type: 2}
+  - key: ally.armor
+    baseColor: {r: 0.1882353, g: 0.23921569, b: 0.28235295, a: 1}
+    emissionColor: {r: 0.1882353, g: 0.23921569, b: 0.28235295, a: 1}
+    emissionIntensity: 0
+    metallic: 0.7
+    smoothness: 0.5
+    material: {fileID: 2100000, guid: f5414e89821a89640bdfcf92d875d04a, type: 2}
+  - key: ally.frame
+    baseColor: {r: 0.07058824, g: 0.10980392, b: 0.1882353, a: 1}
+    emissionColor: {r: 0.07058824, g: 0.10980392, b: 0.1882353, a: 1}
+    emissionIntensity: 0
+    metallic: 0.82
+    smoothness: 0.58
+    material: {fileID: 2100000, guid: 7bb1515319e26a44c8a09807365f2d6a, type: 2}
+  - key: ally.ceramic
+    baseColor: {r: 0.827451, g: 0.7921569, b: 0.6901961, a: 1}
+    emissionColor: {r: 0.827451, g: 0.7921569, b: 0.6901961, a: 1}
+    emissionIntensity: 0
+    metallic: 0.52
+    smoothness: 0.4
+    material: {fileID: 2100000, guid: 5acdcdcd5db55394ba6540783d2f6b4f, type: 2}
+  - key: ally.joint
+    baseColor: {r: 0.047058824, g: 0.05882353, b: 0.08627451, a: 1}
+    emissionColor: {r: 0.047058824, g: 0.05882353, b: 0.08627451, a: 1}
+    emissionIntensity: 0
+    metallic: 0.72
+    smoothness: 0.34
+    material: {fileID: 2100000, guid: 73782ce0d6476a64e973f680ab107073, type: 2}
+  - key: ally.energy
+    baseColor: {r: 0.12941177, g: 0.83137256, b: 0.9490196, a: 1}
+    emissionColor: {r: 0.12941177, g: 0.83137256, b: 0.9490196, a: 1}
+    emissionIntensity: 2.4
+    metallic: 0.2
+    smoothness: 0.55
+    material: {fileID: 2100000, guid: 8c10ba9f6c878dc46909541dbb3223e4, type: 2}
+  - key: ally.haetae
+    baseColor: {r: 0.90588236, g: 0.654902, b: 0.16862746, a: 1}
+    emissionColor: {r: 0.90588236, g: 0.654902, b: 0.16862746, a: 1}
+    emissionIntensity: 0.35
+    metallic: 0.75
+    smoothness: 0.48
+    material: {fileID: 2100000, guid: ab03892835d673b4aac5448dba6c08a2, type: 2}
+  - key: ally.unit2
+    baseColor: {r: 1, g: 0.43137255, b: 0.1764706, a: 1}
+    emissionColor: {r: 1, g: 0.43137255, b: 0.1764706, a: 1}
+    emissionIntensity: 1.1
+    metallic: 0.35
+    smoothness: 0.48
+    material: {fileID: 2100000, guid: 3bdbfed39f414084dbf5874967073e81, type: 2}
+  - key: ally.medical
+    baseColor: {r: 0.21960784, g: 0.8862745, b: 0.627451, a: 1}
+    emissionColor: {r: 0.21960784, g: 0.8862745, b: 0.627451, a: 1}
+    emissionIntensity: 1.8
+    metallic: 0.2
+    smoothness: 0.45
+    material: {fileID: 2100000, guid: 17924ebf80157be42bab52d4c85279a1, type: 2}
+  - key: enemy.body
+    baseColor: {r: 0.30980393, g: 0.34509805, b: 0.3647059, a: 1}
+    emissionColor: {r: 0.30980393, g: 0.34509805, b: 0.3647059, a: 1}
+    emissionIntensity: 0
+    metallic: 0.15
+    smoothness: 0.28
+    material: {fileID: 2100000, guid: 7cde4e5c8e602834daf7067b6bda9028, type: 2}
+  - key: enemy.armor
+    baseColor: {r: 0.21176471, g: 0.16862746, b: 0.17254902, a: 1}
+    emissionColor: {r: 0.21176471, g: 0.16862746, b: 0.17254902, a: 1}
+    emissionIntensity: 0
+    metallic: 0.55
+    smoothness: 0.32
+    material: {fileID: 2100000, guid: 2d270ebf75650e14282ec28252259008, type: 2}
+  - key: enemy.corruption
+    baseColor: {r: 0.8901961, g: 0.21176471, b: 0.21176471, a: 1}
+    emissionColor: {r: 0.8901961, g: 0.21176471, b: 0.21176471, a: 1}
+    emissionIntensity: 1.45
+    metallic: 0.15
+    smoothness: 0.35
+    material: {fileID: 2100000, guid: 562d8458664a9bb4db7a83f8d8155f12, type: 2}
+  - key: enemy.ripper
+    baseColor: {r: 0.9372549, g: 0.24705882, b: 0.61960787, a: 1}
+    emissionColor: {r: 0.9372549, g: 0.24705882, b: 0.61960787, a: 1}
+    emissionIntensity: 2.1
+    metallic: 0.18
+    smoothness: 0.42
+    material: {fileID: 2100000, guid: 220cb97be6c2f5245a1ca9f2f0d72f62, type: 2}
+  - key: state.safe
+    baseColor: {r: 0.24705882, g: 0.8392157, b: 0.45490196, a: 1}
+    emissionColor: {r: 0.24705882, g: 0.8392157, b: 0.45490196, a: 1}
+    emissionIntensity: 1.25
+    metallic: 0.15
+    smoothness: 0.4
+    material: {fileID: 2100000, guid: 87b515348d81cf04895848a5c22ea40e, type: 2}
+  - key: state.caution
+    baseColor: {r: 0.9490196, g: 0.654902, b: 0.16862746, a: 1}
+    emissionColor: {r: 0.9490196, g: 0.654902, b: 0.16862746, a: 1}
+    emissionIntensity: 1.25
+    metallic: 0.15
+    smoothness: 0.4
+    material: {fileID: 2100000, guid: cd75fb0a2114cfe4bbbbefab850ba7e2, type: 2}
+  - key: state.danger
+    baseColor: {r: 0.9490196, g: 0.23529412, b: 0.23529412, a: 1}
+    emissionColor: {r: 0.9490196, g: 0.23529412, b: 0.23529412, a: 1}
+    emissionIntensity: 1.6
+    metallic: 0.15
+    smoothness: 0.4
+    material: {fileID: 2100000, guid: 4bd732ad4c64051478819244e69916d0, type: 2}
+  - key: ui.panel
+    baseColor: {r: 0.03137255, g: 0.07058824, b: 0.10980392, a: 0.92156863}
+    emissionColor: {r: 0.03137255, g: 0.07058824, b: 0.10980392, a: 0.92156863}
+    emissionIntensity: 0
+    metallic: 0
+    smoothness: 0.25
+    material: {fileID: 2100000, guid: b7b8438fba2600240a0a52553d6079d3, type: 2}
+  effects:
+  - key: combat.hit
+    colorKey: enemy.corruption
+    duration: 0.12
+    size: 0.22
+    maximumConcurrent: 32
+  - key: combat.headshot
+    colorKey: state.caution
+    duration: 0.18
+    size: 0.28
+    maximumConcurrent: 16
+  - key: combat.explosion
+    colorKey: state.caution
+    duration: 0.35
+    size: 5
+    maximumConcurrent: 8
+  - key: robot.attack
+    colorKey: ally.energy
+    duration: 0.12
+    size: 0.42
+    maximumConcurrent: 24
+  - key: robot.heal
+    colorKey: ally.medical
+    duration: 0.3
+    size: 1
+    maximumConcurrent: 8
+  - key: robot.level
+    colorKey: ally.haetae
+    duration: 0.8
+    size: 1.6
+    maximumConcurrent: 4
+  - key: enemy.death
+    colorKey: enemy.corruption
+    duration: 0.42
+    size: 0.9
+    maximumConcurrent: 32
+  menuBackdrop: {fileID: 2800000, guid: 88307b291c86fc5e1310d8b45f018c04, type: 3}
+  bodyFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
+  headingFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
+  haetaeGeneralModel: {fileID: 919132149155446097, guid: 9a410d695a8df0046a740b32eed17167, type: 3}
+  haetaeGeneralLod1: {fileID: 919132149155446097, guid: f993abc63236ce748b2b071dac887c46, type: 3}

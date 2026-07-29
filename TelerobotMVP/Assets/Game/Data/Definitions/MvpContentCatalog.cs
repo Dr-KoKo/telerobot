@@ -32,6 +32,8 @@ namespace Telerobot.Game.Data
         public RouteDefinitionAsset[] routes;
         public StringTableAsset strings;
         public Material runtimeMaterialTemplate;
+        public VisualThemeDefinitionAsset visualTheme;
+        public DesignAssetCatalogAsset designAssets;
 
         public ZombieDefinitionAsset Zombie(ZombieType type)
         {

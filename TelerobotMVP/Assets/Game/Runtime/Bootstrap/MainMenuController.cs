@@ -10,6 +10,7 @@ namespace Telerobot.Game.Runtime
         [SerializeField] private MvpContentCatalog catalog;
         private GUIStyle titleStyle;
         private GUIStyle subtitleStyle;
+        private GUIStyle buttonStyle;
 
         public MvpContentCatalog Catalog { get { return catalog; } }
         public SettingsOverlay Settings { get; private set; }
@@ -75,14 +76,17 @@ namespace Telerobot.Game.Runtime
                 fontSize = 48,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = new Color(0.25f, 0.9f, 1f) }
+                normal = { textColor = GuardianGuiTheme.ResolveColor(catalog, "ally.haetae", new Color(0.9f, 0.66f, 0.17f)) }
             };
             subtitleStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 20,
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = new Color(0.78f, 0.86f, 0.92f) }
+                normal = { textColor = GuardianGuiTheme.ResolveColor(catalog, "ui.text", new Color(0.78f, 0.86f, 0.92f)) }
             };
+            GuardianGuiTheme.ApplyFont(titleStyle, catalog, true);
+            GuardianGuiTheme.ApplyFont(subtitleStyle, catalog, false);
+            buttonStyle = GuardianGuiTheme.CreateButton(catalog, 20);
         }
 
         private void OnGUI()
@@ -90,19 +94,18 @@ namespace Telerobot.Game.Runtime
             if (catalog == null || SettingsOpen) return;
             EnsureStyles();
             var strings = catalog.strings;
-            GUI.color = new Color(0.015f, 0.035f, 0.065f, 1f);
-            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
-            GUI.color = Color.white;
+            GuardianGuiTheme.DrawBackdrop(catalog);
 
             var centerX = Screen.width * 0.5f;
             var top = Mathf.Max(55f, Screen.height * 0.16f);
+            GuardianGuiTheme.DrawPanel(new Rect(centerX - 470f, top - 20f, 940f, 150f), catalog, 0.58f);
             GUI.Label(new Rect(centerX - 430f, top, 860f, 82f), strings.Get("menu.title"), titleStyle);
             GUI.Label(new Rect(centerX - 430f, top + 76f, 860f, 46f), strings.Get("menu.subtitle"), subtitleStyle);
 
             var buttonTop = top + 180f;
-            if (GUI.Button(new Rect(centerX - 150f, buttonTop, 300f, 58f), strings.Get("menu.play"))) StartGame();
-            if (GUI.Button(new Rect(centerX - 150f, buttonTop + 76f, 300f, 58f), strings.Get("menu.settings"))) OpenSettings();
-            if (GUI.Button(new Rect(centerX - 150f, buttonTop + 152f, 300f, 58f), strings.Get("menu.quit"))) QuitGame();
+            if (GUI.Button(new Rect(centerX - 150f, buttonTop, 300f, 58f), strings.Get("menu.play"), buttonStyle)) StartGame();
+            if (GUI.Button(new Rect(centerX - 150f, buttonTop + 76f, 300f, 58f), strings.Get("menu.settings"), buttonStyle)) OpenSettings();
+            if (GUI.Button(new Rect(centerX - 150f, buttonTop + 152f, 300f, 58f), strings.Get("menu.quit"), buttonStyle)) QuitGame();
 
             GUI.Label(new Rect(centerX - 450f, Screen.height - 78f, 900f, 38f), strings.Get("menu.controls_hint"), subtitleStyle);
         }

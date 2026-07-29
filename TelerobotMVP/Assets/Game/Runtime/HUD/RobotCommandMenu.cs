@@ -8,6 +8,8 @@ namespace Telerobot.Game.Runtime
     {
         private MvpGameController game;
         private int routeIndex;
+        private GUIStyle buttonStyle;
+        private GUIStyle headerStyle;
         public bool IsOpen { get; private set; }
 
         public void Initialize(MvpGameController owner)
@@ -37,11 +39,16 @@ namespace Telerobot.Game.Runtime
             var strings = game.Catalog.strings;
             var route = game.OpenRoutes.Count == 0 ? RouteId.NorthRoad : game.OpenRoutes[Mathf.Clamp(routeIndex, 0, game.OpenRoutes.Count - 1)];
             var panel = new Rect(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 140f, 360f, 280f);
-            GUI.color = new Color(0.02f, 0.04f, 0.08f, 0.96f);
-            GUI.Box(panel, GUIContent.none);
-            GUI.color = Color.white;
+            if (buttonStyle == null)
+            {
+                buttonStyle = GuardianGuiTheme.CreateButton(game.Catalog, 17);
+                headerStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold };
+                headerStyle.normal.textColor = GuardianGuiTheme.ResolveColor(game.Catalog, "ally.haetae", Color.yellow);
+                GuardianGuiTheme.ApplyFont(headerStyle, game.Catalog, true);
+            }
+            GuardianGuiTheme.DrawPanel(panel, game.Catalog, 0.96f, 3f);
             var selectionLabel = game.AreAllRobotsSelected ? strings.Get("hud.all_robots") : game.SelectedRobot.State.Id;
-            GUI.Label(new Rect(panel.x + 22f, panel.y + 18f, 320f, 28f), strings.Get("hud.command") + " — " + selectionLabel);
+            GUI.Label(new Rect(panel.x + 22f, panel.y + 18f, 320f, 28f), strings.Get("hud.command") + " — " + selectionLabel, headerStyle);
             GUI.Label(new Rect(panel.x + 22f, panel.y + 48f, 320f, 26f), strings.Get("hud.target") + ": " + strings.Get(game.Catalog.Route(route).displayNameKey) + "  [Q]");
 
             DrawCommand(new Rect(panel.x + 30f, panel.y + 82f, 300f, 44f), "cmd.defend", RobotCommand.DefendPosition, route);
@@ -51,7 +58,7 @@ namespace Telerobot.Game.Runtime
 
         private void DrawCommand(Rect rect, string key, RobotCommand command, RouteId route)
         {
-            if (!GUI.Button(rect, game.Catalog.strings.Get(key))) return;
+            if (!GUI.Button(rect, game.Catalog.strings.Get(key), buttonStyle)) return;
             game.IssueCommandToSelected(command, route);
             Close();
         }

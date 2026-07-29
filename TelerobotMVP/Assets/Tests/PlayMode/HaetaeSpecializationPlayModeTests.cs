@@ -2,6 +2,9 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using Telerobot.Game.Core;
+using Telerobot.Game.Data;
+using Telerobot.Game.Runtime;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Telerobot.Game.Tests
@@ -43,6 +46,22 @@ namespace Telerobot.Game.Tests
 
             Assert.That(robot.State.IsDestroyed, Is.False);
             Assert.That(robot.State.Progression.Specialization, Is.EqualTo(HaetaeSpecialization.Ranged));
+        }
+
+        [UnityTest]
+        public IEnumerator LiveSpecializationUsesMatchingVisualAndPreservesUnitMarker()
+        {
+            var robot = Game.Robots[1];
+            MakeReady(robot.State);
+
+            Assert.That(Game.SelectHaetaeSpecialization(robot.State.Id, HaetaeSpecialization.Ranged),
+                Is.EqualTo(SpecializationSelectionResult.Selected));
+            yield return null;
+
+            var marker = robot.GetComponentInChildren<VisualIdentityMarker>();
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(marker.role, Is.EqualTo(PresentationRole.HaetaeRangedPreview));
+            Assert.That(marker.markerCount, Is.EqualTo(2));
         }
 
         private void MakeReady(RobotState robot)
