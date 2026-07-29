@@ -97,6 +97,10 @@ namespace Telerobot.Game.Runtime
         public bool MenuConsumesPointer { get { return IsPaused || SettingsOpen || SpecializationOpen || (commandMenu != null && commandMenu.IsOpen); } }
         public int SpawnedCount { get { return spawnIndex; } }
         public int TotalSpawnCount { get { return spawnQueue == null ? 0 : spawnQueue.Count; } }
+        public bool IsSpawnScheduleComplete
+        {
+            get { return spawnQueue != null && spawnIndex >= spawnQueue.Count; }
+        }
         public int MaxAliveConcurrent { get { return phaseState == null ? 0 : Config.GetPhase(phaseState.Number).MaxAliveConcurrent; } }
         public bool IsResupplying { get { return resupplyInProgress; } }
         public float ResupplyRemainingSeconds { get { return resupplyRemaining; } }
@@ -876,8 +880,11 @@ namespace Telerobot.Game.Runtime
             foreach (var zombie in AliveZombies)
             {
                 if (zombie == null) continue;
-                if ((robot.State.Command == RobotCommand.PatrolRoute || robot.State.Command == RobotCommand.DefendPosition) &&
-                    zombie.State.Route != robot.State.AssignedRoute) continue;
+                if (!RobotTargetingRules.AllowsRoute(
+                        robot.State.Command,
+                        robot.State.AssignedRoute,
+                        zombie.State.Route,
+                        IsSpawnScheduleComplete)) continue;
                 var robotDistance = Vector3.Distance(robot.transform.position, zombie.transform.position);
                 var score = robotDistance;
                 if (defending)
