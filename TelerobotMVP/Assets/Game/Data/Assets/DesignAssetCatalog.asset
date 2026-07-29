@@ -93,7 +93,7 @@ MonoBehaviour:
     validationTags:
     - automated
     - manual-visual
-    notes: Visual preview is staged; live mapping remains owned by feature 002.
+    notes: Authored upgrade model is mapped live with a role-local procedural fallback.
   - id: character.haetae.ranged
     displayName: character.haetae.ranged
     category: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
     validationTags:
     - automated
     - manual-visual
-    notes: Visual preview is staged; live mapping remains owned by feature 002.
+    notes: Authored upgrade model is mapped live with a role-local procedural fallback.
   - id: character.haetae.balanced
     displayName: character.haetae.balanced
     category: 0
@@ -125,7 +125,7 @@ MonoBehaviour:
     validationTags:
     - automated
     - manual-visual
-    notes: Visual preview is staged; live mapping remains owned by feature 002.
+    notes: Authored upgrade model is mapped live with a role-local procedural fallback.
   - id: character.medical.robot
     displayName: character.medical.robot
     category: 0

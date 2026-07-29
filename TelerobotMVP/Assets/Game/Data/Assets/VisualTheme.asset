@@ -235,3 +235,19 @@ MonoBehaviour:
   headingFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
   haetaeGeneralModel: {fileID: 919132149155446097, guid: 9a410d695a8df0046a740b32eed17167, type: 3}
   haetaeGeneralLod1: {fileID: 919132149155446097, guid: f993abc63236ce748b2b071dac887c46, type: 3}
+  haetaeUpgradeModels:
+  - role: 4
+    assetId: character.haetae.melee
+    lod0: {fileID: 919132149155446097, guid: b33355f7438b28547a95081c9b7883a5, type: 3}
+    lod1: {fileID: 919132149155446097, guid: 41d5253fd45fc6a4eb4d59e98c999e8a, type: 3}
+    silhouetteSignature: haetae.authored.melee.ram
+  - role: 5
+    assetId: character.haetae.ranged
+    lod0: {fileID: 919132149155446097, guid: 70363d5874eb2484696724a5517c9a2e, type: 3}
+    lod1: {fileID: 919132149155446097, guid: 9993b6879d226864f95867072489541e, type: 3}
+    silhouetteSignature: haetae.authored.ranged.turret
+  - role: 6
+    assetId: character.haetae.balanced
+    lod0: {fileID: 919132149155446097, guid: 93d368c72bde78444a1669433d6bc1f3, type: 3}
+    lod1: {fileID: 919132149155446097, guid: 7e1dd9f83a3a8c34e9d78be480e72405, type: 3}
+    silhouetteSignature: haetae.authored.balanced.asymmetric

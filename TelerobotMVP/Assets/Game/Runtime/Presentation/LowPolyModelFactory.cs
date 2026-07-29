@@ -213,19 +213,22 @@ namespace Telerobot.Game.Runtime
         private bool TryBuildAuthoredHaetae(
             Transform root, PresentationRole role, VisualIdentityMarker marker, int unitMarkerCount)
         {
-            if (role != PresentationRole.HaetaeGeneralUnit1 &&
-                role != PresentationRole.HaetaeGeneralUnit2) return false;
-
             var theme = materials.Theme;
-            var lod0Prefab = theme == null ? null : theme.haetaeGeneralModel;
-            if (lod0Prefab == null) return false;
+            if (!TryResolveAuthoredHaetae(
+                    theme,
+                    role,
+                    out var lod0Prefab,
+                    out var lod1Prefab,
+                    out var assetId,
+                    out var silhouetteSignature,
+                    out var modelName)) return false;
 
             GameObject lod0 = null;
             GameObject lod1 = null;
             try
             {
                 lod0 = UnityEngine.Object.Instantiate(lod0Prefab, root, false);
-                lod0.name = "Haetae General Authored LOD0";
+                lod0.name = "Haetae " + modelName + " Authored LOD0";
                 ResetLocalTransform(lod0.transform);
                 ApplyAuthoredMaterials(lod0);
 
@@ -236,10 +239,10 @@ namespace Telerobot.Game.Runtime
 
                 var lod0Renderers = lod0.GetComponentsInChildren<Renderer>(true);
                 var lodCount = 1;
-                if (theme.haetaeGeneralLod1 != null)
+                if (lod1Prefab != null)
                 {
-                    lod1 = UnityEngine.Object.Instantiate(theme.haetaeGeneralLod1, root, false);
-                    lod1.name = "Haetae General Authored LOD1";
+                    lod1 = UnityEngine.Object.Instantiate(lod1Prefab, root, false);
+                    lod1.name = "Haetae " + modelName + " Authored LOD1";
                     ResetLocalTransform(lod1.transform);
                     ApplyAuthoredMaterials(lod1);
                     ConfigureAuthoredUnitMarkers(lod1, requestedMarkers);
@@ -256,10 +259,10 @@ namespace Telerobot.Game.Runtime
                     lodCount = 2;
                 }
 
-                marker.silhouetteSignature = "haetae.authored.guardian.quadruped";
+                marker.silhouetteSignature = silhouetteSignature;
                 marker.markerCount = requestedMarkers;
                 var authored = root.gameObject.AddComponent<AuthoredModelMarker>();
-                authored.assetId = "character.haetae.general";
+                authored.assetId = assetId;
                 authored.sourceVertexCount = CountVertices(lod0);
                 authored.lodCount = lodCount;
                 return true;
@@ -271,6 +274,44 @@ namespace Telerobot.Game.Runtime
                 Debug.LogWarning("Authored haetae model fallback: " + exception.Message);
                 return false;
             }
+        }
+
+        private static bool TryResolveAuthoredHaetae(
+            VisualThemeDefinitionAsset theme,
+            PresentationRole role,
+            out GameObject lod0,
+            out GameObject lod1,
+            out string assetId,
+            out string silhouetteSignature,
+            out string modelName)
+        {
+            lod0 = null;
+            lod1 = null;
+            assetId = null;
+            silhouetteSignature = null;
+            modelName = null;
+            if (theme == null) return false;
+
+            if (role == PresentationRole.HaetaeGeneralUnit1 ||
+                role == PresentationRole.HaetaeGeneralUnit2)
+            {
+                lod0 = theme.haetaeGeneralModel;
+                lod1 = theme.haetaeGeneralLod1;
+                assetId = "character.haetae.general";
+                silhouetteSignature = "haetae.authored.guardian.quadruped";
+                modelName = "General";
+                return lod0 != null;
+            }
+
+            var definition = theme.AuthoredHaetaeFor(role);
+            if (definition == null || definition.lod0 == null) return false;
+            lod0 = definition.lod0;
+            lod1 = definition.lod1;
+            assetId = definition.assetId;
+            silhouetteSignature = definition.silhouetteSignature;
+            modelName = role == PresentationRole.HaetaeMeleePreview ? "Melee" :
+                role == PresentationRole.HaetaeRangedPreview ? "Ranged" : "Balanced";
+            return true;
         }
 
         private void ApplyAuthoredMaterials(GameObject model)

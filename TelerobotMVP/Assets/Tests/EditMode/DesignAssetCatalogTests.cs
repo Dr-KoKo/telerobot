@@ -165,6 +165,57 @@ namespace Telerobot.Game.Tests
         }
 
         [Test]
+        public void AuthoredHaetaeUpgrades_HaveProductionMeshesAndRoleMappings()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<VisualThemeDefinitionAsset>(
+                "Assets/Game/Data/Assets/VisualTheme.asset");
+            Assert.That(theme, Is.Not.Null, "Run Tools/Telerobot/Build MVP Project.");
+            Assert.That(theme.haetaeUpgradeModels, Is.Not.Null);
+            Assert.That(theme.haetaeUpgradeModels.Length, Is.EqualTo(3));
+            Assert.That(theme.haetaeUpgradeModels.Select(item => item.role).Distinct().Count(),
+                Is.EqualTo(3));
+            Assert.That(theme.haetaeUpgradeModels.Select(item => item.assetId).Distinct().Count(),
+                Is.EqualTo(3));
+
+            var expected = new[]
+            {
+                new
+                {
+                    Role = PresentationRole.HaetaeMeleePreview,
+                    AssetId = "character.haetae.melee",
+                    Stem = "Haetae_Melee"
+                },
+                new
+                {
+                    Role = PresentationRole.HaetaeRangedPreview,
+                    AssetId = "character.haetae.ranged",
+                    Stem = "Haetae_Ranged"
+                },
+                new
+                {
+                    Role = PresentationRole.HaetaeBalancedPreview,
+                    AssetId = "character.haetae.balanced",
+                    Stem = "Haetae_Balanced"
+                }
+            };
+
+            foreach (var item in expected)
+            {
+                var definition = theme.AuthoredHaetaeFor(item.Role);
+                Assert.That(definition, Is.Not.Null, item.Role.ToString());
+                Assert.That(definition.assetId, Is.EqualTo(item.AssetId));
+                Assert.That(definition.silhouetteSignature, Is.Not.Empty);
+                Assert.That(definition.lod0, Is.Not.Null);
+                Assert.That(definition.lod1, Is.Not.Null);
+                Assert.That(AssetDatabase.GetAssetPath(definition.lod0),
+                    Does.EndWith(item.Stem + "_LOD0.fbx"));
+                Assert.That(AssetDatabase.GetAssetPath(definition.lod1),
+                    Does.EndWith(item.Stem + "_LOD1.fbx"));
+                AssertAuthoredUpgradeContract(definition.lod0, definition.lod1);
+            }
+        }
+
+        [Test]
         public void VisualDefinitions_DoNotOwnGameplayBalance()
         {
             var forbidden = new[] { "damage", "health", "battery", "spawn", "attackrange", "movespeed", "experience" };
@@ -183,6 +234,41 @@ namespace Telerobot.Game.Tests
                    model.GetComponentsInChildren<SkinnedMeshRenderer>(true)
                        .Where(renderer => renderer.sharedMesh != null)
                        .Sum(renderer => renderer.sharedMesh.vertexCount);
+        }
+
+        private static void AssertAuthoredUpgradeContract(GameObject lod0, GameObject lod1)
+        {
+            var vertexCount = MeshVertexCount(lod0);
+            var lod1VertexCount = MeshVertexCount(lod1);
+            Assert.That(vertexCount, Is.GreaterThan(18000));
+            Assert.That(lod1VertexCount, Is.GreaterThan(500));
+            Assert.That(lod1VertexCount, Is.LessThan(vertexCount * 0.7f));
+
+            var materialNames = lod0.GetComponentsInChildren<Renderer>(true)
+                .SelectMany(renderer => renderer.sharedMaterials)
+                .Where(material => material != null)
+                .Select(material => material.name)
+                .Distinct()
+                .ToArray();
+            Assert.That(materialNames.Length, Is.EqualTo(5));
+
+            var body = lod0.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+                .FirstOrDefault(renderer => renderer.sharedMesh != null
+                    && renderer.sharedMesh.vertexCount > 18000);
+            Assert.That(body, Is.Not.Null);
+            Assert.That(body.sharedMesh.subMeshCount, Is.EqualTo(5));
+            Assert.That(Enumerable.Range(0, body.sharedMesh.subMeshCount)
+                .All(index => body.sharedMesh.GetIndexCount(index) > 0), Is.True);
+
+            var hierarchy = lod0.GetComponentsInChildren<Transform>(true)
+                .Select(item => item.name)
+                .ToArray();
+            foreach (var required in new[]
+                     {
+                         "head", "leg_lf", "leg_rf", "leg_lb", "leg_rb",
+                         "tail_06", "UnitMarker_1", "UnitMarker_2"
+                     })
+                Assert.That(hierarchy, Does.Contain(required));
         }
     }
 }
