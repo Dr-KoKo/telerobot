@@ -45,6 +45,7 @@ namespace Telerobot.Game.Runtime
 
             var visual = new GameObject(VisualRootName);
             visual.transform.SetParent(gameplayRoot.transform, false);
+            visual.transform.localScale = VisualScaleFor(role);
             try
             {
                 var marker = visual.AddComponent<VisualIdentityMarker>();
@@ -65,6 +66,22 @@ namespace Telerobot.Game.Runtime
                 Debug.LogWarning("Presentation fallback retained for " + gameplayRoot.name + ": " + exception.Message);
                 return null;
             }
+        }
+
+        private Vector3 VisualScaleFor(PresentationRole role)
+        {
+            if (!IsHaetaeRole(role)) return Vector3.one;
+            var theme = materials.Theme;
+            return Vector3.one * (theme == null ? 1f : theme.haetaeVisualScale);
+        }
+
+        private static bool IsHaetaeRole(PresentationRole role)
+        {
+            return role == PresentationRole.HaetaeGeneralUnit1 ||
+                   role == PresentationRole.HaetaeGeneralUnit2 ||
+                   role == PresentationRole.HaetaeMeleePreview ||
+                   role == PresentationRole.HaetaeRangedPreview ||
+                   role == PresentationRole.HaetaeBalancedPreview;
         }
 
         public GameObject CreatePart(Transform parent, string name, PrimitiveType primitive, Vector3 localPosition,

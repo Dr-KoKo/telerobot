@@ -228,6 +228,9 @@ namespace Telerobot.Game.Tests
             Assert.That(authored.All(item => item.sourceVertexCount > 1000), Is.True);
             Assert.That(authored.All(item => item.lodCount == 2), Is.True);
             Assert.That(Game.Robots.All(item => item.GetComponentInChildren<LODGroup>() != null), Is.True);
+            Assert.That(Game.Robots.All(item =>
+                item.transform.Find(LowPolyModelFactory.VisualRootName).localScale ==
+                Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale), Is.True);
         }
 
         [UnityTest]
@@ -269,6 +272,8 @@ namespace Telerobot.Game.Tests
                 Assert.That(root.GetComponentsInChildren<Transform>(true)
                     .Where(item => item.name.Contains("UnitMarker_2"))
                     .All(item => item.gameObject.activeSelf), Is.True);
+                Assert.That(root.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                    Is.EqualTo(Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale));
                 Assert.That(collider.bounds.center, Is.EqualTo(centerBefore));
                 Assert.That(collider.bounds.size, Is.EqualTo(sizeBefore));
                 signatures[index] = identity.silhouetteSignature;
@@ -325,6 +330,8 @@ namespace Telerobot.Game.Tests
                     .Count(item => item.name == LowPolyModelFactory.VisualRootName),
                     Is.EqualTo(1));
                 Assert.That(root.GetComponentsInChildren<LODGroup>(true).Length, Is.EqualTo(0));
+                Assert.That(root.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                    Is.EqualTo(Vector3.one * fallbackTheme.haetaeVisualScale));
 
                 var availableIndex = (missingIndex + 1) % roles.Length;
                 var availableRoot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -361,10 +368,72 @@ namespace Telerobot.Game.Tests
             Assert.That(marker, Is.Not.Null);
             Assert.That(marker.silhouetteSignature, Is.EqualTo("haetae.guardian.quadruped"));
             Assert.That(root.GetComponentInChildren<AuthoredModelMarker>(), Is.Null);
+            Assert.That(root.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                Is.EqualTo(Vector3.one * fallbackTheme.haetaeVisualScale));
 
             Object.Destroy(root);
             library.Dispose();
             Object.Destroy(fallbackTheme);
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeScaleStaysAbsoluteAcrossRolesRefreshMotionAndPhysics()
+        {
+            var theme = Game.Catalog.visualTheme;
+            var expectedScale = Vector3.one * theme.haetaeVisualScale;
+            var roles = new[]
+            {
+                PresentationRole.HaetaeGeneralUnit1,
+                PresentationRole.HaetaeGeneralUnit2,
+                PresentationRole.HaetaeMeleePreview,
+                PresentationRole.HaetaeRangedPreview,
+                PresentationRole.HaetaeBalancedPreview
+            };
+            var root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            root.name = "Haetae Scale Boundary Test";
+            root.transform.localScale = new Vector3(1.1f, 0.75f, 1.5f);
+            var collider = root.GetComponent<Collider>();
+            var gameplayScaleBefore = root.transform.localScale;
+            Physics.SyncTransforms();
+            var colliderCenterBefore = collider.bounds.center;
+            var colliderSizeBefore = collider.bounds.size;
+
+            foreach (var role in roles)
+            {
+                Game.PresentationModels.Attach(root, role, 2);
+                yield return null;
+
+                var visual = root.transform.Find(LowPolyModelFactory.VisualRootName);
+                Assert.That(visual, Is.Not.Null, role.ToString());
+                Assert.That(visual.localScale, Is.EqualTo(expectedScale), role.ToString());
+                var motion = root.GetComponent<CharacterMotionDriver>();
+                Assert.That(motion, Is.Not.Null, role.ToString());
+                motion.SampleForTests(CharacterMotionState.Attack, 0.5f);
+                Assert.That(visual.localScale, Is.EqualTo(expectedScale), role.ToString());
+            }
+
+            for (var iteration = 0; iteration < 10; iteration++)
+            {
+                Game.PresentationModels.Attach(root, PresentationRole.HaetaeGeneralUnit1, 1);
+                yield return null;
+                Assert.That(root.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                    Is.EqualTo(expectedScale), "Refresh " + iteration);
+            }
+
+            Physics.SyncTransforms();
+            Assert.That(root.transform.localScale, Is.EqualTo(gameplayScaleBefore));
+            Assert.That(collider.bounds.center, Is.EqualTo(colliderCenterBefore));
+            Assert.That(collider.bounds.size, Is.EqualTo(colliderSizeBefore));
+
+            var runner = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            runner.name = "Non-Haetae Scale Control";
+            Game.PresentationModels.Attach(runner, PresentationRole.Runner);
+            yield return null;
+            Assert.That(runner.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                Is.EqualTo(Vector3.one));
+
+            Object.Destroy(root);
+            Object.Destroy(runner);
         }
 
         [UnityTest]

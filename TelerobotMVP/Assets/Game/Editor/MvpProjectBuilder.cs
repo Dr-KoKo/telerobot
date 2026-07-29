@@ -897,6 +897,7 @@ namespace Telerobot.Game.Editor
                     "Assets/Game/Art/Menu/guardian-night-menu.png");
                 item.bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Game/Art/Fonts/NotoSansKR-VF.ttf");
                 item.headingFont = item.bodyFont;
+                item.haetaeVisualScale = 0.90f;
                 item.haetaeGeneralModel =
                     AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod0Path);
                 item.haetaeGeneralLod1 =

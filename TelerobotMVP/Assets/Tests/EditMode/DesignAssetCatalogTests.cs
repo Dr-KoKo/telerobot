@@ -21,7 +21,15 @@ namespace Telerobot.Game.Tests
                 .Select(key => new MaterialRoleDefinition { key = key, baseColor = Color.white })
                 .ToArray();
 
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(1f));
             Assert.DoesNotThrow(theme.Validate);
+            theme.haetaeVisualScale = 0f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeVisualScale = 2.01f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeVisualScale = float.NaN;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeVisualScale = 1f;
             theme.colors[0].key = theme.colors[1].key;
             Assert.Throws<InvalidOperationException>(theme.Validate);
         }
@@ -111,6 +119,7 @@ namespace Telerobot.Game.Tests
             Assert.DoesNotThrow(theme.Validate);
             Assert.DoesNotThrow(catalog.Validate);
             Assert.That(catalog.fallbackTheme, Is.SameAs(theme));
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.90f));
             Assert.That(catalog.items.Select(item => item.id).Distinct().Count(), Is.EqualTo(catalog.items.Length));
             Assert.That(catalog.sources.All(source => source.officialUrl.StartsWith("https://", StringComparison.Ordinal)), Is.True);
         }
