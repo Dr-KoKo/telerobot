@@ -21,10 +21,10 @@ namespace Telerobot.Game.Tests
                 .Select(key => new MaterialRoleDefinition { key = key, baseColor = Color.white })
                 .ToArray();
 
-            Assert.That(theme.haetaeVisualScale, Is.EqualTo(1f));
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.85f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.24f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.16f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
@@ -36,10 +36,10 @@ namespace Telerobot.Game.Tests
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeVisualScale = float.NaN;
             Assert.Throws<InvalidOperationException>(theme.Validate);
-            theme.haetaeVisualScale = 1f;
+            theme.haetaeVisualScale = 0.85f;
             theme.haetaeOcclusionFade.obstructingOpacity = 1f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
-            theme.haetaeOcclusionFade.obstructingOpacity = 0.24f;
+            theme.haetaeOcclusionFade.obstructingOpacity = 0.16f;
             theme.haetaeOcclusionFade.fadeSeconds = 0f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeOcclusionFade.fadeSeconds = 0.15f;
@@ -141,10 +141,10 @@ namespace Telerobot.Game.Tests
             Assert.DoesNotThrow(theme.Validate);
             Assert.DoesNotThrow(catalog.Validate);
             Assert.That(catalog.fallbackTheme, Is.SameAs(theme));
-            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.90f));
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.85f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.24f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.16f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));

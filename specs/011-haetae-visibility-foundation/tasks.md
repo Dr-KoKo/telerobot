@@ -29,7 +29,7 @@ changes precede their corresponding implementation.
 
 ## Phase 3: User Story 1 - One predictable visual size (Priority: P1)
 
-**Independent Test**: Every role uses one uniform 0.90 presentation scale under
+**Independent Test**: Every role uses one uniform 0.85 presentation scale under
 an identity actor root while the legacy physical bounds remain unchanged.
 
 - [x] T005 [US1] Add failing identity-root, legacy-bounds, all-role, motion, and repeated-replacement assertions in `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
@@ -43,9 +43,9 @@ an identity actor root while the legacy physical bounds remain unchanged.
 **Independent Test**: A centered visible model fades with an off-corridor
 collider, while a centered collider with clear renderers stays opaque.
 
-- [x] T008 [US2] Add failing renderer-only obstruction, collider-only clear, opacity 0.24, active-renderer, and transparent-surface assertions in `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
+- [x] T008 [US2] Add failing renderer-only obstruction, collider-only clear, opacity 0.16, active-renderer, and transparent-surface assertions in `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
 - [x] T009 [US2] Replace physics-collider obstruction with cached active-renderer bounds in `TelerobotMVP/Assets/Game/Runtime/Presentation/HaetaeCameraOcclusionFader.cs`
-- [x] T010 [US2] Set opacity 0.24 and non-preserved specular transparent variants in `TelerobotMVP/Assets/Game/Data/Definitions/VisualThemeDefinitionAsset.cs`, `TelerobotMVP/Assets/Game/Editor/MvpProjectBuilder.cs`, `TelerobotMVP/Assets/Game/Data/Assets/VisualTheme.asset`, and `TelerobotMVP/Assets/Game/Runtime/Presentation/HaetaeCameraOcclusionFader.cs`
+- [x] T010 [US2] Set opacity 0.16 and non-preserved specular transparent variants in `TelerobotMVP/Assets/Game/Data/Definitions/VisualThemeDefinitionAsset.cs`, `TelerobotMVP/Assets/Game/Editor/MvpProjectBuilder.cs`, `TelerobotMVP/Assets/Game/Data/Assets/VisualTheme.asset`, and `TelerobotMVP/Assets/Game/Runtime/Presentation/HaetaeCameraOcclusionFader.cs`
 
 ---
 
@@ -64,6 +64,16 @@ tint, fallback, and ten cycles restore exact stable state.
 - [x] T013 Run `MvpProjectBuilder.BuildAll`, verify generated physical/visual/opacity data, and remove unrelated serialization noise
 - [x] T014 Run complete EditMode and PlayMode suites, Windows build, standalone smoke, and record results in `specs/011-haetae-visibility-foundation/quickstart.md`
 - [x] T015 Mark `specs/011-haetae-visibility-foundation/spec.md` implemented, complete this task list, run `git diff --check`, review scope, and commit on `main`
+
+---
+
+## Phase 7: Follow-up visibility tuning
+
+- [x] T016 [US1] Change generated and loaded theme expectations to uniform scale `0.85`
+- [x] T017 [US2] Change generated and loaded obstruction opacity expectations to `0.16`
+- [x] T018 [US1] [US2] Update theme defaults, generated data, and runtime assets without changing physical footprint or transition timing
+- [x] T019 Run targeted and complete Unity suites, regenerate, build Windows, run standalone smoke, exclude serialization noise, and record results
+- [x] T020 Mark the tuning delta implemented, complete tasks, review, and commit on `main`
 
 ## Dependencies & Execution Order
 

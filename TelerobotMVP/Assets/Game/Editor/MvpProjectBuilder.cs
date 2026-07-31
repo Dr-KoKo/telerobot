@@ -899,11 +899,11 @@ namespace Telerobot.Game.Editor
                     "Assets/Game/Art/Menu/guardian-night-menu.png");
                 item.bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Game/Art/Fonts/NotoSansKR-VF.ttf");
                 item.headingFont = item.bodyFont;
-                item.haetaeVisualScale = 0.90f;
+                item.haetaeVisualScale = 0.85f;
                 item.haetaeOcclusionFade = new HaetaeOcclusionFadeDefinition
                 {
                     enabled = true,
-                    obstructingOpacity = 0.24f,
+                    obstructingOpacity = 0.16f,
                     fadeSeconds = 0.15f,
                     restoreSeconds = 0.25f,
                     aimCorridorRadius = 0.45f,

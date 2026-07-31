@@ -32,5 +32,7 @@
 ## Notes
 
 - Validation pass 1: 16/16 items passed.
+- Validation pass 2: 16/16 items passed after the 0.85 scale and 0.16 opacity
+  tuning amendment; no clarification markers were introduced.
 - The new specification explicitly supersedes the stacked-scale preservation
   constraint from feature 010 while preserving physical gameplay bounds.

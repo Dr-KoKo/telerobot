@@ -17,19 +17,19 @@ removes hidden visual multiplication without changing gameplay footprint.
 - Store final non-uniform visual scale: rejected because it preserves distortion
   of artist-authored models.
 
-## Decision 2: Keep one uniform 0.90 visual value
+## Decision 2: Tune the one uniform visual value to 0.85
 
-**Decision**: Retain `haetaeVisualScale = 0.90` as the only visual-size value and
+**Decision**: Use `haetaeVisualScale = 0.85` as the only visual-size value and
 apply it once to `Presentation Visual`.
 
-**Rationale**: It is already data-driven, applies to authored and fallback paths,
-and motion captures it as the stable baseline. With an identity parent it finally
-means an actual uniform 90% model scale.
+**Rationale**: It is data-driven, applies to authored and fallback paths, and
+motion captures it as the stable baseline. Playtest feedback found the 0.90 model
+still slightly too large, so the single value is reduced without touching physics.
 
 **Alternatives considered**:
 
-- Change the value while restructuring: rejected to avoid mixing architecture
-  correction with a new subjective size decision.
+- Keep 0.90: rejected after the follow-up playtest found enemy readability still
+  needed a small improvement.
 - Rescale every FBX: rejected because it duplicates tuning across eight assets.
 
 ## Decision 3: Renderer bounds own obstruction
@@ -51,16 +51,16 @@ without adding colliders or allocations.
 
 ## Decision 4: Make transparency unmistakable
 
-**Decision**: Use obstructing opacity 0.24 and disable preserved specular on
+**Decision**: Use obstructing opacity 0.16 and disable preserved specular on
 transparent URP variants while retaining the existing fade/restore timing.
 
-**Rationale**: The previous 0.32 treatment was difficult to perceive, especially
-on bright metallic and emissive surfaces. The new value retains the silhouette
-but provides a clearer view of enemies.
+**Rationale**: The intermediate 0.24 treatment was still weaker than desired in
+playtesting. The new value retains the silhouette but provides a clearer view of
+enemies through bright metallic and emissive surfaces.
 
 **Alternatives considered**:
 
-- Keep 0.32: rejected based on user playtest feedback.
+- Keep 0.24: rejected based on follow-up user playtest feedback.
 - Hide the model entirely: rejected because ally location and identity matter.
 - Use dithering: rejected because it requires a custom shader and asset scope.
 

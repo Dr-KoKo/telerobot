@@ -233,10 +233,10 @@ MonoBehaviour:
   menuBackdrop: {fileID: 2800000, guid: 88307b291c86fc5e1310d8b45f018c04, type: 3}
   bodyFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
   headingFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
-  haetaeVisualScale: 0.9
+  haetaeVisualScale: 0.85
   haetaeOcclusionFade:
     enabled: 1
-    obstructingOpacity: 0.24
+    obstructingOpacity: 0.16
     fadeSeconds: 0.15
     restoreSeconds: 0.25
     aimCorridorRadius: 0.45

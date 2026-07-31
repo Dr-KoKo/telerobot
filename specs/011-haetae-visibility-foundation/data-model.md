@@ -16,13 +16,13 @@ These values reproduce the bounds of the legacy default capsule beneath
 ## Haetae Visual Presentation
 
 `VisualThemeDefinitionAsset.haetaeVisualScale` remains a uniform scalar with
-generated value `0.90`. It is the only transform scale used to size a Haetae
+generated value `0.85`. It is the only transform scale used to size a Haetae
 presentation.
 
 ```text
 Haetae actor root: scale (1, 1, 1)
 |-- CapsuleCollider: radius/height/center from RobotConfig
-`-- Presentation Visual: scale (0.9, 0.9, 0.9)
+`-- Presentation Visual: scale (0.85, 0.85, 0.85)
     `-- Authored LOD or procedural fallback: identity attachment transform
 ```
 
@@ -37,7 +37,7 @@ Existing per-Haetae state remains:
 - obstruction state.
 
 The activation source changes from physical hits to expanded active-renderer
-bounds intersecting the camera aim ray. Generated opacity becomes `0.24`.
+bounds intersecting the camera aim ray. Generated opacity becomes `0.16`.
 
 ## Invariants
 

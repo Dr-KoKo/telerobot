@@ -451,6 +451,7 @@ namespace Telerobot.Game.Tests
         public IEnumerator LiveHaetaeUsesOneVisualScaleAndPreservesLegacyPhysicalBounds()
         {
             yield return null;
+            Assert.That(Game.Catalog.visualTheme.haetaeVisualScale, Is.EqualTo(0.85f));
             var expectedVisualScale = Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale;
             foreach (var robot in Game.Robots)
             {
@@ -498,6 +499,7 @@ namespace Telerobot.Game.Tests
         {
             yield return null;
             var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
+            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.16f));
             var player = Game.PlayerActor;
             var robot = Game.Robots[0];
             var fader = robot.GetComponent<HaetaeCameraOcclusionFader>();

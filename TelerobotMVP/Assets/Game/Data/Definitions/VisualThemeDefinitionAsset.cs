@@ -99,7 +99,7 @@ namespace Telerobot.Game.Data
     public sealed class HaetaeOcclusionFadeDefinition
     {
         public bool enabled = true;
-        [Range(0.05f, 0.95f)] public float obstructingOpacity = 0.24f;
+        [Range(0.05f, 0.95f)] public float obstructingOpacity = 0.16f;
         [Range(0.01f, 2f)] public float fadeSeconds = 0.15f;
         [Range(0.01f, 2f)] public float restoreSeconds = 0.25f;
         [Range(0.01f, 3f)] public float aimCorridorRadius = 0.45f;
@@ -155,7 +155,7 @@ namespace Telerobot.Game.Data
         public Font headingFont;
         [Header("Character Scale")]
         [Range(0.01f, 2f)]
-        public float haetaeVisualScale = 1f;
+        public float haetaeVisualScale = 0.85f;
         [Header("Haetae Camera Occlusion")]
         public HaetaeOcclusionFadeDefinition haetaeOcclusionFade =
             new HaetaeOcclusionFadeDefinition();
