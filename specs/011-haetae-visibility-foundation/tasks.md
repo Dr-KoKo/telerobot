@@ -75,6 +75,17 @@ tint, fallback, and ten cycles restore exact stable state.
 - [x] T019 Run targeted and complete Unity suites, regenerate, build Windows, run standalone smoke, exclude serialization noise, and record results
 - [x] T020 Mark the tuning delta implemented, complete tasks, review, and commit on `main`
 
+---
+
+## Phase 8: Player-build transparency and second size pass
+
+- [x] T021 [US1] [US2] Amend the feature artifacts for uniform scale `0.80`, opacity `0.10`, retained player-build transparency, and emissive fading
+- [x] T022 [US1] Add failing generated/default scale `0.80` assertions in `TelerobotMVP/Assets/Tests/EditMode/DesignAssetCatalogTests.cs` and `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
+- [x] T023 [US2] Add failing retained transparent-template, render-state, and emissive-opacity assertions in the same EditMode and PlayMode fixtures
+- [x] T024 [US1] [US2] Generate the transparent material asset, map it through `VisualThemeDefinitionAsset`, apply scale/opacity values, and derive runtime faded materials from the retained template
+- [x] T025 Run targeted red/green coverage, regenerate assets, complete suites, Windows build, standalone smoke, and exclude unrelated serialization noise
+- [x] T026 Mark the follow-up implemented, record validation, review scope, and commit the explicit files on `main`
+
 ## Dependencies & Execution Order
 
 - Phase 1 establishes the committed baseline.

@@ -8,16 +8,17 @@
 
 **Active product references**: `specs/002-haetae-build-progression/spec.md`,
 `specs/009-haetae-scale-tuning/spec.md`, and
-`specs/010-haetae-camera-occlusion/spec.md` at main commit `02048d8`.
+`specs/010-haetae-camera-occlusion/spec.md` at main commit `eaf3c14`.
 
 ## Summary
 
 Normalize each Haetae gameplay root to identity, preserve its existing physical
-footprint through explicit robot data, and keep `haetaeVisualScale = 0.85` as the
+footprint through explicit robot data, and keep `haetaeVisualScale = 0.80` as the
 sole uniform presentation size. Replace collider-based camera obstruction with a
-non-allocating camera-ray test against active renderer bounds, reduce obstructing
-opacity to 0.16, and validate visible rendering as well as state and material
-contracts.
+non-allocating camera-ray test against active renderer bounds, use a serialized
+transparent material template retained by player builds, reduce obstructing
+opacity to 0.10, dim emissive accents with opacity, and validate visible rendering
+as well as state and material contracts.
 
 ## Technical Context
 
@@ -77,11 +78,12 @@ Post-design re-check: PASS. No complexity exception is required.
 2. `SpawnRobot` leaves the actor transform at identity and configures the capsule
    from robot data, preserving the legacy physical bounds.
 3. `LowPolyModelFactory` remains the only owner of Haetae visual size and applies
-   the uniform `haetaeVisualScale = 0.85` once before motion binding.
+   the uniform `haetaeVisualScale = 0.80` once before motion binding.
 4. `HaetaeCameraOcclusionFader` uses cached active renderers. An expanded renderer
    world bound intersecting the camera aim ray within range activates fading.
-5. Transparent variants disable preserved specular contribution and use opacity
-   0.16 so the change is visually unambiguous while keeping ally identity.
+5. Transparent variants derive from a serialized URP transparent template so the
+   player build retains the needed shader path, disable preserved specular, dim
+   emission with opacity, and use opacity 0.10.
 6. Presentation replacement rebuilds cached renderers and releases obsolete
    material variants as before.
 

@@ -233,14 +233,15 @@ MonoBehaviour:
   menuBackdrop: {fileID: 2800000, guid: 88307b291c86fc5e1310d8b45f018c04, type: 3}
   bodyFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
   headingFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
-  haetaeVisualScale: 0.85
+  haetaeVisualScale: 0.8
   haetaeOcclusionFade:
     enabled: 1
-    obstructingOpacity: 0.16
+    obstructingOpacity: 0.1
     fadeSeconds: 0.15
     restoreSeconds: 0.25
     aimCorridorRadius: 0.45
     maxDistance: 35
+  haetaeOcclusionMaterialTemplate: {fileID: 2100000, guid: 2f28f332abfc42f49be25aca66845e2c, type: 2}
   haetaeGeneralModel: {fileID: 919132149155446097, guid: 9a410d695a8df0046a740b32eed17167, type: 3}
   haetaeGeneralLod1: {fileID: 919132149155446097, guid: f993abc63236ce748b2b071dac887c46, type: 3}
   haetaeUpgradeModels:

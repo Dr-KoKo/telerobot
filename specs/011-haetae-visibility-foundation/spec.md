@@ -6,7 +6,7 @@
 
 **Status**: Implemented
 
-**Input**: User request to consolidate Haetae sizing so it cannot become tangled later and to make the intended obstruction transparency visibly and reliably activate.
+**Input**: User request to consolidate Haetae sizing so it cannot become tangled later, make the intended obstruction transparency visibly and reliably activate in a player build, then reduce the robot slightly further after playtesting.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -50,7 +50,7 @@ fades and restores when the rendered body moves clear.
 **Acceptance Scenarios**:
 
 1. **Given** third-person view, **When** any active Haetae renderer overlaps the
-   central aiming corridor within range, **Then** that Haetae reaches 16% opacity
+   central aiming corridor within range, **Then** that Haetae reaches 10% opacity
    within 0.15 seconds.
 2. **Given** the visible model blocks the corridor but its physical footprint does
    not, **When** obstruction is evaluated, **Then** transparency still activates.
@@ -95,7 +95,7 @@ then confirm independent and reversible behavior.
 ### Functional Requirements
 
 - **FR-001**: Every Haetae presentation MUST have exactly one uniform,
-  designer-adjustable visual size value defaulting to `0.85`.
+  designer-adjustable visual size value defaulting to `0.80`.
 - **FR-002**: Parent gameplay state MUST NOT apply a second visual scale or
   distort authored proportions.
 - **FR-003**: The existing physical gameplay footprint MUST remain unchanged and
@@ -104,7 +104,7 @@ then confirm independent and reversible behavior.
   fallback presentations MUST use the same sizing rule.
 - **FR-005**: Obstruction MUST be determined from active visible presentation,
   not solely from the physical gameplay footprint.
-- **FR-006**: Obstructing opacity MUST default to `0.16`, fade duration to `0.15`
+- **FR-006**: Obstructing opacity MUST default to `0.10`, fade duration to `0.15`
   seconds, and restore duration to `0.25` seconds, all adjustable as presentation
   data.
 - **FR-007**: First-person and clear third-person views MUST remain fully opaque.
@@ -118,6 +118,9 @@ then confirm independent and reversible behavior.
   unchanged.
 - **FR-011**: Player, zombie, medical robot, base, prop, effect, and environment
   presentation MUST remain unaffected.
+- **FR-012**: The Windows player build MUST visibly render Haetae obstruction
+  transparency, and luminous accents MUST dim with the obstructing opacity rather
+  than remaining visually opaque.
 
 ### Key Entities
 
@@ -133,11 +136,11 @@ then confirm independent and reversible behavior.
 ### Measurable Outcomes
 
 - **SC-001**: 100% of general and specialized Haetae models use exactly one
-  `0.85` uniform visual size setting after creation, animation, and replacement.
+  `0.80` uniform visual size setting after creation, animation, and replacement.
 - **SC-002**: Physical bounds before and after consolidation differ by no more
   than `0.001` world units on any axis.
 - **SC-003**: 100% of test cases where visible Haetae bounds cover the central
-  aiming corridor reach 16% opacity within 0.15 seconds, including cases where
+  aiming corridor reach 10% opacity within 0.15 seconds, including cases where
   the physical footprint does not cover it.
 - **SC-004**: Clear and first-person cases restore 100% opacity within 0.25
   seconds and restore the original material references.
@@ -148,11 +151,13 @@ then confirm independent and reversible behavior.
 
 ## Assumptions
 
-- The uniform visual size is reduced from `0.90` to `0.85` after playtest feedback;
+- The uniform visual size is reduced from `0.85` to `0.80` after playtest feedback;
   the identity parent and independent physical footprint remain unchanged.
 - Existing physical bounds are preserved by explicit physical-footprint data.
-- A 16% opacity is intentionally more obvious than the previous 24% value while
+- A 10% opacity is intentionally more obvious than the previous 16% value while
   retaining enough silhouette to identify the ally.
+- All resources required for transparency are included in the Windows player
+  build rather than depending on editor-only state.
 - Central obstruction includes a small world-space margin around the camera aim
   ray and evaluates only active renderers in front of the camera.
 - Camera distance, field of view, formation behavior, enemy outlines, and

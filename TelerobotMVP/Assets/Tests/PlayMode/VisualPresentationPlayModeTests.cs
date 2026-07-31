@@ -451,7 +451,7 @@ namespace Telerobot.Game.Tests
         public IEnumerator LiveHaetaeUsesOneVisualScaleAndPreservesLegacyPhysicalBounds()
         {
             yield return null;
-            Assert.That(Game.Catalog.visualTheme.haetaeVisualScale, Is.EqualTo(0.85f));
+            Assert.That(Game.Catalog.visualTheme.haetaeVisualScale, Is.EqualTo(0.80f));
             var expectedVisualScale = Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale;
             foreach (var robot in Game.Robots)
             {
@@ -499,7 +499,7 @@ namespace Telerobot.Game.Tests
         {
             yield return null;
             var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
-            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.16f));
+            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.10f));
             var player = Game.PlayerActor;
             var robot = Game.Robots[0];
             var fader = robot.GetComponent<HaetaeCameraOcclusionFader>();
@@ -510,6 +510,12 @@ namespace Telerobot.Game.Tests
 
             var renderers = fader.PresentationRoot.GetComponentsInChildren<Renderer>(true);
             var opaqueMaterials = renderers.Select(item => item.sharedMaterials.ToArray()).ToArray();
+            var opaqueEmission = opaqueMaterials
+                .Select(materials => materials.Select(material =>
+                    material != null && material.HasProperty("_EmissionColor")
+                        ? material.GetColor("_EmissionColor")
+                        : Color.black).ToArray())
+                .ToArray();
             var camera = player.ViewCamera;
             var centeredPosition = camera.transform.position + camera.transform.forward * 5f;
             robot.transform.position = centeredPosition + camera.transform.right * 6f;
@@ -538,6 +544,20 @@ namespace Telerobot.Game.Tests
                 .Where(item => item.HasProperty("_BaseColor"))
                 .All(item => Mathf.Approximately(
                     item.GetColor("_BaseColor").a, tuning.obstructingOpacity)), Is.True);
+            for (var rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                var fadedMaterials = renderers[rendererIndex].sharedMaterials;
+                for (var materialIndex = 0; materialIndex < fadedMaterials.Length; materialIndex++)
+                {
+                    var material = fadedMaterials[materialIndex];
+                    if (material == null || !material.HasProperty("_EmissionColor")) continue;
+                    var expected = opaqueEmission[rendererIndex][materialIndex] * tuning.obstructingOpacity;
+                    var actual = material.GetColor("_EmissionColor");
+                    Assert.That(actual.r, Is.EqualTo(expected.r).Within(0.001f));
+                    Assert.That(actual.g, Is.EqualTo(expected.g).Within(0.001f));
+                    Assert.That(actual.b, Is.EqualTo(expected.b).Within(0.001f));
+                }
+            }
             Assert.That(collider.bounds.size, Is.EqualTo(colliderSize));
             Assert.That(robot.transform.localScale, Is.EqualTo(gameplayScale));
             Assert.That(robot.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
@@ -637,6 +657,46 @@ namespace Telerobot.Game.Tests
             tinted.GetPropertyBlock(sampled);
             Assert.That(sampled.GetColor("_BaseColor").a, Is.EqualTo(1f).Within(0.001f));
             Assert.That(first.UsesTransparentMaterials, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeOcclusionDimsEmissionWithTheVisibleOpacity()
+        {
+            yield return null;
+            var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
+            var fader = Game.Robots[0].GetComponent<HaetaeCameraOcclusionFader>();
+            fader.enabled = false;
+            fader.TickForTests(false, tuning.restoreSeconds);
+
+            var renderers = fader.PresentationRoot.GetComponentsInChildren<Renderer>(true);
+            Renderer emissiveRenderer = null;
+            var emissiveMaterialIndex = -1;
+            var opaqueEmission = Color.black;
+            foreach (var candidate in renderers)
+            {
+                var materials = candidate.sharedMaterials;
+                for (var index = 0; index < materials.Length; index++)
+                {
+                    var material = materials[index];
+                    if (material == null || !material.HasProperty("_EmissionColor")) continue;
+                    var emission = material.GetColor("_EmissionColor");
+                    if (emission.maxColorComponent <= 0.01f) continue;
+                    emissiveRenderer = candidate;
+                    emissiveMaterialIndex = index;
+                    opaqueEmission = emission;
+                    break;
+                }
+                if (emissiveRenderer != null) break;
+            }
+            Assert.That(emissiveRenderer, Is.Not.Null, "The authored Haetae should retain a luminous accent.");
+
+            fader.TickForTests(true, tuning.fadeSeconds);
+            var fadedEmission = emissiveRenderer.sharedMaterials[emissiveMaterialIndex]
+                .GetColor("_EmissionColor");
+            var expected = opaqueEmission * tuning.obstructingOpacity;
+            Assert.That(fadedEmission.r, Is.EqualTo(expected.r).Within(0.001f));
+            Assert.That(fadedEmission.g, Is.EqualTo(expected.g).Within(0.001f));
+            Assert.That(fadedEmission.b, Is.EqualTo(expected.b).Within(0.001f));
         }
 
         [UnityTest]

@@ -12,8 +12,10 @@ Run `Telerobot.Game.Editor.MvpProjectBuilder.BuildAll` in Unity batch mode and
 confirm:
 
 - robot physical fields are radius `0.75`, height `1.50`, center Y `0`;
-- `haetaeVisualScale` is `0.85`;
-- obstructing opacity is `0.16`;
+- `haetaeVisualScale` is `0.80`;
+- obstructing opacity is `0.10`;
+- `ally-haetae-occlusion.mat` is referenced by the visual theme and retains the
+  transparent shader path in the Windows player;
 - unrelated scene/catalog serialization noise is excluded.
 
 ## Automated validation
@@ -24,8 +26,9 @@ confirm:
 - A renderer centered on the aim ray activates fade even when its actor collider
   is outside the old corridor.
 - A centered collider with clear renderers does not activate fade.
-- Active obstruction reaches 0.16 and uses correctly configured transparent URP
-  variants; clear and first-person states restore exact originals.
+- Active obstruction reaches 0.10, uses the retained transparent URP template,
+  and dims emission with opacity; clear and first-person states restore exact
+  originals.
 - Two robots, specialization replacement, fallback, tint, and ten cycles retain
   independent stable state.
 
@@ -75,3 +78,19 @@ Follow-up visibility tuning completed on 2026-07-31:
 - regenerated Windows x86_64 development build: succeeded;
 - standalone smoke: exit code `0` with `TELEROBOT_STANDALONE_SMOKE_READY`;
 - generated scene/catalog-only serialization rewrites: excluded.
+
+Second visibility follow-up completed on 2026-08-01:
+
+- TDD red: theme target `6/8` and presentation target `17/19`, with only the two
+  new value expectations failing in each target;
+- independent TDD red: retained-template `0/1` and emissive-opacity `0/1`;
+- target green: theme `9/9` and visual presentation `20/20`;
+- complete EditMode suite: `122/122` passed;
+- complete PlayMode suite: `84/84` passed;
+- Windows x86_64 development build: succeeded;
+- built `sharedassets0.assets` contains `ally-haetae-occlusion` and
+  `_SURFACE_TYPE_TRANSPARENT`;
+- standalone smoke: exit code `0` with `TELEROBOT_STANDALONE_SMOKE_READY` and no
+  material or shader errors;
+- generated scene/catalog-only serialization rewrites: excluded;
+- `git diff --check`: passed.

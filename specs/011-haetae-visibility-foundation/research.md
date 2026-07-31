@@ -79,3 +79,24 @@ collider. Separating the boundaries prevents the same false confidence.
 - Pixel-perfect screenshot threshold as the sole test: rejected as sensitive to
   platform lighting; material-state automation plus manual rendered comparison is
   more stable.
+
+## Decision 6: Retain a transparent player-build material path
+
+**Decision**: Generate and reference a serialized URP transparent material
+template, derive runtime obstruction materials from it, scale emission with the
+current opacity, and tune the single visual scale to `0.80` and opacity to `0.10`.
+
+**Rationale**: Editor-only material-state tests did not prove that a transparent
+shader variant survived player-build stripping. A referenced transparent asset
+makes that dependency explicit, while emission scaling prevents luminous accents
+from appearing opaque after the body fades. The smaller single scale directly
+addresses the latest playtest without changing the physical footprint.
+
+**Alternatives considered**:
+
+- Continue mutating opaque materials only at runtime: rejected because it leaves
+  player-build shader retention implicit.
+- Disable renderers completely: rejected because the ally silhouette would be
+  lost.
+- Add a custom shader: deferred because the standard retained URP transparent
+  path satisfies the current requirement with less asset and maintenance scope.

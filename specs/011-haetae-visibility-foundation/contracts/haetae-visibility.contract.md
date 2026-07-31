@@ -5,7 +5,7 @@
 - Each spawned Haetae actor root has identity local scale.
 - Its capsule uses mapped robot radius, height, and center data.
 - Its physical world bounds match the legacy footprint within `0.001`.
-- Exactly one `Presentation Visual` child owns the uniform `0.85` theme scale.
+- Exactly one `Presentation Visual` child owns the uniform `0.80` theme scale.
 - Exactly one occlusion fader binds to the current presentation.
 
 ## Obstruction contract
@@ -22,9 +22,12 @@ For each Haetae independently:
 
 ## Material contract
 
-- Obstructing target opacity is `0.16` by default.
+- Obstructing target opacity is `0.10` by default.
+- Runtime transparent variants derive from a serialized transparent template
+  referenced by the active visual theme and therefore included in player builds.
 - Transparent variants use alpha blending, no depth write, no shadow caster, and
   no preserved full-strength specular contribution.
+- Emission color is multiplied by current opacity while obstructing.
 - Existing property-block RGB values remain unchanged while alpha transitions.
 - Fully restored renderers use their exact original material arrays.
 - Replacement and destruction release only variants owned by that fader.

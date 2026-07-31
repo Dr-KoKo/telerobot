@@ -19,11 +19,15 @@ namespace Telerobot.Game.Runtime
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int LegacyColorId = Shader.PropertyToID("_Color");
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private readonly List<RendererBinding> bindings = new List<RendererBinding>(24);
         private readonly Dictionary<Material, Material> transparentByOpaque =
             new Dictionary<Material, Material>();
+        private readonly Dictionary<Material, Color> sourceEmissionByTransparent =
+            new Dictionary<Material, Color>();
         private ThirdPersonPlayerController player;
         private HaetaeOcclusionFadeDefinition tuning;
+        private Material transparentMaterialTemplate;
         private Transform presentationRoot;
         private bool usesTransparentMaterials;
 
@@ -42,6 +46,8 @@ namespace Telerobot.Game.Runtime
             RestoreAndReleaseBindings();
             player = playerController;
             tuning = visualTheme == null ? null : visualTheme.haetaeOcclusionFade;
+            transparentMaterialTemplate = visualTheme == null
+                ? null : visualTheme.haetaeOcclusionMaterialTemplate;
             IsObstructing = false;
             CurrentOpacity = 1f;
             RefreshPresentationBindings();
@@ -136,11 +142,13 @@ namespace Telerobot.Game.Runtime
         {
             if (opaque == null) return null;
             if (transparentByOpaque.TryGetValue(opaque, out var existing)) return existing;
-            var result = new Material(opaque)
+            var result = new Material(transparentMaterialTemplate == null
+                ? opaque : transparentMaterialTemplate)
             {
                 name = opaque.name + " (Haetae Occlusion)",
                 renderQueue = (int)RenderQueue.Transparent
             };
+            CopySurfaceAppearance(opaque, result);
             result.SetOverrideTag("RenderType", "Transparent");
             SetFloatIfPresent(result, "_Surface", 1f);
             SetFloatIfPresent(result, "_Blend", 0f);
@@ -158,7 +166,40 @@ namespace Telerobot.Game.Runtime
             result.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             result.SetShaderPassEnabled("ShadowCaster", false);
             transparentByOpaque.Add(opaque, result);
+            sourceEmissionByTransparent.Add(result,
+                opaque.HasProperty(EmissionColorId) ? opaque.GetColor(EmissionColorId) : Color.black);
             return result;
+        }
+
+        private static void CopySurfaceAppearance(Material source, Material destination)
+        {
+            var baseColor = source.HasProperty(BaseColorId)
+                ? source.GetColor(BaseColorId) : source.color;
+            destination.color = baseColor;
+            if (destination.HasProperty(BaseColorId)) destination.SetColor(BaseColorId, baseColor);
+            if (source.HasProperty("_BaseMap") && destination.HasProperty("_BaseMap"))
+            {
+                destination.SetTexture("_BaseMap", source.GetTexture("_BaseMap"));
+                destination.SetTextureScale("_BaseMap", source.GetTextureScale("_BaseMap"));
+                destination.SetTextureOffset("_BaseMap", source.GetTextureOffset("_BaseMap"));
+            }
+            CopyFloatIfPresent(source, destination, "_Metallic");
+            CopyFloatIfPresent(source, destination, "_Smoothness");
+            CopyFloatIfPresent(source, destination, "_BumpScale");
+            CopyFloatIfPresent(source, destination, "_OcclusionStrength");
+            if (source.HasProperty(EmissionColorId) && destination.HasProperty(EmissionColorId))
+            {
+                var emission = source.GetColor(EmissionColorId);
+                destination.SetColor(EmissionColorId, emission);
+                if (emission.maxColorComponent > 0f) destination.EnableKeyword("_EMISSION");
+                else destination.DisableKeyword("_EMISSION");
+            }
+        }
+
+        private static void CopyFloatIfPresent(Material source, Material destination, string property)
+        {
+            if (source.HasProperty(property) && destination.HasProperty(property))
+                destination.SetFloat(property, source.GetFloat(property));
         }
 
         private void ApplyOpacity(float opacity, bool forceMaterialAssignment = false)
@@ -197,7 +238,7 @@ namespace Telerobot.Game.Runtime
             }
         }
 
-        private static void SetMaterialAlpha(Material material, float opacity)
+        private void SetMaterialAlpha(Material material, float opacity)
         {
             if (material == null) return;
             var color = material.HasProperty(BaseColorId)
@@ -206,6 +247,9 @@ namespace Telerobot.Game.Runtime
             color.a = opacity;
             material.color = color;
             if (material.HasProperty(BaseColorId)) material.SetColor(BaseColorId, color);
+            if (material.HasProperty(EmissionColorId) &&
+                sourceEmissionByTransparent.TryGetValue(material, out var sourceEmission))
+                material.SetColor(EmissionColorId, sourceEmission * opacity);
         }
 
         private static void SetFloatIfPresent(Material material, string property, float value)
@@ -224,6 +268,7 @@ namespace Telerobot.Game.Runtime
                 else DestroyImmediate(pair.Value);
             }
             transparentByOpaque.Clear();
+            sourceEmissionByTransparent.Clear();
             presentationRoot = null;
             usesTransparentMaterials = false;
         }

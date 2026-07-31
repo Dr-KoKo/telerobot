@@ -99,7 +99,7 @@ namespace Telerobot.Game.Data
     public sealed class HaetaeOcclusionFadeDefinition
     {
         public bool enabled = true;
-        [Range(0.05f, 0.95f)] public float obstructingOpacity = 0.16f;
+        [Range(0.05f, 0.95f)] public float obstructingOpacity = 0.10f;
         [Range(0.01f, 2f)] public float fadeSeconds = 0.15f;
         [Range(0.01f, 2f)] public float restoreSeconds = 0.25f;
         [Range(0.01f, 3f)] public float aimCorridorRadius = 0.45f;
@@ -155,10 +155,11 @@ namespace Telerobot.Game.Data
         public Font headingFont;
         [Header("Character Scale")]
         [Range(0.01f, 2f)]
-        public float haetaeVisualScale = 0.85f;
+        public float haetaeVisualScale = 0.80f;
         [Header("Haetae Camera Occlusion")]
         public HaetaeOcclusionFadeDefinition haetaeOcclusionFade =
             new HaetaeOcclusionFadeDefinition();
+        public Material haetaeOcclusionMaterialTemplate;
         [Header("Authored Character Models")]
         public GameObject haetaeGeneralModel;
         public GameObject haetaeGeneralLod1;
@@ -246,6 +247,10 @@ namespace Telerobot.Game.Data
             if (haetaeOcclusionFade == null)
                 throw new InvalidOperationException("Haetae occlusion fade definition is required.");
             haetaeOcclusionFade.Validate();
+            if (haetaeOcclusionMaterialTemplate == null ||
+                haetaeOcclusionMaterialTemplate.shader == null)
+                throw new InvalidOperationException(
+                    "Haetae occlusion requires a transparent material template retained by player builds.");
             ValidateUniqueKeys(colors, item => item == null ? null : item.key, RequiredColorKeys, "color");
             ValidateUniqueKeys(materials, item => item == null ? null : item.key, RequiredMaterialKeys, "material");
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");

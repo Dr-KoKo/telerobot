@@ -13,6 +13,8 @@ namespace Telerobot.Game.Tests
         public void VisualTheme_RequiresEverySemanticColor()
         {
             var theme = ScriptableObject.CreateInstance<VisualThemeDefinitionAsset>();
+            theme.haetaeOcclusionMaterialTemplate = AssetDatabase.LoadAssetAtPath<Material>(
+                "Assets/Game/Art/Materials/ally-haetae-occlusion.mat");
             theme.themeId = "test";
             theme.colors = VisualThemeDefinitionAsset.RequiredColorKeys
                 .Select(key => new SemanticColorDefinition { key = key, value = Color.white })
@@ -21,10 +23,10 @@ namespace Telerobot.Game.Tests
                 .Select(key => new MaterialRoleDefinition { key = key, baseColor = Color.white })
                 .ToArray();
 
-            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.85f));
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.80f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.16f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.10f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
@@ -36,10 +38,10 @@ namespace Telerobot.Game.Tests
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeVisualScale = float.NaN;
             Assert.Throws<InvalidOperationException>(theme.Validate);
-            theme.haetaeVisualScale = 0.85f;
+            theme.haetaeVisualScale = 0.80f;
             theme.haetaeOcclusionFade.obstructingOpacity = 1f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
-            theme.haetaeOcclusionFade.obstructingOpacity = 0.16f;
+            theme.haetaeOcclusionFade.obstructingOpacity = 0.10f;
             theme.haetaeOcclusionFade.fadeSeconds = 0f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeOcclusionFade.fadeSeconds = 0.15f;
@@ -141,16 +143,53 @@ namespace Telerobot.Game.Tests
             Assert.DoesNotThrow(theme.Validate);
             Assert.DoesNotThrow(catalog.Validate);
             Assert.That(catalog.fallbackTheme, Is.SameAs(theme));
-            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.85f));
+            Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.80f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.16f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.10f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
             Assert.That(theme.haetaeOcclusionFade.maxDistance, Is.EqualTo(35f));
+            var serializedTheme = new SerializedObject(theme);
+            var occlusionTemplateProperty = serializedTheme.FindProperty("haetaeOcclusionMaterialTemplate");
+            Assert.That(occlusionTemplateProperty, Is.Not.Null,
+                "The player build needs an explicitly serialized transparent material reference.");
+            var occlusionTemplate = occlusionTemplateProperty.objectReferenceValue as Material;
+            Assert.That(occlusionTemplate, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(occlusionTemplate),
+                Is.EqualTo("Assets/Game/Art/Materials/ally-haetae-occlusion.mat"));
+            Assert.That(occlusionTemplate.renderQueue, Is.GreaterThanOrEqualTo(3000));
+            Assert.That(occlusionTemplate.GetTag("RenderType", false), Is.EqualTo("Transparent"));
+            Assert.That(occlusionTemplate.HasProperty("_Surface"), Is.True);
+            Assert.That(occlusionTemplate.GetFloat("_Surface"), Is.EqualTo(1f));
+            Assert.That(occlusionTemplate.GetFloat("_ZWrite"), Is.EqualTo(0f));
+            Assert.That(occlusionTemplate.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), Is.True);
             Assert.That(catalog.items.Select(item => item.id).Distinct().Count(), Is.EqualTo(catalog.items.Length));
             Assert.That(catalog.sources.All(source => source.officialUrl.StartsWith("https://", StringComparison.Ordinal)), Is.True);
+        }
+
+        [Test]
+        public void GeneratedTheme_RetainsTransparentOcclusionMaterialForPlayerBuilds()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<VisualThemeDefinitionAsset>(
+                "Assets/Game/Data/Assets/VisualTheme.asset");
+            Assert.That(theme, Is.Not.Null, "Run Tools/Telerobot/Build MVP Project.");
+
+            var serializedTheme = new SerializedObject(theme);
+            var templateProperty = serializedTheme.FindProperty("haetaeOcclusionMaterialTemplate");
+            Assert.That(templateProperty, Is.Not.Null,
+                "The player build needs an explicitly serialized transparent material reference.");
+            var template = templateProperty.objectReferenceValue as Material;
+            Assert.That(template, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(template),
+                Is.EqualTo("Assets/Game/Art/Materials/ally-haetae-occlusion.mat"));
+            Assert.That(template.renderQueue, Is.GreaterThanOrEqualTo(3000));
+            Assert.That(template.GetTag("RenderType", false), Is.EqualTo("Transparent"));
+            Assert.That(template.HasProperty("_Surface"), Is.True);
+            Assert.That(template.GetFloat("_Surface"), Is.EqualTo(1f));
+            Assert.That(template.GetFloat("_ZWrite"), Is.EqualTo(0f));
+            Assert.That(template.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT"), Is.True);
         }
 
         [Test]

@@ -8,6 +8,7 @@ using Telerobot.Game.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 namespace Telerobot.Game.Editor
@@ -899,16 +900,17 @@ namespace Telerobot.Game.Editor
                     "Assets/Game/Art/Menu/guardian-night-menu.png");
                 item.bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Game/Art/Fonts/NotoSansKR-VF.ttf");
                 item.headingFont = item.bodyFont;
-                item.haetaeVisualScale = 0.85f;
+                item.haetaeVisualScale = 0.80f;
                 item.haetaeOcclusionFade = new HaetaeOcclusionFadeDefinition
                 {
                     enabled = true,
-                    obstructingOpacity = 0.16f,
+                    obstructingOpacity = 0.10f,
                     fadeSeconds = 0.15f,
                     restoreSeconds = 0.25f,
                     aimCorridorRadius = 0.45f,
                     maxDistance = 35f
                 };
+                item.haetaeOcclusionMaterialTemplate = HaetaeOcclusionMaterialAsset();
                 item.haetaeGeneralModel =
                     AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod0Path);
                 item.haetaeGeneralLod1 =
@@ -1156,6 +1158,36 @@ namespace Telerobot.Game.Editor
             result.enableInstancing = true;
             EditorUtility.SetDirty(result);
             return result;
+        }
+
+        private static Material HaetaeOcclusionMaterialAsset()
+        {
+            var result = VisualMaterialAsset("ally-haetae-occlusion", Color.white, 0f, 0f, 0f);
+            result.name = "ally-haetae-occlusion";
+            result.renderQueue = (int)RenderQueue.Transparent;
+            result.SetOverrideTag("RenderType", "Transparent");
+            SetFloatIfPresent(result, "_Surface", 1f);
+            SetFloatIfPresent(result, "_Blend", 0f);
+            SetFloatIfPresent(result, "_BlendModePreserveSpecular", 0f);
+            SetFloatIfPresent(result, "_AlphaClip", 0f);
+            SetFloatIfPresent(result, "_Mode", 3f);
+            SetFloatIfPresent(result, "_SrcBlend", (float)BlendMode.SrcAlpha);
+            SetFloatIfPresent(result, "_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            SetFloatIfPresent(result, "_SrcBlendAlpha", (float)BlendMode.One);
+            SetFloatIfPresent(result, "_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            SetFloatIfPresent(result, "_ZWrite", 0f);
+            result.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            result.EnableKeyword("_ALPHABLEND_ON");
+            result.DisableKeyword("_ALPHATEST_ON");
+            result.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            result.SetShaderPassEnabled("ShadowCaster", false);
+            EditorUtility.SetDirty(result);
+            return result;
+        }
+
+        private static void SetFloatIfPresent(Material material, string property, float value)
+        {
+            if (material.HasProperty(property)) material.SetFloat(property, value);
         }
 
         private static DesignAssetCategory CategoryFor(string id)
