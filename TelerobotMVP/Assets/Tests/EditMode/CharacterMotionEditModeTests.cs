@@ -167,6 +167,8 @@ namespace Telerobot.Game.Tests
         {
             var theme = ScriptableObject.CreateInstance<VisualThemeDefinitionAsset>();
             theme.themeId = "motion-test";
+            theme.haetaeOcclusionMaterialTemplate = AssetDatabase.LoadAssetAtPath<Material>(
+                "Assets/Game/Art/Materials/ally-haetae-occlusion.mat");
             theme.colors = VisualThemeDefinitionAsset.RequiredColorKeys
                 .Select(key => new SemanticColorDefinition { key = key, value = Color.white })
                 .ToArray();

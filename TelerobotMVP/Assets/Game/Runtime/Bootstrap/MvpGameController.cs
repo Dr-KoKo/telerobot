@@ -443,10 +443,16 @@ namespace Telerobot.Game.Runtime
             var actorObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             actorObject.name = id;
             actorObject.transform.position = position;
-            actorObject.transform.localScale = new Vector3(1.1f, 0.75f, 1.5f);
+            actorObject.transform.localScale = Vector3.one;
+            var bodyCollider = actorObject.GetComponent<CapsuleCollider>();
+            bodyCollider.radius = Config.Robot.BodyColliderRadius;
+            bodyCollider.height = Config.Robot.BodyColliderHeight;
+            bodyCollider.center = new Vector3(0f, Config.Robot.BodyColliderCenterY, 0f);
             ApplyColor(actorObject, color);
             var actor = actorObject.AddComponent<HaetaeRobotActor>();
             actor.Initialize(this, id, Config.Robot, Config.Battery, route);
+            var occlusionFader = actorObject.AddComponent<HaetaeCameraOcclusionFader>();
+            occlusionFader.Initialize(PlayerActor, catalog.visualTheme);
             Robots.Add(actor);
         }
 

@@ -6,6 +6,7 @@ using Telerobot.Game.Data;
 using Telerobot.Game.Runtime;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Utils;
 
 namespace Telerobot.Game.Tests
 {
@@ -362,6 +363,9 @@ namespace Telerobot.Game.Tests
             root.name = "Authored Haetae Fallback Test";
 
             factory.Attach(root, PresentationRole.HaetaeGeneralUnit1);
+            var fader = root.AddComponent<HaetaeCameraOcclusionFader>();
+            fader.Initialize(Game.PlayerActor, fallbackTheme);
+            fader.enabled = false;
             yield return null;
 
             var marker = root.GetComponentInChildren<VisualIdentityMarker>();
@@ -370,6 +374,13 @@ namespace Telerobot.Game.Tests
             Assert.That(root.GetComponentInChildren<AuthoredModelMarker>(), Is.Null);
             Assert.That(root.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
                 Is.EqualTo(Vector3.one * fallbackTheme.haetaeVisualScale));
+            fader.TickForTests(true, fallbackTheme.haetaeOcclusionFade.fadeSeconds);
+            Assert.That(fader.CurrentOpacity,
+                Is.EqualTo(fallbackTheme.haetaeOcclusionFade.obstructingOpacity).Within(0.001f));
+            Assert.That(fader.UsesTransparentMaterials, Is.True);
+            fader.TickForTests(false, fallbackTheme.haetaeOcclusionFade.restoreSeconds);
+            Assert.That(fader.CurrentOpacity, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(fader.UsesTransparentMaterials, Is.False);
 
             Object.Destroy(root);
             library.Dispose();
@@ -434,6 +445,274 @@ namespace Telerobot.Game.Tests
 
             Object.Destroy(root);
             Object.Destroy(runner);
+        }
+
+        [UnityTest]
+        public IEnumerator LiveHaetaeUsesOneVisualScaleAndPreservesLegacyPhysicalBounds()
+        {
+            yield return null;
+            Assert.That(Game.Catalog.visualTheme.haetaeVisualScale, Is.EqualTo(0.80f));
+            var expectedVisualScale = Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale;
+            foreach (var robot in Game.Robots)
+            {
+                Assert.That(robot.transform.localScale, Is.EqualTo(Vector3.one), robot.name);
+                var visual = robot.transform.Find(LowPolyModelFactory.VisualRootName);
+                Assert.That(visual, Is.Not.Null, robot.name);
+                Assert.That(visual.localScale, Is.EqualTo(expectedVisualScale), robot.name);
+
+                var capsule = robot.GetComponent<CapsuleCollider>();
+                Assert.That(capsule.radius, Is.EqualTo(Game.Config.Robot.BodyColliderRadius));
+                Assert.That(capsule.height, Is.EqualTo(Game.Config.Robot.BodyColliderHeight));
+                Assert.That(capsule.center.y, Is.EqualTo(Game.Config.Robot.BodyColliderCenterY));
+
+                var legacy = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                legacy.transform.position = robot.transform.position;
+                legacy.transform.localScale = new Vector3(1.1f, 0.75f, 1.5f);
+                Physics.SyncTransforms();
+                Assert.That(capsule.bounds.center,
+                    Is.EqualTo(legacy.GetComponent<Collider>().bounds.center).Using(Vector3ComparerWithEqualsOperator.Instance));
+                Assert.That(capsule.bounds.size,
+                    Is.EqualTo(legacy.GetComponent<Collider>().bounds.size).Using(Vector3ComparerWithEqualsOperator.Instance));
+                Object.Destroy(legacy);
+            }
+
+            var specializationRobot = Game.Robots[0];
+            var specializations = new[]
+            {
+                HaetaeSpecialization.Melee,
+                HaetaeSpecialization.Ranged,
+                HaetaeSpecialization.Balanced
+            };
+            foreach (var specialization in specializations)
+            {
+                specializationRobot.State.Progression.Specialization = specialization;
+                yield return null;
+                Assert.That(specializationRobot.transform.localScale, Is.EqualTo(Vector3.one),
+                    specialization.ToString());
+                Assert.That(specializationRobot.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                    Is.EqualTo(expectedVisualScale), specialization.ToString());
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeOcclusionFadesInBothPerspectiveAimCorridorsAndRestores()
+        {
+            yield return null;
+            var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
+            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.20f));
+            var player = Game.PlayerActor;
+            var robot = Game.Robots[0];
+            var fader = robot.GetComponent<HaetaeCameraOcclusionFader>();
+            Assert.That(fader, Is.Not.Null);
+            Assert.That(robot.GetComponents<HaetaeCameraOcclusionFader>().Length, Is.EqualTo(1));
+            fader.enabled = false;
+            fader.TickForTests(false, tuning.restoreSeconds);
+
+            var renderers = fader.PresentationRoot.GetComponentsInChildren<Renderer>(true);
+            var opaqueMaterials = renderers.Select(item => item.sharedMaterials.ToArray()).ToArray();
+            var opaqueEmission = opaqueMaterials
+                .Select(materials => materials.Select(material =>
+                    material != null && material.HasProperty("_EmissionColor")
+                        ? material.GetColor("_EmissionColor")
+                        : Color.black).ToArray())
+                .ToArray();
+            var camera = player.ViewCamera;
+            if (player.Perspective != CameraPerspective.ThirdPerson)
+            {
+                player.TogglePerspective();
+                player.SnapCameraForTests();
+            }
+            var centeredPosition = camera.transform.position + camera.transform.forward * 5f;
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
+            Physics.SyncTransforms();
+            var collider = robot.GetComponent<Collider>();
+            var colliderSize = collider.bounds.size;
+            var gameplayScale = robot.transform.localScale;
+
+            Assert.That(Vector3.Distance(collider.bounds.center, centeredPosition), Is.GreaterThan(4f));
+            Assert.That(fader.EvaluateOcclusionForTests(), Is.True);
+            fader.TickForTests(true, tuning.fadeSeconds);
+            Assert.That(fader.IsObstructing, Is.True);
+            Assert.That(fader.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+            Assert.That(fader.UsesTransparentMaterials, Is.True);
+            Assert.That(renderers.SelectMany(item => item.sharedMaterials)
+                .All(item => item.renderQueue >= 3000), Is.True);
+            var specularMaterials = renderers.SelectMany(item => item.sharedMaterials)
+                .Where(item => item.HasProperty("_BlendModePreserveSpecular"))
+                .ToArray();
+            Assert.That(specularMaterials, Is.Not.Empty);
+            Assert.That(specularMaterials
+                .All(item => item.GetFloat("_BlendModePreserveSpecular") == 0f), Is.True);
+            Assert.That(renderers.SelectMany(item => item.sharedMaterials)
+                .Where(item => item.HasProperty("_BaseColor"))
+                .All(item => Mathf.Approximately(
+                    item.GetColor("_BaseColor").a, tuning.obstructingOpacity)), Is.True);
+            for (var rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                var fadedMaterials = renderers[rendererIndex].sharedMaterials;
+                for (var materialIndex = 0; materialIndex < fadedMaterials.Length; materialIndex++)
+                {
+                    var material = fadedMaterials[materialIndex];
+                    if (material == null || !material.HasProperty("_EmissionColor")) continue;
+                    var expected = opaqueEmission[rendererIndex][materialIndex] * tuning.obstructingOpacity;
+                    var actual = material.GetColor("_EmissionColor");
+                    Assert.That(actual.r, Is.EqualTo(expected.r).Within(0.001f));
+                    Assert.That(actual.g, Is.EqualTo(expected.g).Within(0.001f));
+                    Assert.That(actual.b, Is.EqualTo(expected.b).Within(0.001f));
+                }
+            }
+            Assert.That(collider.bounds.size, Is.EqualTo(colliderSize));
+            Assert.That(robot.transform.localScale, Is.EqualTo(gameplayScale));
+            Assert.That(robot.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                Is.EqualTo(Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale));
+
+            robot.transform.position = centeredPosition;
+            fader.PresentationRoot.position = centeredPosition + camera.transform.right * 6f;
+            Physics.SyncTransforms();
+            Assert.That(fader.EvaluateOcclusionForTests(), Is.False);
+            fader.TickForTests(false, tuning.restoreSeconds);
+            Assert.That(fader.CurrentOpacity, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(fader.UsesTransparentMaterials, Is.False);
+            for (var index = 0; index < renderers.Length; index++)
+                Assert.That(renderers[index].sharedMaterials, Is.EqualTo(opaqueMaterials[index]));
+
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
+            Physics.SyncTransforms();
+            player.TogglePerspective();
+            Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.FirstPerson));
+            player.SnapCameraForTests();
+            centeredPosition = camera.transform.position + camera.transform.forward * 5f;
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
+            Physics.SyncTransforms();
+            Assert.That(fader.EvaluateOcclusionForTests(), Is.True);
+            fader.TickForTests(true, tuning.fadeSeconds);
+            Assert.That(fader.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+
+            fader.PresentationRoot.position = centeredPosition + camera.transform.right * 6f;
+            Physics.SyncTransforms();
+            Assert.That(fader.EvaluateOcclusionForTests(), Is.False);
+            fader.TickForTests(false, tuning.restoreSeconds);
+            Assert.That(fader.CurrentOpacity, Is.EqualTo(1f).Within(0.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeOcclusionRemainsIndependentAcrossReplacementMotionAndCycles()
+        {
+            yield return null;
+            var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
+            var firstRobot = Game.Robots[0];
+            var secondRobot = Game.Robots[1];
+            var first = firstRobot.GetComponent<HaetaeCameraOcclusionFader>();
+            var second = secondRobot.GetComponent<HaetaeCameraOcclusionFader>();
+            Assert.That(first, Is.Not.Null);
+            Assert.That(second, Is.Not.Null);
+            first.enabled = false;
+            second.enabled = false;
+            first.TickForTests(false, tuning.restoreSeconds);
+            second.TickForTests(false, tuning.restoreSeconds);
+
+            first.TickForTests(true, tuning.fadeSeconds);
+            second.TickForTests(false, tuning.fadeSeconds);
+            Assert.That(first.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+            Assert.That(second.CurrentOpacity, Is.EqualTo(1f).Within(0.001f));
+            second.TickForTests(true, tuning.fadeSeconds);
+            Assert.That(second.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+            Assert.That(first.OwnedMaterialCount, Is.GreaterThan(0));
+            Assert.That(second.OwnedMaterialCount, Is.GreaterThan(0));
+            Assert.That(first.OwnedMaterials.Intersect(second.OwnedMaterials).Any(), Is.False);
+
+            var oldRoot = first.PresentationRoot;
+            firstRobot.State.Progression.Specialization = HaetaeSpecialization.Melee;
+            for (var frame = 0; frame < 3 && first.PresentationRoot == oldRoot; frame++)
+            {
+                yield return null;
+                first.TickForTests(true, tuning.fadeSeconds);
+            }
+            Assert.That(first.PresentationRoot, Is.Not.SameAs(oldRoot));
+            Assert.That(first.PresentationRoot.GetComponent<AuthoredModelMarker>().assetId,
+                Is.EqualTo("character.haetae.melee"));
+            var ownedAfterReplacement = first.OwnedMaterialCount;
+            Assert.That(ownedAfterReplacement, Is.GreaterThan(0));
+
+            var tinted = first.PresentationRoot.GetComponentsInChildren<Renderer>(true).First();
+            var tint = new Color(0.18f, 0.27f, 0.39f, 1f);
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_BaseColor", tint);
+            block.SetColor("_Color", tint);
+            tinted.SetPropertyBlock(block);
+            first.TickForTests(true, tuning.fadeSeconds);
+            var sampled = new MaterialPropertyBlock();
+            tinted.GetPropertyBlock(sampled);
+            var sampledColor = sampled.GetColor("_BaseColor");
+            Assert.That(sampledColor.r, Is.EqualTo(tint.r).Within(0.001f));
+            Assert.That(sampledColor.g, Is.EqualTo(tint.g).Within(0.001f));
+            Assert.That(sampledColor.b, Is.EqualTo(tint.b).Within(0.001f));
+            Assert.That(sampledColor.a, Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+
+            firstRobot.GetComponent<CharacterMotionDriver>()
+                .SampleForTests(CharacterMotionState.Attack, 0.5f, CharacterAttackMotion.Melee);
+            Assert.That(first.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+            for (var cycle = 0; cycle < 10; cycle++)
+            {
+                first.TickForTests(false, tuning.restoreSeconds);
+                Assert.That(first.CurrentOpacity, Is.EqualTo(1f).Within(0.001f), "Restore " + cycle);
+                first.TickForTests(true, tuning.fadeSeconds);
+                Assert.That(first.CurrentOpacity,
+                    Is.EqualTo(tuning.obstructingOpacity).Within(0.001f), "Fade " + cycle);
+                Assert.That(first.OwnedMaterialCount, Is.EqualTo(ownedAfterReplacement));
+            }
+            first.TickForTests(false, tuning.restoreSeconds);
+            tinted.GetPropertyBlock(sampled);
+            Assert.That(sampled.GetColor("_BaseColor").a, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(first.UsesTransparentMaterials, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator HaetaeOcclusionDimsEmissionWithTheVisibleOpacity()
+        {
+            yield return null;
+            var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
+            var fader = Game.Robots[0].GetComponent<HaetaeCameraOcclusionFader>();
+            fader.enabled = false;
+            fader.TickForTests(false, tuning.restoreSeconds);
+
+            var renderers = fader.PresentationRoot.GetComponentsInChildren<Renderer>(true);
+            Renderer emissiveRenderer = null;
+            var emissiveMaterialIndex = -1;
+            var opaqueEmission = Color.black;
+            foreach (var candidate in renderers)
+            {
+                var materials = candidate.sharedMaterials;
+                for (var index = 0; index < materials.Length; index++)
+                {
+                    var material = materials[index];
+                    if (material == null || !material.HasProperty("_EmissionColor")) continue;
+                    var emission = material.GetColor("_EmissionColor");
+                    if (emission.maxColorComponent <= 0.01f) continue;
+                    emissiveRenderer = candidate;
+                    emissiveMaterialIndex = index;
+                    opaqueEmission = emission;
+                    break;
+                }
+                if (emissiveRenderer != null) break;
+            }
+            Assert.That(emissiveRenderer, Is.Not.Null, "The authored Haetae should retain a luminous accent.");
+
+            fader.TickForTests(true, tuning.fadeSeconds);
+            var fadedEmission = emissiveRenderer.sharedMaterials[emissiveMaterialIndex]
+                .GetColor("_EmissionColor");
+            var expected = opaqueEmission * tuning.obstructingOpacity;
+            Assert.That(fadedEmission.r, Is.EqualTo(expected.r).Within(0.001f));
+            Assert.That(fadedEmission.g, Is.EqualTo(expected.g).Within(0.001f));
+            Assert.That(fadedEmission.b, Is.EqualTo(expected.b).Within(0.001f));
         }
 
         [UnityTest]

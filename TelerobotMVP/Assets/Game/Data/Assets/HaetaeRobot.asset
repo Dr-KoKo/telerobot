@@ -20,6 +20,9 @@ MonoBehaviour:
   dashCooldownSeconds: 3
   detectionRadius: 15
   engageRange: 2
+  bodyColliderRadius: 0.75
+  bodyColliderHeight: 1.5
+  bodyColliderCenterY: 0
   separationRadius: 2.2
   separationStrength: 1.8
   formationSpacing: 3

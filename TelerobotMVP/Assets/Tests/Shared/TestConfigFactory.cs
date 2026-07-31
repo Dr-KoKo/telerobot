@@ -47,6 +47,7 @@ namespace Telerobot.Game.Tests
                 {
                     MaxHealth = 300f, MoveSpeed = 10f, DashDamage = 60f, BiteDamage = 40f,
                     BiteCooldownSeconds = 0.6f, DashCooldownSeconds = 3f, DetectionRadius = 15f, EngageRange = 2f,
+                    BodyColliderRadius = 0.75f, BodyColliderHeight = 1.5f, BodyColliderCenterY = 0f,
                     SeparationRadius = 2.2f, SeparationStrength = 1.8f, FormationSpacing = 3f, DefendLeashRadius = 14f,
                     RunnerKillTargetMinimumSeconds = 1f, RunnerKillTargetMaximumSeconds = 2f,
                     BruiserKillTargetMinimumSeconds = 6f, BruiserKillTargetMaximumSeconds = 10f

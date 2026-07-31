@@ -19,7 +19,6 @@ namespace Telerobot.Game.Runtime
         private Renderer visualRenderer;
         private Color activeColor;
         private Quaternion activeRotation;
-        private Vector3 activeScale;
         private ZombieActor followUpTarget;
         private HaetaeSpecialization presentedSpecialization = (HaetaeSpecialization)(-1);
         private MaterialPropertyBlock presentationBlock;
@@ -44,7 +43,6 @@ namespace Telerobot.Game.Runtime
             visualRenderer = GetComponent<Renderer>();
             activeColor = visualRenderer == null ? Color.white : visualRenderer.material.color;
             activeRotation = transform.rotation;
-            activeScale = transform.localScale;
             RefreshSpecializationPresentation();
         }
 
@@ -310,7 +308,7 @@ namespace Telerobot.Game.Runtime
             followUpTarget = null;
             durabilitySystem.RestoreAtPhaseStart(State, config.MaxHealth, State.MaximumBattery);
             transform.rotation = activeRotation;
-            transform.localScale = activeScale;
+            transform.localScale = Vector3.one;
             if (visualRenderer != null) visualRenderer.material.color = activeColor;
             ClearPresentationTint();
             presentedSpecialization = (HaetaeSpecialization)(-1);
@@ -323,7 +321,7 @@ namespace Telerobot.Game.Runtime
         {
             followUpTarget = null;
             transform.rotation = Quaternion.Euler(90f, transform.eulerAngles.y, 0f);
-            transform.localScale = new Vector3(activeScale.x, activeScale.y * 0.55f, activeScale.z);
+            transform.localScale = Vector3.one;
             if (visualRenderer != null) visualRenderer.material.color = new Color(0.16f, 0.17f, 0.18f);
             TintPresentation(new Color(0.16f, 0.17f, 0.18f));
         }
@@ -353,7 +351,7 @@ namespace Telerobot.Game.Runtime
                 : PresentationRole.HaetaeGeneralUnit1;
             if (presentedSpecialization == HaetaeSpecialization.Unselected)
             {
-                transform.localScale = activeScale;
+                transform.localScale = Vector3.one;
                 if (visualRenderer != null) visualRenderer.material.color = activeColor;
                 game.PresentationModels?.Attach(gameObject, presentationRole, State.Id == "haetae-2" ? 2 : 1);
                 return;
@@ -367,7 +365,7 @@ namespace Telerobot.Game.Runtime
                     ? PresentationRole.HaetaeRangedPreview
                     : PresentationRole.HaetaeBalancedPreview;
             game.PresentationModels?.Attach(gameObject, presentationRole, State.Id == "haetae-2" ? 2 : 1);
-            transform.localScale = Vector3.Scale(activeScale, definition.scaleMultiplier);
+            transform.localScale = Vector3.one;
             if (visualRenderer != null) visualRenderer.material.color = definition.bodyColor;
         }
 

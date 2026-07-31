@@ -95,6 +95,9 @@ namespace Telerobot.Game.Data
                     DashCooldownSeconds = source.robot.dashCooldownSeconds,
                     DetectionRadius = source.robot.detectionRadius,
                     EngageRange = source.robot.engageRange,
+                    BodyColliderRadius = source.robot.bodyColliderRadius,
+                    BodyColliderHeight = source.robot.bodyColliderHeight,
+                    BodyColliderCenterY = source.robot.bodyColliderCenterY,
                     SeparationRadius = source.robot.separationRadius,
                     SeparationStrength = source.robot.separationStrength,
                     FormationSpacing = source.robot.formationSpacing,
@@ -322,6 +325,10 @@ namespace Telerobot.Game.Data
                 source.ammo.resupplyUseSeconds <= 0f || source.ammo.resupplyCooldownSeconds < 0f ||
                 source.ammo.grenadeResupplyPolicy != GrenadeResupplyPolicy.PhaseResetOnly)
                 throw new InvalidOperationException("Ammo reserve configuration is invalid.");
+            if (!IsFinite(source.robot.bodyColliderRadius) || source.robot.bodyColliderRadius <= 0f ||
+                !IsFinite(source.robot.bodyColliderHeight) || source.robot.bodyColliderHeight < source.robot.bodyColliderRadius * 2f ||
+                !IsFinite(source.robot.bodyColliderCenterY))
+                throw new InvalidOperationException("Robot physical footprint configuration is invalid.");
             if (source.robot.dashDamage <= 0f || source.robot.biteDamage <= 0f || source.robot.biteCooldownSeconds <= 0f ||
                 source.robot.dashCooldownSeconds <= 0f || source.robot.engageRange <= 0f || source.robot.detectionRadius <= 0f ||
                 source.robot.separationRadius <= 0f || source.robot.separationStrength <= 0f ||
@@ -447,9 +454,7 @@ namespace Telerobot.Game.Data
                     specialization.dashDamageMultiplier < 0f || specialization.biteDamageMultiplier < 0f ||
                     specialization.rangedDamage < 0f || specialization.rangedCooldownSeconds < 0f ||
                     specialization.cleaveRadius < 0f || specialization.maximumTargets < 1 ||
-                    specialization.incomingDamageMultiplier <= 0f || specialization.combatBatteryMultiplier <= 0f ||
-                    specialization.scaleMultiplier.x <= 0f || specialization.scaleMultiplier.y <= 0f ||
-                    specialization.scaleMultiplier.z <= 0f)
+                    specialization.incomingDamageMultiplier <= 0f || specialization.combatBatteryMultiplier <= 0f)
                     throw new InvalidOperationException("Haetae specialization definitions are invalid.");
                 if ((specialization.id == HaetaeSpecialization.Ranged ||
                      specialization.id == HaetaeSpecialization.Balanced) &&

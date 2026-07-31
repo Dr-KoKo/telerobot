@@ -26,6 +26,5 @@ MonoBehaviour:
   incomingDamageMultiplier: 1
   combatBatteryMultiplier: 0.9
   bodyColor: {r: 0.68, g: 0.38, b: 0.95, a: 1}
-  scaleMultiplier: {x: 1, y: 1, z: 1}
   attackPulseColor: {r: 0.78, g: 0.45, b: 1, a: 1}
   tracerColor: {r: 0.65, g: 0.55, b: 1, a: 1}

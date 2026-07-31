@@ -102,6 +102,47 @@ namespace Telerobot.Game.Tests
             Assert.That(ids.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(3));
         }
 
+        [Test]
+        public void GeneratedRobotUsesExplicitLegacyEquivalentPhysicalFootprint()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<Telerobot.Game.Data.MvpContentCatalog>(
+                DataRoot + "MvpBalanceCatalog.asset");
+            var robot = AssetDatabase.LoadAssetAtPath<Telerobot.Game.Data.RobotDefinitionAsset>(
+                DataRoot + "HaetaeRobot.asset");
+            var mapped = Telerobot.Game.Data.MvpDataMapper.Map(catalog).Robot;
+
+            Assert.That(robot.bodyColliderRadius, Is.EqualTo(0.75f));
+            Assert.That(robot.bodyColliderHeight, Is.EqualTo(1.5f));
+            Assert.That(robot.bodyColliderCenterY, Is.Zero);
+            Assert.That(mapped.BodyColliderRadius, Is.EqualTo(robot.bodyColliderRadius));
+            Assert.That(mapped.BodyColliderHeight, Is.EqualTo(robot.bodyColliderHeight));
+            Assert.That(mapped.BodyColliderCenterY, Is.EqualTo(robot.bodyColliderCenterY));
+            Assert.That(typeof(Telerobot.Game.Data.HaetaeSpecializationDefinitionAsset)
+                .GetField("scaleMultiplier", BindingFlags.Instance | BindingFlags.Public), Is.Null);
+        }
+
+        [Test]
+        public void MapperRejectsInvalidRobotPhysicalFootprint()
+        {
+            var source = AssetDatabase.LoadAssetAtPath<Telerobot.Game.Data.MvpContentCatalog>(
+                DataRoot + "MvpBalanceCatalog.asset");
+            var catalog = UnityEngine.Object.Instantiate(source);
+            catalog.robot = UnityEngine.Object.Instantiate(source.robot);
+            catalog.robot.bodyColliderRadius = 0.8f;
+            catalog.robot.bodyColliderHeight = 1.5f;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                Telerobot.Game.Data.MvpDataMapper.Map(catalog));
+
+            catalog.robot.bodyColliderHeight = 1.6f;
+            catalog.robot.bodyColliderCenterY = float.NaN;
+            Assert.Throws<InvalidOperationException>(() =>
+                Telerobot.Game.Data.MvpDataMapper.Map(catalog));
+
+            UnityEngine.Object.DestroyImmediate(catalog.robot);
+            UnityEngine.Object.DestroyImmediate(catalog);
+        }
+
         [TestCase("haetae.specialization.melee", "근거리형")]
         [TestCase("haetae.specialization.ranged", "원거리형")]
         [TestCase("haetae.specialization.balanced", "균형형")]
