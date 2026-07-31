@@ -495,7 +495,7 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
-        public IEnumerator HaetaeOcclusionFadesOnlyTheThirdPersonAimCorridorAndRestores()
+        public IEnumerator HaetaeOcclusionFadesInBothPerspectiveAimCorridorsAndRestores()
         {
             yield return null;
             var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
@@ -517,6 +517,11 @@ namespace Telerobot.Game.Tests
                         : Color.black).ToArray())
                 .ToArray();
             var camera = player.ViewCamera;
+            if (player.Perspective != CameraPerspective.ThirdPerson)
+            {
+                player.TogglePerspective();
+                player.SnapCameraForTests();
+            }
             var centeredPosition = camera.transform.position + camera.transform.forward * 5f;
             robot.transform.position = centeredPosition + camera.transform.right * 6f;
             fader.PresentationRoot.position = centeredPosition;
@@ -578,10 +583,21 @@ namespace Telerobot.Game.Tests
             Physics.SyncTransforms();
             player.TogglePerspective();
             Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.FirstPerson));
+            player.SnapCameraForTests();
+            centeredPosition = camera.transform.position + camera.transform.forward * 5f;
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
+            Physics.SyncTransforms();
+            Assert.That(fader.EvaluateOcclusionForTests(), Is.True);
+            fader.TickForTests(true, tuning.fadeSeconds);
+            Assert.That(fader.CurrentOpacity,
+                Is.EqualTo(tuning.obstructingOpacity).Within(0.001f));
+
+            fader.PresentationRoot.position = centeredPosition + camera.transform.right * 6f;
+            Physics.SyncTransforms();
             Assert.That(fader.EvaluateOcclusionForTests(), Is.False);
             fader.TickForTests(false, tuning.restoreSeconds);
             Assert.That(fader.CurrentOpacity, Is.EqualTo(1f).Within(0.001f));
-            player.TogglePerspective();
         }
 
         [UnityTest]

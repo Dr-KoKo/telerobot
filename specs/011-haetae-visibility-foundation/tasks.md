@@ -86,12 +86,36 @@ tint, fallback, and ten cycles restore exact stable state.
 - [x] T025 Run targeted red/green coverage, regenerate assets, complete suites, Windows build, standalone smoke, and exclude unrelated serialization noise
 - [x] T026 Mark the follow-up implemented, record validation, review scope, and commit the explicit files on `main`
 
+---
+
+## Phase 9: First-person playtest amendment
+
+- [x] T027 [US2] Add a failing PlayMode assertion that a Haetae covering the
+  first-person aiming corridor uses the same conditional fade and restore rule
+  in `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
+- [x] T028 [US4] Add failing configuration and PlayMode assertions for a
+  first-person first-launch default and saved-perspective precedence in
+  `TelerobotMVP/Assets/Tests/EditMode/DesignAssetCatalogTests.cs`,
+  `TelerobotMVP/Assets/Tests/PlayMode/PlayerExperiencePlayModeTests.cs`, and
+  `TelerobotMVP/Assets/Tests/PlayMode/MenuAndSettingsPlayModeTests.cs`
+- [x] T029 [US2] Allow renderer-bound obstruction evaluation in either camera
+  perspective in `TelerobotMVP/Assets/Game/Runtime/Presentation/HaetaeCameraOcclusionFader.cs`
+- [x] T030 [US4] Change the data-defined and generated first-launch perspective
+  to first-person while retaining saved preference precedence in
+  `TelerobotMVP/Assets/Game/Data/Assets/PlayerSettings.asset` and
+  `TelerobotMVP/Assets/Game/Editor/MvpProjectBuilder.cs`
+- [x] T031 [US2] [US4] Run targeted red/green tests, complete EditMode and
+  PlayMode regression suites, build Windows x86_64, run standalone smoke, and
+  record validation in `specs/011-haetae-visibility-foundation/quickstart.md`
+
 ## Dependencies & Execution Order
 
 - Phase 1 establishes the committed baseline.
 - Phase 2 blocks identity-root spawning.
 - US1 establishes scale and physical ownership before US2 changes obstruction.
 - US2 establishes renderer-bound activation before US3 lifecycle coverage.
+- T027 and T028 establish the amended red tests before T029 and T030 implementation.
+- T031 depends on all first-person amendment tasks.
 - Phase 6 depends on all stories.
 
 ## Parallel Opportunities
@@ -107,3 +131,5 @@ tint, fallback, and ten cycles restore exact stable state.
 3. Prove the old collider detection fails the renderer-only scenario.
 4. Implement renderer-bound activation and clearer material state.
 5. Re-run lifecycle, full regression, build, smoke, and commit.
+6. Extend the proven obstruction rule to first-person, change only the unsaved
+   perspective default, and repeat full validation.

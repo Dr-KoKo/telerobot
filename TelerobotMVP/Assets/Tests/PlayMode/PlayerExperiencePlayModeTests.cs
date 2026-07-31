@@ -11,20 +11,21 @@ namespace Telerobot.Game.Tests
     public sealed class PlayerExperiencePlayModeTests : RuntimeSceneTestBase
     {
         [UnityTest]
-        public IEnumerator PerspectiveToggleSwitchesFovBodyAndEyePosition()
+        public IEnumerator FirstLaunchStartsFirstPersonAndToggleSwitchesPresentation()
         {
             var player = Game.PlayerActor;
-            Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.ThirdPerson));
-            Assert.That(player.IsBodyVisible, Is.True);
-
-            player.TogglePerspective();
-            yield return null;
-
             Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.FirstPerson));
             Assert.That(player.IsBodyVisible, Is.False);
             Assert.That(player.ViewCamera.fieldOfView, Is.EqualTo(Game.Config.Game.FirstPersonFieldOfView));
             var expectedEye = player.transform.position + Vector3.up * Game.Config.Game.FirstPersonEyeHeight;
             Assert.That(Vector3.Distance(player.ViewCamera.transform.position, expectedEye), Is.LessThan(0.01f));
+
+            player.TogglePerspective();
+            yield return null;
+
+            Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.ThirdPerson));
+            Assert.That(player.IsBodyVisible, Is.True);
+            Assert.That(player.ViewCamera.fieldOfView, Is.EqualTo(Game.Config.Game.ThirdPersonFieldOfView));
             Assert.That(Game.EventHistory.Any(item => item.Name == "camera_perspective_changed"), Is.True);
         }
 
@@ -32,6 +33,7 @@ namespace Telerobot.Game.Tests
         public IEnumerator ThirdPersonCameraStopsInFrontOfWall()
         {
             var player = Game.PlayerActor;
+            if (player.Perspective != CameraPerspective.ThirdPerson) player.TogglePerspective();
             player.transform.position = new Vector3(10f, 1f, 10f);
             var anchor = player.transform.position + Vector3.up * 0.55f;
             var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -237,7 +239,7 @@ namespace Telerobot.Game.Tests
             var target = Game.AliveZombies.First(item => item.Type == ZombieType.Runner);
             target.enabled = false;
             player.transform.position = new Vector3(12f, 1f, 12f);
-            player.TogglePerspective();
+            if (player.Perspective != CameraPerspective.FirstPerson) player.TogglePerspective();
             player.SnapCameraForTests();
             var aimPoint = player.ViewCamera.transform.position + player.ViewCamera.transform.forward * 8f;
             target.transform.position = aimPoint - Vector3.up * (target.VisualHeight * 0.35f);

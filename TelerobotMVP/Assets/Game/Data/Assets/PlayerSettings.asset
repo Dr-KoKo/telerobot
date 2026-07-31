@@ -22,4 +22,4 @@ MonoBehaviour:
   defaultResolutionWidth: 1280
   defaultResolutionHeight: 720
   defaultFullscreen: 0
-  defaultPerspective: 0
+  defaultPerspective: 1

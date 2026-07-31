@@ -100,3 +100,37 @@ addresses the latest playtest without changing the physical footprint.
   lost.
 - Add a custom shader: deferred because the standard retained URP transparent
   path satisfies the current requirement with less asset and maintenance scope.
+
+## Decision 7: Use one obstruction rule in both perspectives
+
+**Decision**: Evaluate the same active-renderer aim-ray obstruction rule in
+first- and third-person instead of treating first-person as always clear.
+
+**Rationale**: First-person is the primary FPS play mode and therefore the place
+where an ally covering the crosshair most directly blocks target acquisition.
+The existing camera-ray rule already expresses the desired screen-space intent
+without needing a separate threshold or material path.
+
+**Alternatives considered**:
+
+- Keep first-person opaque: rejected because it leaves the reported gameplay
+  obstruction unresolved in the primary perspective.
+- Make Haetae permanently transparent in first-person: rejected because allies
+  outside the aiming corridor should retain their authored appearance.
+- Use a different first-person opacity: deferred because a shared rule is easier
+  to understand and the current `0.10` target already passed visibility tuning.
+
+## Decision 8: First-person is the unsaved default
+
+**Decision**: Change the data-defined initial perspective to first-person and
+retain the existing saved-preference precedence.
+
+**Rationale**: New players enter the intended FPS combat presentation without an
+extra toggle, while returning players keep explicit control of their preference.
+
+**Alternatives considered**:
+
+- Force first-person on every start: rejected because it would discard a saved
+  user choice.
+- Change only the runtime fallback: rejected because it would leave generated
+  settings data and menu behavior inconsistent.

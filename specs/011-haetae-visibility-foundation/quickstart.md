@@ -26,9 +26,11 @@ confirm:
 - A renderer centered on the aim ray activates fade even when its actor collider
   is outside the old corridor.
 - A centered collider with clear renderers does not activate fade.
-- Active obstruction reaches 0.10, uses the retained transparent URP template,
-  and dims emission with opacity; clear and first-person states restore exact
-  originals.
+- Active obstruction in either camera perspective reaches 0.10, uses the retained
+  transparent URP template, and dims emission with opacity; clear states restore
+  exact originals.
+- With saved preferences cleared, the game starts in first-person; a saved valid
+  perspective remains authoritative on the next start.
 - Two robots, specialization replacement, fallback, tint, and ten cycles retain
   independent stable state.
 
@@ -48,8 +50,11 @@ Build with
 3. Move it clear and confirm the exact opaque appearance returns smoothly.
 4. Confirm the model has its authored proportions and both robots share one
    consistent size.
-5. Repeat in first-person and confirm no transparency is applied.
-6. Exercise every specialization and confirm status UI, movement, collision,
+5. Repeat in first-person and confirm the same conditional transparency applies
+   only while the Haetae covers the aiming corridor.
+6. Clear saved preferences, start a session, and confirm it begins in
+   first-person; save third-person and confirm a later session respects it.
+7. Exercise every specialization and confirm status UI, movement, collision,
    spacing, targeting, and attacks behave as before.
 
 ## Validation record
@@ -92,5 +97,20 @@ Second visibility follow-up completed on 2026-08-01:
   `_SURFACE_TYPE_TRANSPARENT`;
 - standalone smoke: exit code `0` with `TELEROBOT_STANDALONE_SMOKE_READY` and no
   material or shader errors;
+- generated scene/catalog-only serialization rewrites: excluded;
+- `git diff --check`: passed.
+
+First-person playtest amendment completed on 2026-08-01:
+
+- TDD red: first-launch EditMode `0/1` and first-person behavior PlayMode `0/2`,
+  with only the three amended expectations failing;
+- targeted green: first-launch EditMode `1/1` and first-person behavior PlayMode
+  `2/2`;
+- generated `PlayerSettings.asset` verified with first-person default;
+- complete EditMode suite: `123/123` passed;
+- complete PlayMode suite: `84/84` passed;
+- Windows x86_64 development build: succeeded;
+- standalone smoke contains `TELEROBOT_STANDALONE_SMOKE_READY` with no material,
+  shader, or runtime exception errors;
 - generated scene/catalog-only serialization rewrites: excluded;
 - `git diff --check`: passed.

@@ -15,6 +15,6 @@ namespace Telerobot.Game.Data
         public int defaultResolutionWidth;
         public int defaultResolutionHeight;
         public bool defaultFullscreen;
-        public CameraPerspective defaultPerspective;
+        public CameraPerspective defaultPerspective = CameraPerspective.FirstPerson;
     }
 }

@@ -17,8 +17,10 @@ footprint through explicit robot data, and keep `haetaeVisualScale = 0.80` as th
 sole uniform presentation size. Replace collider-based camera obstruction with a
 non-allocating camera-ray test against active renderer bounds, use a serialized
 transparent material template retained by player builds, reduce obstructing
-opacity to 0.10, dim emissive accents with opacity, and validate visible rendering
-as well as state and material contracts.
+opacity to 0.10, dim emissive accents with opacity, apply the same conditional
+fade in both camera perspectives, make first-person the data-defined first-launch
+default while preserving saved choices, and validate visible rendering as well
+as state, preference, and material contracts.
 
 ## Technical Context
 
@@ -42,8 +44,8 @@ complete regression suites
 frame; test only cached active renderer bounds
 
 **Constraints**: Preserve physical bounds and all simulation outcomes; use one
-uniform visual scale; no player-facing string, HUD, combat, telemetry, or camera
-behavior changes
+uniform visual scale; no player-facing string, HUD, combat, or telemetry changes;
+only obstruction eligibility and the unsaved perspective default may change
 
 **Scale/Scope**: Robot body data and mapping, one spawn path, one presentation
 factory invariant, one fader, existing EditMode/PlayMode fixtures, generated data,
@@ -79,13 +81,16 @@ Post-design re-check: PASS. No complexity exception is required.
    from robot data, preserving the legacy physical bounds.
 3. `LowPolyModelFactory` remains the only owner of Haetae visual size and applies
    the uniform `haetaeVisualScale = 0.80` once before motion binding.
-4. `HaetaeCameraOcclusionFader` uses cached active renderers. An expanded renderer
-   world bound intersecting the camera aim ray within range activates fading.
+4. `HaetaeCameraOcclusionFader` uses cached active renderers in either camera
+   perspective. An expanded renderer world bound intersecting the camera aim ray
+   within range activates fading.
 5. Transparent variants derive from a serialized URP transparent template so the
    player build retains the needed shader path, disable preserved specular, dim
    emission with opacity, and use opacity 0.10.
 6. Presentation replacement rebuilds cached renderers and releases obsolete
    material variants as before.
+7. `PlayerSettingsAsset` defines first-person as the initial perspective;
+   `PlayerPreferences` continues to give a valid saved choice precedence.
 
 ## Acceptance Validation Map
 
@@ -98,8 +103,10 @@ Post-design re-check: PASS. No complexity exception is required.
 | US2.2 collider-miss still fades | Offset root and centered visual hierarchy test |
 | US2.3 clear restores | Timed restore and exact original material references |
 | US3.1 two robots independent | Existing two-fader state test updated to renderer bounds |
-| US3.2 first-person opaque | Perspective boundary test |
+| US3.2 first-person obstruction fades | First-person renderer-bound obstruction and restoration test |
 | US3.3 lifecycle stable | Specialization, motion, fallback, tint, and ten cycles |
+| US4.1 first launch uses first-person | Cleared-preference asset and scene-start tests |
+| US4.2 saved choice wins | Preference round-trip and scene-start test |
 
 ## Project Structure
 
@@ -121,15 +128,19 @@ TelerobotMVP/Assets/Game/
 |-- Data/Definitions/RobotDefinitionAsset.cs
 |-- Data/Assets/HaetaeRobot.asset
 |-- Data/Assets/VisualTheme.asset
+|-- Data/Assets/PlayerSettings.asset
 |-- Data/MvpDataMapper.cs
 |-- Editor/MvpProjectBuilder.cs
 `-- Runtime/
     |-- Bootstrap/MvpGameController.cs
+    |-- Settings/PlayerPreferences.cs
     `-- Presentation/HaetaeCameraOcclusionFader.cs
 
 TelerobotMVP/Assets/Tests/
 |-- EditMode/HaetaeDataConfigurationTests.cs
 |-- EditMode/DesignAssetCatalogTests.cs
+|-- EditMode/DesignAssetCatalogTests.cs
+|-- PlayMode/PlayerExperiencePlayModeTests.cs
 |-- PlayMode/VisualPresentationPlayModeTests.cs
 `-- Shared/TestConfigFactory.cs
 ```

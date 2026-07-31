@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using Telerobot.Game.Core;
 using Telerobot.Game.Data;
 using UnityEditor;
 using UnityEngine;
@@ -9,6 +10,20 @@ namespace Telerobot.Game.Tests
 {
     public sealed class DesignAssetCatalogTests
     {
+        [Test]
+        public void GeneratedPlayerSettings_DefaultToFirstPerson()
+        {
+            var settings = AssetDatabase.LoadAssetAtPath<PlayerSettingsAsset>(
+                "Assets/Game/Data/Assets/PlayerSettings.asset");
+
+            Assert.That(settings, Is.Not.Null);
+            Assert.That(settings.defaultPerspective, Is.EqualTo(CameraPerspective.FirstPerson));
+
+            var defaults = ScriptableObject.CreateInstance<PlayerSettingsAsset>();
+            Assert.That(defaults.defaultPerspective, Is.EqualTo(CameraPerspective.FirstPerson));
+            UnityEngine.Object.DestroyImmediate(defaults);
+        }
+
         [Test]
         public void VisualTheme_RequiresEverySemanticColor()
         {

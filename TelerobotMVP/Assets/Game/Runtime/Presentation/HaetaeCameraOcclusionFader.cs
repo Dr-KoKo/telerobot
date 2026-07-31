@@ -74,8 +74,7 @@ namespace Telerobot.Game.Runtime
 
         private bool EvaluateOcclusion()
         {
-            if (tuning == null || !tuning.enabled || player == null ||
-                player.Perspective != CameraPerspective.ThirdPerson || presentationRoot == null)
+            if (tuning == null || !tuning.enabled || player == null || presentationRoot == null)
                 return false;
             var camera = player.ViewCamera;
             if (camera == null) return false;

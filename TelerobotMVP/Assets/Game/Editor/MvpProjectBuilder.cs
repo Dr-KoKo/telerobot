@@ -276,7 +276,7 @@ namespace Telerobot.Game.Editor
                 item.defaultResolutionWidth = 1280;
                 item.defaultResolutionHeight = 720;
                 item.defaultFullscreen = false;
-                item.defaultPerspective = CameraPerspective.ThirdPerson;
+                item.defaultPerspective = CameraPerspective.FirstPerson;
             });
             var telemetry = Asset<TelemetryConfigAsset>("TelemetryConfig", item =>
             {

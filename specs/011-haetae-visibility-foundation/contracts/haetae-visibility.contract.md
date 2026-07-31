@@ -12,8 +12,8 @@
 
 For each Haetae independently:
 
-1. Return clear outside third-person view, without a camera, without a current
-   presentation, or outside maximum distance.
+1. Return clear without a camera, without a current presentation, or outside
+   maximum distance; camera perspective does not exclude obstruction evaluation.
 2. Inspect only cached renderers that are enabled and active in hierarchy.
 3. Expand each renderer world bound by the configured corridor margin.
 4. Return obstructing when the camera center ray intersects any expanded bound in
@@ -36,5 +36,7 @@ For each Haetae independently:
 
 - Physical footprint, movement, navigation, separation, targeting, combat,
   progression, telemetry, and HUD remain unchanged.
-- First-person always resolves clear.
+- First- and third-person use the same conditional obstruction rule.
+- With no saved perspective, a session starts in first-person; a valid saved
+  preference remains authoritative.
 - Non-Haetae presentation and scale remain unchanged.

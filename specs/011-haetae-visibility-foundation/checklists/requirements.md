@@ -37,5 +37,8 @@
 - Validation pass 3: 16/16 items passed after the 0.80 scale, 0.10 opacity, and
   Windows-player transparency reliability amendment; no clarification markers
   were introduced.
+- Validation pass 4: 16/16 items passed after extending conditional obstruction
+  fading to first-person and making first-person the first-launch default while
+  preserving saved choices; no clarification markers were introduced.
 - The new specification explicitly supersedes the stacked-scale preservation
   constraint from feature 010 while preserving physical gameplay bounds.

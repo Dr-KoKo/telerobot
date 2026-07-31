@@ -36,11 +36,11 @@ namespace Telerobot.Game.Tests
             defaults.defaultEffectsVolume = 0.7f;
             defaults.defaultResolutionWidth = 1280;
             defaults.defaultResolutionHeight = 720;
-            defaults.defaultPerspective = CameraPerspective.ThirdPerson;
+            defaults.defaultPerspective = CameraPerspective.FirstPerson;
 
             PlayerPreferences.Initialize(defaults, false);
             PlayerPreferences.Save(defaults, 9f, -1f, 2f, 1600, 900, true,
-                CameraPerspective.FirstPerson, false);
+                CameraPerspective.ThirdPerson, false);
             PlayerPreferences.Initialize(defaults, false);
 
             Assert.That(PlayerPreferences.MouseSensitivity, Is.EqualTo(0.35f).Within(0.001f));
@@ -49,7 +49,7 @@ namespace Telerobot.Game.Tests
             Assert.That(PlayerPreferences.ResolutionWidth, Is.EqualTo(1600));
             Assert.That(PlayerPreferences.ResolutionHeight, Is.EqualTo(900));
             Assert.That(PlayerPreferences.Fullscreen, Is.True);
-            Assert.That(PlayerPreferences.DefaultPerspective, Is.EqualTo(CameraPerspective.FirstPerson));
+            Assert.That(PlayerPreferences.DefaultPerspective, Is.EqualTo(CameraPerspective.ThirdPerson));
             Object.DestroyImmediate(defaults);
         }
 
@@ -67,7 +67,7 @@ namespace Telerobot.Game.Tests
 
             menu.OpenSettings();
             Assert.That(menu.SettingsOpen, Is.True);
-            menu.Settings.SetDraftPerspectiveForTests(CameraPerspective.FirstPerson);
+            menu.Settings.SetDraftPerspectiveForTests(CameraPerspective.ThirdPerson);
             menu.Settings.ApplyAndClose();
             Assert.That(menu.SettingsOpen, Is.False);
 
@@ -77,7 +77,7 @@ namespace Telerobot.Game.Tests
 
             var game = Object.FindFirstObjectByType<MvpGameController>();
             Assert.That(game, Is.Not.Null);
-            Assert.That(game.PlayerActor.Perspective, Is.EqualTo(CameraPerspective.FirstPerson));
+            Assert.That(game.PlayerActor.Perspective, Is.EqualTo(CameraPerspective.ThirdPerson));
         }
     }
 }
