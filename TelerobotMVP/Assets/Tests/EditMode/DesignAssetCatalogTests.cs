@@ -41,7 +41,7 @@ namespace Telerobot.Game.Tests
             Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.80f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.10f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.20f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
@@ -56,7 +56,7 @@ namespace Telerobot.Game.Tests
             theme.haetaeVisualScale = 0.80f;
             theme.haetaeOcclusionFade.obstructingOpacity = 1f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
-            theme.haetaeOcclusionFade.obstructingOpacity = 0.10f;
+            theme.haetaeOcclusionFade.obstructingOpacity = 0.20f;
             theme.haetaeOcclusionFade.fadeSeconds = 0f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeOcclusionFade.fadeSeconds = 0.15f;
@@ -161,7 +161,7 @@ namespace Telerobot.Game.Tests
             Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.80f));
             Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
             Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
-            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.10f));
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.20f));
             Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
             Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
             Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));

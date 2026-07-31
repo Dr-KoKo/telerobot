@@ -499,7 +499,7 @@ namespace Telerobot.Game.Tests
         {
             yield return null;
             var tuning = Game.Catalog.visualTheme.haetaeOcclusionFade;
-            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.10f));
+            Assert.That(tuning.obstructingOpacity, Is.EqualTo(0.20f));
             var player = Game.PlayerActor;
             var robot = Game.Robots[0];
             var fader = robot.GetComponent<HaetaeCameraOcclusionFader>();

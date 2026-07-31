@@ -22,7 +22,7 @@ For each Haetae independently:
 
 ## Material contract
 
-- Obstructing target opacity is `0.10` by default.
+- Obstructing target opacity is `0.20` by default.
 - Runtime transparent variants derive from a serialized transparent template
   referenced by the active visual theme and therefore included in player builds.
 - Transparent variants use alpha blending, no depth write, no shadow caster, and

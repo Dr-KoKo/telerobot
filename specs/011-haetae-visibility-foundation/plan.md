@@ -17,7 +17,7 @@ footprint through explicit robot data, and keep `haetaeVisualScale = 0.80` as th
 sole uniform presentation size. Replace collider-based camera obstruction with a
 non-allocating camera-ray test against active renderer bounds, use a serialized
 transparent material template retained by player builds, reduce obstructing
-opacity to 0.10, dim emissive accents with opacity, apply the same conditional
+opacity to 0.20, dim emissive accents with opacity, apply the same conditional
 fade in both camera perspectives, make first-person the data-defined first-launch
 default while preserving saved choices, and validate visible rendering as well
 as state, preference, and material contracts.
@@ -86,7 +86,7 @@ Post-design re-check: PASS. No complexity exception is required.
    within range activates fading.
 5. Transparent variants derive from a serialized URP transparent template so the
    player build retains the needed shader path, disable preserved specular, dim
-   emission with opacity, and use opacity 0.10.
+   emission with opacity, and use opacity 0.20.
 6. Presentation replacement rebuilds cached renderers and releases obsolete
    material variants as before.
 7. `PlayerSettingsAsset` defines first-person as the initial perspective;
@@ -138,7 +138,6 @@ TelerobotMVP/Assets/Game/
 
 TelerobotMVP/Assets/Tests/
 |-- EditMode/HaetaeDataConfigurationTests.cs
-|-- EditMode/DesignAssetCatalogTests.cs
 |-- EditMode/DesignAssetCatalogTests.cs
 |-- PlayMode/PlayerExperiencePlayModeTests.cs
 |-- PlayMode/VisualPresentationPlayModeTests.cs

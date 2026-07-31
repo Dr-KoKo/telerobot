@@ -13,7 +13,7 @@ confirm:
 
 - robot physical fields are radius `0.75`, height `1.50`, center Y `0`;
 - `haetaeVisualScale` is `0.80`;
-- obstructing opacity is `0.10`;
+- obstructing opacity is `0.20`;
 - `ally-haetae-occlusion.mat` is referenced by the visual theme and retains the
   transparent shader path in the Windows player;
 - unrelated scene/catalog serialization noise is excluded.
@@ -26,7 +26,7 @@ confirm:
 - A renderer centered on the aim ray activates fade even when its actor collider
   is outside the old corridor.
 - A centered collider with clear renderers does not activate fade.
-- Active obstruction in either camera perspective reaches 0.10, uses the retained
+- Active obstruction in either camera perspective reaches 0.20, uses the retained
   transparent URP template, and dims emission with opacity; clear states restore
   exact originals.
 - With saved preferences cleared, the game starts in first-person; a saved valid
@@ -107,6 +107,20 @@ First-person playtest amendment completed on 2026-08-01:
 - targeted green: first-launch EditMode `1/1` and first-person behavior PlayMode
   `2/2`;
 - generated `PlayerSettings.asset` verified with first-person default;
+- complete EditMode suite: `123/123` passed;
+- complete PlayMode suite: `84/84` passed;
+- Windows x86_64 development build: succeeded;
+- standalone smoke contains `TELEROBOT_STANDALONE_SMOKE_READY` with no material,
+  shader, or runtime exception errors;
+- generated scene/catalog-only serialization rewrites: excluded;
+- `git diff --check`: passed.
+
+Opacity playtest tuning completed on 2026-08-01:
+
+- TDD red: theme EditMode target `8/10` and obstruction PlayMode target `0/1`,
+  with only the new `0.20` expectations failing;
+- targeted green: theme EditMode `10/10` and obstruction PlayMode `1/1`;
+- generated `VisualTheme.asset` verified at opacity `0.20`;
 - complete EditMode suite: `123/123` passed;
 - complete PlayMode suite: `84/84` passed;
 - Windows x86_64 development build: succeeded;

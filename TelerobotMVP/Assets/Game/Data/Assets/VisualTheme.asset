@@ -236,7 +236,7 @@ MonoBehaviour:
   haetaeVisualScale: 0.8
   haetaeOcclusionFade:
     enabled: 1
-    obstructingOpacity: 0.1
+    obstructingOpacity: 0.2
     fadeSeconds: 0.15
     restoreSeconds: 0.25
     aimCorridorRadius: 0.45

@@ -118,7 +118,7 @@ without needing a separate threshold or material path.
 - Make Haetae permanently transparent in first-person: rejected because allies
   outside the aiming corridor should retain their authored appearance.
 - Use a different first-person opacity: deferred because a shared rule is easier
-  to understand and the current `0.10` target already passed visibility tuning.
+  to understand and tune consistently.
 
 ## Decision 8: First-person is the unsaved default
 
@@ -134,3 +134,20 @@ extra toggle, while returning players keep explicit control of their preference.
   user choice.
 - Change only the runtime fallback: rejected because it would leave generated
   settings data and menu behavior inconsistent.
+
+## Decision 9: Restore more silhouette at 0.20 opacity
+
+**Decision**: Increase the shared obstructing opacity from `0.10` to `0.20`
+without changing activation, timing, perspective, or material behavior.
+
+**Rationale**: Once the fade became reliable in first-person, playtesting showed
+that the ally could remain more legible without materially obscuring enemies.
+The opacity remains presentation data and applies uniformly in both perspectives.
+
+**Alternatives considered**:
+
+- Keep `0.10`: rejected because the active ally silhouette is weaker than needed.
+- Return to `0.16`: rejected because `0.20` is a clearer, easily tunable midpoint
+  between the former treatment and full opacity.
+- Change fade timing or corridor size: rejected because the feedback concerns
+  only how transparent the obstructing model appears.

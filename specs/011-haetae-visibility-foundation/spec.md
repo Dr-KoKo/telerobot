@@ -50,7 +50,7 @@ fades and restores when the rendered body moves clear.
 **Acceptance Scenarios**:
 
 1. **Given** first- or third-person view, **When** any active Haetae renderer overlaps the
-   central aiming corridor within range, **Then** that Haetae reaches 10% opacity
+   central aiming corridor within range, **Then** that Haetae reaches 20% opacity
    within 0.15 seconds.
 2. **Given** the visible model blocks the corridor but its physical footprint does
    not, **When** obstruction is evaluated, **Then** transparency still activates.
@@ -126,7 +126,7 @@ the saved choice remains respected on the next start.
   fallback presentations MUST use the same sizing rule.
 - **FR-005**: Obstruction MUST be determined from active visible presentation,
   not solely from the physical gameplay footprint.
-- **FR-006**: Obstructing opacity MUST default to `0.10`, fade duration to `0.15`
+- **FR-006**: Obstructing opacity MUST default to `0.20`, fade duration to `0.15`
   seconds, and restore duration to `0.25` seconds, all adjustable as presentation
   data.
 - **FR-007**: First- and third-person views MUST fade an obstructing Haetae and
@@ -169,7 +169,7 @@ the saved choice remains respected on the next start.
 - **SC-002**: Physical bounds before and after consolidation differ by no more
   than `0.001` world units on any axis.
 - **SC-003**: 100% of test cases where visible Haetae bounds cover the central
-  aiming corridor reach 10% opacity within 0.15 seconds, including cases where
+  aiming corridor reach 20% opacity within 0.15 seconds, including cases where
   the physical footprint does not cover it.
 - **SC-004**: Clear cases in both perspectives restore 100% opacity within 0.25
   seconds and restore the original material references.
@@ -185,8 +185,8 @@ the saved choice remains respected on the next start.
 - The uniform visual size is reduced from `0.85` to `0.80` after playtest feedback;
   the identity parent and independent physical footprint remain unchanged.
 - Existing physical bounds are preserved by explicit physical-footprint data.
-- A 10% opacity is intentionally more obvious than the previous 16% value while
-  retaining enough silhouette to identify the ally.
+- A 20% opacity retains more of the ally silhouette after first-person playtesting
+  while still leaving enemies readable through the obstructing model.
 - All resources required for transparency are included in the Windows player
   build rather than depending on editor-only state.
 - Central obstruction includes a small world-space margin around the camera aim

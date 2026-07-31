@@ -40,5 +40,7 @@
 - Validation pass 4: 16/16 items passed after extending conditional obstruction
   fading to first-person and making first-person the first-launch default while
   preserving saved choices; no clarification markers were introduced.
+- Validation pass 5: 16/16 items passed after increasing shared obstructing
+  opacity to 0.20 from playtest feedback; no clarification markers were introduced.
 - The new specification explicitly supersedes the stacked-scale preservation
   constraint from feature 010 while preserving physical gameplay bounds.

@@ -108,6 +108,22 @@ tint, fallback, and ten cycles restore exact stable state.
   PlayMode regression suites, build Windows x86_64, run standalone smoke, and
   record validation in `specs/011-haetae-visibility-foundation/quickstart.md`
 
+---
+
+## Phase 10: First-person opacity playtest tuning
+
+- [x] T032 [US2] Change generated/default and runtime presentation test
+  expectations from opacity `0.10` to `0.20` in
+  `TelerobotMVP/Assets/Tests/EditMode/DesignAssetCatalogTests.cs` and
+  `TelerobotMVP/Assets/Tests/PlayMode/VisualPresentationPlayModeTests.cs`
+- [x] T033 [US2] Change the data-defined opacity to `0.20` in
+  `TelerobotMVP/Assets/Game/Data/Definitions/VisualThemeDefinitionAsset.cs`,
+  `TelerobotMVP/Assets/Game/Editor/MvpProjectBuilder.cs`, and
+  `TelerobotMVP/Assets/Game/Data/Assets/VisualTheme.asset`
+- [x] T034 [US2] Run targeted red/green tests, complete EditMode and PlayMode
+  regression suites, build Windows x86_64, run standalone smoke, exclude
+  generated serialization noise, and record validation
+
 ## Dependencies & Execution Order
 
 - Phase 1 establishes the committed baseline.
@@ -116,6 +132,7 @@ tint, fallback, and ten cycles restore exact stable state.
 - US2 establishes renderer-bound activation before US3 lifecycle coverage.
 - T027 and T028 establish the amended red tests before T029 and T030 implementation.
 - T031 depends on all first-person amendment tasks.
+- T032 establishes the opacity-tuning red tests before T033; T034 depends on both.
 - Phase 6 depends on all stories.
 
 ## Parallel Opportunities
@@ -133,3 +150,4 @@ tint, fallback, and ten cycles restore exact stable state.
 5. Re-run lifecycle, full regression, build, smoke, and commit.
 6. Extend the proven obstruction rule to first-person, change only the unsaved
    perspective default, and repeat full validation.
+7. Increase only the shared data-defined opacity and repeat full validation.

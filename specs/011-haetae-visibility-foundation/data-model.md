@@ -37,7 +37,7 @@ Existing per-Haetae state remains:
 - obstruction state.
 
 The activation source changes from physical hits to expanded active-renderer
-bounds intersecting the camera aim ray. Generated opacity becomes `0.10`. A
+bounds intersecting the camera aim ray. Generated opacity becomes `0.20`. A
 serialized transparent material template guarantees that the needed rendering
 variant is retained in player builds; each runtime copy preserves source color
 and surface detail while its emission is multiplied by current opacity.

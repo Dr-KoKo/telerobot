@@ -904,7 +904,7 @@ namespace Telerobot.Game.Editor
                 item.haetaeOcclusionFade = new HaetaeOcclusionFadeDefinition
                 {
                     enabled = true,
-                    obstructingOpacity = 0.10f,
+                    obstructingOpacity = 0.20f,
                     fadeSeconds = 0.15f,
                     restoreSeconds = 0.25f,
                     aimCorridorRadius = 0.45f,
