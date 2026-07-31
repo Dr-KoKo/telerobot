@@ -95,6 +95,34 @@ namespace Telerobot.Game.Data
         [Min(0.05f)] public float hitDuration = 0.16f;
     }
 
+    [Serializable]
+    public sealed class HaetaeOcclusionFadeDefinition
+    {
+        public bool enabled = true;
+        [Range(0.05f, 0.95f)] public float obstructingOpacity = 0.32f;
+        [Range(0.01f, 2f)] public float fadeSeconds = 0.15f;
+        [Range(0.01f, 2f)] public float restoreSeconds = 0.25f;
+        [Range(0.01f, 3f)] public float aimCorridorRadius = 0.45f;
+        [Range(1f, 200f)] public float maxDistance = 35f;
+
+        public void Validate()
+        {
+            if (!IsFiniteInRange(obstructingOpacity, 0.05f, 0.95f) ||
+                !IsFiniteInRange(fadeSeconds, 0.01f, 2f) ||
+                !IsFiniteInRange(restoreSeconds, 0.01f, 2f) ||
+                !IsFiniteInRange(aimCorridorRadius, 0.01f, 3f) ||
+                !IsFiniteInRange(maxDistance, 1f, 200f))
+                throw new InvalidOperationException(
+                    "Haetae occlusion fade values must be finite and within their supported ranges.");
+        }
+
+        private static bool IsFiniteInRange(float value, float minimum, float maximum)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value) &&
+                   value >= minimum && value <= maximum;
+        }
+    }
+
     [CreateAssetMenu(menuName = "Telerobot/Visual Theme")]
     public sealed class VisualThemeDefinitionAsset : ScriptableObject
     {
@@ -128,6 +156,9 @@ namespace Telerobot.Game.Data
         [Header("Character Scale")]
         [Range(0.01f, 2f)]
         public float haetaeVisualScale = 1f;
+        [Header("Haetae Camera Occlusion")]
+        public HaetaeOcclusionFadeDefinition haetaeOcclusionFade =
+            new HaetaeOcclusionFadeDefinition();
         [Header("Authored Character Models")]
         public GameObject haetaeGeneralModel;
         public GameObject haetaeGeneralLod1;
@@ -212,6 +243,9 @@ namespace Telerobot.Game.Data
                 haetaeVisualScale <= 0f || haetaeVisualScale > 2f)
                 throw new InvalidOperationException(
                     "Haetae visual scale must be finite, greater than zero, and at most two.");
+            if (haetaeOcclusionFade == null)
+                throw new InvalidOperationException("Haetae occlusion fade definition is required.");
+            haetaeOcclusionFade.Validate();
             ValidateUniqueKeys(colors, item => item == null ? null : item.key, RequiredColorKeys, "color");
             ValidateUniqueKeys(materials, item => item == null ? null : item.key, RequiredMaterialKeys, "material");
             ValidateUniqueKeys(effects, item => item == null ? null : item.key, Array.Empty<string>(), "effect");

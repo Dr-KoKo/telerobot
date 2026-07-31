@@ -22,6 +22,13 @@ namespace Telerobot.Game.Tests
                 .ToArray();
 
             Assert.That(theme.haetaeVisualScale, Is.EqualTo(1f));
+            Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
+            Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.32f));
+            Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
+            Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
+            Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
+            Assert.That(theme.haetaeOcclusionFade.maxDistance, Is.EqualTo(35f));
             Assert.DoesNotThrow(theme.Validate);
             theme.haetaeVisualScale = 0f;
             Assert.Throws<InvalidOperationException>(theme.Validate);
@@ -30,6 +37,21 @@ namespace Telerobot.Game.Tests
             theme.haetaeVisualScale = float.NaN;
             Assert.Throws<InvalidOperationException>(theme.Validate);
             theme.haetaeVisualScale = 1f;
+            theme.haetaeOcclusionFade.obstructingOpacity = 1f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeOcclusionFade.obstructingOpacity = 0.32f;
+            theme.haetaeOcclusionFade.fadeSeconds = 0f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeOcclusionFade.fadeSeconds = 0.15f;
+            theme.haetaeOcclusionFade.restoreSeconds = float.PositiveInfinity;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeOcclusionFade.restoreSeconds = 0.25f;
+            theme.haetaeOcclusionFade.aimCorridorRadius = 3.01f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeOcclusionFade.aimCorridorRadius = 0.45f;
+            theme.haetaeOcclusionFade.maxDistance = 0f;
+            Assert.Throws<InvalidOperationException>(theme.Validate);
+            theme.haetaeOcclusionFade.maxDistance = 35f;
             theme.colors[0].key = theme.colors[1].key;
             Assert.Throws<InvalidOperationException>(theme.Validate);
         }
@@ -120,6 +142,13 @@ namespace Telerobot.Game.Tests
             Assert.DoesNotThrow(catalog.Validate);
             Assert.That(catalog.fallbackTheme, Is.SameAs(theme));
             Assert.That(theme.haetaeVisualScale, Is.EqualTo(0.90f));
+            Assert.That(theme.haetaeOcclusionFade, Is.Not.Null);
+            Assert.That(theme.haetaeOcclusionFade.enabled, Is.True);
+            Assert.That(theme.haetaeOcclusionFade.obstructingOpacity, Is.EqualTo(0.32f));
+            Assert.That(theme.haetaeOcclusionFade.fadeSeconds, Is.EqualTo(0.15f));
+            Assert.That(theme.haetaeOcclusionFade.restoreSeconds, Is.EqualTo(0.25f));
+            Assert.That(theme.haetaeOcclusionFade.aimCorridorRadius, Is.EqualTo(0.45f));
+            Assert.That(theme.haetaeOcclusionFade.maxDistance, Is.EqualTo(35f));
             Assert.That(catalog.items.Select(item => item.id).Distinct().Count(), Is.EqualTo(catalog.items.Length));
             Assert.That(catalog.sources.All(source => source.officialUrl.StartsWith("https://", StringComparison.Ordinal)), Is.True);
         }

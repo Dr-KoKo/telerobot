@@ -234,6 +234,13 @@ MonoBehaviour:
   bodyFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
   headingFont: {fileID: 12800000, guid: b28e9a065bfaa1fa2f422f525d6d180c, type: 3}
   haetaeVisualScale: 0.9
+  haetaeOcclusionFade:
+    enabled: 1
+    obstructingOpacity: 0.32
+    fadeSeconds: 0.15
+    restoreSeconds: 0.25
+    aimCorridorRadius: 0.45
+    maxDistance: 35
   haetaeGeneralModel: {fileID: 919132149155446097, guid: 9a410d695a8df0046a740b32eed17167, type: 3}
   haetaeGeneralLod1: {fileID: 919132149155446097, guid: f993abc63236ce748b2b071dac887c46, type: 3}
   haetaeUpgradeModels:

@@ -447,6 +447,8 @@ namespace Telerobot.Game.Runtime
             ApplyColor(actorObject, color);
             var actor = actorObject.AddComponent<HaetaeRobotActor>();
             actor.Initialize(this, id, Config.Robot, Config.Battery, route);
+            var occlusionFader = actorObject.AddComponent<HaetaeCameraOcclusionFader>();
+            occlusionFader.Initialize(PlayerActor, catalog.visualTheme);
             Robots.Add(actor);
         }
 

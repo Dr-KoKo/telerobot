@@ -898,6 +898,15 @@ namespace Telerobot.Game.Editor
                 item.bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Game/Art/Fonts/NotoSansKR-VF.ttf");
                 item.headingFont = item.bodyFont;
                 item.haetaeVisualScale = 0.90f;
+                item.haetaeOcclusionFade = new HaetaeOcclusionFadeDefinition
+                {
+                    enabled = true,
+                    obstructingOpacity = 0.32f,
+                    fadeSeconds = 0.15f,
+                    restoreSeconds = 0.25f,
+                    aimCorridorRadius = 0.45f,
+                    maxDistance = 35f
+                };
                 item.haetaeGeneralModel =
                     AssetDatabase.LoadAssetAtPath<GameObject>(HaetaeGeneralLod0Path);
                 item.haetaeGeneralLod1 =
