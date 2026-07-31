@@ -173,6 +173,9 @@ namespace Telerobot.Game.Editor
                 item.dashCooldownSeconds = 3f;
                 item.detectionRadius = 15f;
                 item.engageRange = 2f;
+                item.bodyColliderRadius = 0.75f;
+                item.bodyColliderHeight = 1.5f;
+                item.bodyColliderCenterY = 0f;
                 item.separationRadius = 2.2f;
                 item.separationStrength = 1.8f;
                 item.formationSpacing = 3f;
@@ -186,19 +189,19 @@ namespace Telerobot.Game.Editor
                 "HaetaeMelee", HaetaeSpecialization.Melee,
                 "haetae.specialization.melee", "haetae.specialization.melee.description",
                 0f, 2f, 4f, 4f, 0f, 0f, 2.5f, 3, 0.7f, 1.2f,
-                new Color(0.95f, 0.32f, 0.14f), new Vector3(1.12f, 1.08f, 1.12f),
+                new Color(0.95f, 0.32f, 0.14f),
                 new Color(1f, 0.38f, 0.12f), new Color(1f, 0.55f, 0.2f));
             var rangedSpecialization = HaetaeSpecializationAsset(
                 "HaetaeRanged", HaetaeSpecialization.Ranged,
                 "haetae.specialization.ranged", "haetae.specialization.ranged.description",
                 6f, 12f, 0f, 0f, 200f, 0.35f, 0f, 1, 1.15f, 1f,
-                new Color(0.2f, 0.65f, 1f), new Vector3(0.96f, 1f, 1.08f),
+                new Color(0.2f, 0.65f, 1f),
                 new Color(0.15f, 0.75f, 1f), new Color(0.25f, 0.9f, 1f));
             var balancedSpecialization = HaetaeSpecializationAsset(
                 "HaetaeBalanced", HaetaeSpecialization.Balanced,
                 "haetae.specialization.balanced", "haetae.specialization.balanced.description",
                 0f, 8f, 2.5f, 2.5f, 190f, 0.35f, 0f, 1, 1f, 0.9f,
-                new Color(0.68f, 0.38f, 0.95f), Vector3.one,
+                new Color(0.68f, 0.38f, 0.95f),
                 new Color(0.78f, 0.45f, 1f), new Color(0.65f, 0.55f, 1f));
             var haetaeProgression = Asset<HaetaeProgressionDefinitionAsset>("HaetaeProgression", item =>
             {
@@ -667,7 +670,7 @@ namespace Telerobot.Game.Editor
             float preferredMinRange, float preferredMaxRange, float dashDamageMultiplier,
             float biteDamageMultiplier, float rangedDamage, float rangedCooldownSeconds,
             float cleaveRadius, int maximumTargets, float incomingDamageMultiplier,
-            float combatBatteryMultiplier, Color bodyColor, Vector3 scaleMultiplier,
+            float combatBatteryMultiplier, Color bodyColor,
             Color attackPulseColor, Color tracerColor)
         {
             return Asset<HaetaeSpecializationDefinitionAsset>(name, item =>
@@ -686,7 +689,6 @@ namespace Telerobot.Game.Editor
                 item.incomingDamageMultiplier = incomingDamageMultiplier;
                 item.combatBatteryMultiplier = combatBatteryMultiplier;
                 item.bodyColor = bodyColor;
-                item.scaleMultiplier = scaleMultiplier;
                 item.attackPulseColor = attackPulseColor;
                 item.tracerColor = tracerColor;
             });
@@ -901,7 +903,7 @@ namespace Telerobot.Game.Editor
                 item.haetaeOcclusionFade = new HaetaeOcclusionFadeDefinition
                 {
                     enabled = true,
-                    obstructingOpacity = 0.32f,
+                    obstructingOpacity = 0.24f,
                     fadeSeconds = 0.15f,
                     restoreSeconds = 0.25f,
                     aimCorridorRadius = 0.45f,

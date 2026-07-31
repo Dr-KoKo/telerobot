@@ -19,7 +19,6 @@ namespace Telerobot.Game.Data
         [Min(0.01f)] public float incomingDamageMultiplier = 1f;
         [Min(0.01f)] public float combatBatteryMultiplier = 1f;
         public Color bodyColor = Color.white;
-        public Vector3 scaleMultiplier = Vector3.one;
         public Color attackPulseColor = Color.white;
         public Color tracerColor = Color.white;
     }

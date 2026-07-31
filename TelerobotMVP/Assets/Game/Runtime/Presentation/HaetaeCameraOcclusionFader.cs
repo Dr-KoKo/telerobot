@@ -19,7 +19,6 @@ namespace Telerobot.Game.Runtime
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int LegacyColorId = Shader.PropertyToID("_Color");
-        private readonly RaycastHit[] hitBuffer = new RaycastHit[16];
         private readonly List<RendererBinding> bindings = new List<RendererBinding>(24);
         private readonly Dictionary<Material, Material> transparentByOpaque =
             new Dictionary<Material, Material>();
@@ -74,21 +73,16 @@ namespace Telerobot.Game.Runtime
                 return false;
             var camera = player.ViewCamera;
             if (camera == null) return false;
-            var direction = camera.transform.forward;
-            var hitCount = Physics.SphereCastNonAlloc(
-                camera.transform.position,
-                tuning.aimCorridorRadius,
-                direction,
-                hitBuffer,
-                tuning.maxDistance,
-                ~0,
-                QueryTriggerInteraction.Ignore);
-            for (var index = 0; index < hitCount; index++)
+            var aimRay = new Ray(camera.transform.position, camera.transform.forward);
+            for (var index = 0; index < bindings.Count; index++)
             {
-                var candidate = hitBuffer[index].collider;
-                if (candidate == null) continue;
-                var candidateTransform = candidate.transform;
-                if (candidateTransform == transform || candidateTransform.IsChildOf(transform))
+                var renderer = bindings[index].renderer;
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                    continue;
+                var expandedBounds = renderer.bounds;
+                expandedBounds.Expand(tuning.aimCorridorRadius * 2f);
+                if (expandedBounds.IntersectRay(aimRay, out var distance) &&
+                    distance >= 0f && distance <= tuning.maxDistance)
                     return true;
             }
             return false;
@@ -150,6 +144,7 @@ namespace Telerobot.Game.Runtime
             result.SetOverrideTag("RenderType", "Transparent");
             SetFloatIfPresent(result, "_Surface", 1f);
             SetFloatIfPresent(result, "_Blend", 0f);
+            SetFloatIfPresent(result, "_BlendModePreserveSpecular", 0f);
             SetFloatIfPresent(result, "_AlphaClip", 0f);
             SetFloatIfPresent(result, "_Mode", 3f);
             SetFloatIfPresent(result, "_SrcBlend", (float)BlendMode.SrcAlpha);

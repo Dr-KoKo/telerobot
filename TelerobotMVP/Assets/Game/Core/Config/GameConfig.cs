@@ -174,6 +174,9 @@ namespace Telerobot.Game.Core
         public float DashCooldownSeconds;
         public float DetectionRadius;
         public float EngageRange;
+        public float BodyColliderRadius;
+        public float BodyColliderHeight;
+        public float BodyColliderCenterY;
         public float SeparationRadius;
         public float SeparationStrength;
         public float FormationSpacing;

@@ -6,6 +6,7 @@ using Telerobot.Game.Data;
 using Telerobot.Game.Runtime;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Utils;
 
 namespace Telerobot.Game.Tests
 {
@@ -447,6 +448,52 @@ namespace Telerobot.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator LiveHaetaeUsesOneVisualScaleAndPreservesLegacyPhysicalBounds()
+        {
+            yield return null;
+            var expectedVisualScale = Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale;
+            foreach (var robot in Game.Robots)
+            {
+                Assert.That(robot.transform.localScale, Is.EqualTo(Vector3.one), robot.name);
+                var visual = robot.transform.Find(LowPolyModelFactory.VisualRootName);
+                Assert.That(visual, Is.Not.Null, robot.name);
+                Assert.That(visual.localScale, Is.EqualTo(expectedVisualScale), robot.name);
+
+                var capsule = robot.GetComponent<CapsuleCollider>();
+                Assert.That(capsule.radius, Is.EqualTo(Game.Config.Robot.BodyColliderRadius));
+                Assert.That(capsule.height, Is.EqualTo(Game.Config.Robot.BodyColliderHeight));
+                Assert.That(capsule.center.y, Is.EqualTo(Game.Config.Robot.BodyColliderCenterY));
+
+                var legacy = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                legacy.transform.position = robot.transform.position;
+                legacy.transform.localScale = new Vector3(1.1f, 0.75f, 1.5f);
+                Physics.SyncTransforms();
+                Assert.That(capsule.bounds.center,
+                    Is.EqualTo(legacy.GetComponent<Collider>().bounds.center).Using(Vector3ComparerWithEqualsOperator.Instance));
+                Assert.That(capsule.bounds.size,
+                    Is.EqualTo(legacy.GetComponent<Collider>().bounds.size).Using(Vector3ComparerWithEqualsOperator.Instance));
+                Object.Destroy(legacy);
+            }
+
+            var specializationRobot = Game.Robots[0];
+            var specializations = new[]
+            {
+                HaetaeSpecialization.Melee,
+                HaetaeSpecialization.Ranged,
+                HaetaeSpecialization.Balanced
+            };
+            foreach (var specialization in specializations)
+            {
+                specializationRobot.State.Progression.Specialization = specialization;
+                yield return null;
+                Assert.That(specializationRobot.transform.localScale, Is.EqualTo(Vector3.one),
+                    specialization.ToString());
+                Assert.That(specializationRobot.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
+                    Is.EqualTo(expectedVisualScale), specialization.ToString());
+            }
+        }
+
+        [UnityTest]
         public IEnumerator HaetaeOcclusionFadesOnlyTheThirdPersonAimCorridorAndRestores()
         {
             yield return null;
@@ -461,13 +508,16 @@ namespace Telerobot.Game.Tests
 
             var renderers = fader.PresentationRoot.GetComponentsInChildren<Renderer>(true);
             var opaqueMaterials = renderers.Select(item => item.sharedMaterials.ToArray()).ToArray();
-            var collider = robot.GetComponent<Collider>();
             var camera = player.ViewCamera;
-            robot.transform.position = camera.transform.position + camera.transform.forward * 5f;
+            var centeredPosition = camera.transform.position + camera.transform.forward * 5f;
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
             Physics.SyncTransforms();
+            var collider = robot.GetComponent<Collider>();
             var colliderSize = collider.bounds.size;
             var gameplayScale = robot.transform.localScale;
 
+            Assert.That(Vector3.Distance(collider.bounds.center, centeredPosition), Is.GreaterThan(4f));
             Assert.That(fader.EvaluateOcclusionForTests(), Is.True);
             fader.TickForTests(true, tuning.fadeSeconds);
             Assert.That(fader.IsObstructing, Is.True);
@@ -476,12 +526,23 @@ namespace Telerobot.Game.Tests
             Assert.That(fader.UsesTransparentMaterials, Is.True);
             Assert.That(renderers.SelectMany(item => item.sharedMaterials)
                 .All(item => item.renderQueue >= 3000), Is.True);
+            var specularMaterials = renderers.SelectMany(item => item.sharedMaterials)
+                .Where(item => item.HasProperty("_BlendModePreserveSpecular"))
+                .ToArray();
+            Assert.That(specularMaterials, Is.Not.Empty);
+            Assert.That(specularMaterials
+                .All(item => item.GetFloat("_BlendModePreserveSpecular") == 0f), Is.True);
+            Assert.That(renderers.SelectMany(item => item.sharedMaterials)
+                .Where(item => item.HasProperty("_BaseColor"))
+                .All(item => Mathf.Approximately(
+                    item.GetColor("_BaseColor").a, tuning.obstructingOpacity)), Is.True);
             Assert.That(collider.bounds.size, Is.EqualTo(colliderSize));
             Assert.That(robot.transform.localScale, Is.EqualTo(gameplayScale));
             Assert.That(robot.transform.Find(LowPolyModelFactory.VisualRootName).localScale,
                 Is.EqualTo(Vector3.one * Game.Catalog.visualTheme.haetaeVisualScale));
 
-            robot.transform.position += camera.transform.right * 6f;
+            robot.transform.position = centeredPosition;
+            fader.PresentationRoot.position = centeredPosition + camera.transform.right * 6f;
             Physics.SyncTransforms();
             Assert.That(fader.EvaluateOcclusionForTests(), Is.False);
             fader.TickForTests(false, tuning.restoreSeconds);
@@ -490,7 +551,8 @@ namespace Telerobot.Game.Tests
             for (var index = 0; index < renderers.Length; index++)
                 Assert.That(renderers[index].sharedMaterials, Is.EqualTo(opaqueMaterials[index]));
 
-            robot.transform.position = camera.transform.position + camera.transform.forward * 5f;
+            robot.transform.position = centeredPosition + camera.transform.right * 6f;
+            fader.PresentationRoot.position = centeredPosition;
             Physics.SyncTransforms();
             player.TogglePerspective();
             Assert.That(player.Perspective, Is.EqualTo(CameraPerspective.FirstPerson));
@@ -530,8 +592,11 @@ namespace Telerobot.Game.Tests
 
             var oldRoot = first.PresentationRoot;
             firstRobot.State.Progression.Specialization = HaetaeSpecialization.Melee;
-            yield return null;
-            first.TickForTests(true, tuning.fadeSeconds);
+            for (var frame = 0; frame < 3 && first.PresentationRoot == oldRoot; frame++)
+            {
+                yield return null;
+                first.TickForTests(true, tuning.fadeSeconds);
+            }
             Assert.That(first.PresentationRoot, Is.Not.SameAs(oldRoot));
             Assert.That(first.PresentationRoot.GetComponent<AuthoredModelMarker>().assetId,
                 Is.EqualTo("character.haetae.melee"));
